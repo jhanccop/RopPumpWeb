@@ -1,0 +1,62 @@
+{% extends 'production/base-production.html' %}
+
+{% load static %}
+
+{% block title %} SRP {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block app %} Production review {% endblock app %}
+
+{% block content %}
+
+<div class="row  mb-4">
+    <!-- form for add register -->
+
+    <div class="col-lg-6 col-md-6">
+        <div class="card h-100">
+            <div class="card-header p-3 pb-0">
+                <h6 class="mb-1">Enter production data</h6>
+                <p class="text-sm mb-0">
+                    Enter production for well <span class="text-dark text-sm font-weight-bold mb-0">{{ PumpName }}</span>
+                </p>
+            </div>
+            <div class="card-body p-3">
+                {% if errorMessage %}
+                <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+                {% endif %}
+                <form method="POST" id="form-create-well-test"> {% csrf_token %}
+                                        
+                    <div class="input-group input-group-outline my-3">
+                      <label class="form-label">Oil production</label>
+                      {{ form.OilProd }}
+                    </div>
+                    <div class="input-group input-group-outline my-3">
+                      <label class="form-label">Water Production</label>
+                      {{ form.WaterProd }}
+                    </div>
+                    <div class="input-group input-group-static my-3">
+                      <label>Date</label>
+                      <input type="date" class="form-control">
+                    </div>
+                    
+                    <button class="btn bg-gradient-dark mb-0 float-end" id="save">Save</button>
+                </form>
+                    
+            </div>
+        </div>
+    </div>
+        
+</div>
+
+
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    document.getElementById("save").addEventListener("click", function () {
+    document.getElementById("form-create-well-test").submit();
+  });
+</script>
+
+{% endblock JSscripts %}

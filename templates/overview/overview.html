@@ -1,0 +1,74 @@
+{% extends 'overview/base-overview.html' %}
+
+{% load static %}
+
+{% block title %} Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block app %} Overview {% endblock app %}
+{% block PumpType %}  {% endblock PumpType %}
+{% block PumpName %}  {% endblock PumpName %}
+
+{% block content %}
+
+<div class="row">
+    <!-- column for list wells -->
+    <div class="col-lg-2 col-md-2">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <h6 class = "text-info">Explore wells</h6>
+                <hr class="horizontal dark mt-0 mb-2">
+            </div>
+            <div class="card-body p-3">
+                <ul class="navbar-nav">
+                    <!-- start group for -->
+                    {% for key, value in object_list.groupsWells.items %}
+                    <li class="nav-item">
+                        <a data-bs-toggle="collapse" href="#{{key}}" class="nav-link" aria-controls="{{key}}" role="button" aria-expanded="true">
+                            <span class="text-dark text-sm font-weight-bold mb-0">{{key}}</span>
+                        </a>
+                    </li>
+                    <div class="timeline timeline-one-side collapse show" id="{{key}}">
+                        <!-- start for -->
+                        {% for well in value %}
+                        <a class="nav-link text-white active" href="/overview/{{well.PumpName}}">
+                            <div class="timeline-block mb-0">
+                                <span class="timeline-step">
+                                    <i class="ni ni-bold-right text-success"></i>
+                                </span>
+                                <div class="timeline-content">
+                                    <h6 class="text-dark text-sm mb-0">{{well.PumpName}} / {{well.Battery}} </h6>
+                                    <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{well.Diagnosis}}</p>
+                                    <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Last
+                                        update: {{well.LastUpdate|date:'Y-m-d H:i'}}</p>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                        <!-- end for -->
+                    </div>
+                    {% endfor %}
+                    <!-- end group for -->
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- column for vew data -->
+    <div class="col-lg-10 col-md-10">
+        <div class="card h-100">
+            
+        </div>
+    </div>
+
+</div>
+
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+
+{% endblock JSscripts %}

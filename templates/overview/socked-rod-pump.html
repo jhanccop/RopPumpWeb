@@ -1,0 +1,574 @@
+{% extends 'overview/base-overview.html' %}
+
+{% load static %}
+
+{% block title %} SRP {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block app %} Overview {% endblock app %}
+
+{% block content %}
+
+<div class="row  mb-4">
+    <!-- column for list wells -->
+    <div class="col-lg-2 col-md-2">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <h6 class = "text-info">Explore wells</h6>
+                <hr class="horizontal dark mt-0 mb-2">
+            </div>
+            <div class="card-body p-3">
+                <ul class="navbar-nav">
+                    <!-- start group for -->
+                    {% for key, value in object_list.groupsWells.items %}
+                    <li class="nav-item">
+                        <a data-bs-toggle="collapse" href="#{{key}}" class="nav-link" aria-controls="{{key}}" role="button" aria-expanded="true">
+                            <span class="text-dark text-sm font-weight-bold mb-0">{{key}}</span>
+                        </a>
+                    </li>
+                    <div class="timeline timeline-one-side collapse show" id="{{key}}">
+                        <!-- start for -->
+                        {% for well in value %}
+                        <a class="nav-link text-white active" href="/overview/{{well.PumpName}}">
+                            <div class="timeline-block mb-0">
+                                <span class="timeline-step">
+                                    <i class="ni ni-bold-right text-success"></i>
+                                </span>
+                                <div class="timeline-content">
+                                    <h6 class="text-dark text-sm mb-0">{{well.PumpName}} / {{well.Battery}} </h6>
+                                    <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{well.Diagnosis}}</p>
+                                    <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Last
+                                        update: {{well.LastUpdate|date:'Y-m-d H:i'}}</p>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                        <!-- end for -->
+                    </div>
+                    {% endfor %}
+                    <!-- end group for -->
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- column for dynacharts -->
+    <div class="col-lg-6 col-md-6">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <form method="GET">{% csrf_token %}
+                    <div class="row">
+                        <div class="col-xl-8 col-sm-8">
+                            <input class="bg-gradient-light form-control datetimepicker text-center" value="{{object_list.date}}" type="text" placeholder="today" id="dateKword" name="dateKword" />
+                        </div>
+                        <div class="col-xl-4 col-sm-4">
+                            <button class="btn bg-gradient-primary" type="submit"> Search </button>
+                        </div>
+                    </div>
+                    
+                </form>
+                
+                <p class="text-sm"> <span class="text-md font-weight-bold"> {{object_list.name}} </span> &nbsp;&nbsp;  Last Update:&nbsp;&nbsp;<span class=" font-weight-bold" id = "LastUpdate"></span>
+                </p>
+                
+            </div>
+            
+            <div class="card-body px-0 pb-2">
+                <div class="row mb-4 container">
+                    
+                    <!-- Dynachart -->
+                    <div class="col-lg-12 col-md-12">
+                        <div class="chart">
+                            <div ui-jp="plot"  id = "dynachart" style="height: 300px;"></div>
+                        </div>
+
+                    </div>
+                </div>
+                <div  class="row mb-4 container">
+                    <!-- historical table -->
+                    <div class="col-lg-12 col-md-12 ">
+                        
+                            <div class="table-responsive">
+                                <table class="table align-items-center mb-0" id="datatable-basic2">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Diagnosis</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Fill</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">SPM</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Hours running today</th>
+                                            
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for well in object_list.data %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex px-2 py-1">
+                                                    <!--
+                                                        <div class="avatar me-3" id = "dynachart_{{well.id}}" style="display: inline-block; width: 40px; height: 40px; vertical-align: center;"></div>
+                
+                                                    -->
+                                                    <div class="d-flex flex-column justify-content-center">
+                                                        <h5 class="mb-0 text-xs">{{well.Diagnosis}}</h5>
+                                                        <p class="text-xs font-weight-bold text-secondary mb-0"><span class="text-secondary">{{well.DateCreate|date:'Y-m-d H:i'}}</span></p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-xs font-weight-normal text-center">{{well.PumpFill}}</td>
+                                            <td class="text-xs font-weight-normal text-center">{{well.SPM}}</td>
+                                            <td class="text-xs font-weight-normal text-center">{{well.RunTime}}</td>
+                                            
+                                        </tr>
+                                        {% endfor %}
+                
+                                    </tbody>
+                                </table>
+                            </div>
+                        
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- column for trends runtime and fillage pump -->
+    <div class="col-lg-4 col-md-4">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <p class="text-sm">
+                    <i class="fa fa-chart-line text-info" aria-hidden="true"></i>
+                    <span class="font-weight-bold">Trends</span> for this month.
+                </p>
+            </div>
+            <div class="card-body p-3">
+                <div class="nav-wrapper position-relative end-0">
+                    <ul class="nav nav-pills nav-fill p-1" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link mb-0 px-0 py-1 active " data-bs-toggle="tab" href="#RunTime" role="tab"
+                                aria-selected="true">
+                                <i class="fas fa-clock"></i>
+                                <span class="ms-1">RunTime</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link mb-0 px-0 py-1 " data-bs-toggle="tab" href="#runtimeProduction" role="tab"
+                                aria-selected="false">
+                                <i class="fas fa-chart-line"></i>
+                                <span class="ms-1">Runtime vs Prod</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link mb-0 px-0 py-1 " data-bs-toggle="tab" href="#fill" role="tab"
+                                aria-selected="false">
+                                <i class="fas fa-chart-bar"></i>
+                                <span class="ms-1">Fill Pump</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div id="RunTime" class="collapse show">
+                    <h6>Run time plot</h6>
+                    <div class="chart">
+                        <canvas id="runTime" class="chart-canvas" height="170"></canvas>
+                    </div>
+                </div>
+                
+                <div id="runtimeProduction" class="col s12 collapse">
+                    <div ui-jp="plot"  id = "PlotRunTime" style="height: 200px;width: auto;"></div>
+                </div>
+
+                <div id="fill" class="collapse">
+                    <h6>Fill Pump plot</h6>
+                    <div class="chart">
+                        <canvas id="FillPump" class="chart-canvas" height="170"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock content %}
+
+<!-- end Body -->
+
+
+{% block JSscripts %}
+
+<!--Table-->
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+<script>
+    const dataTableBasic2 = new simpleDatatables.DataTable("#datatable-basic2", {
+        searchable: false,
+        fixedHeight: false,
+        perPage: 10
+    });
+</script>
+
+<script src="{% static 'assets/js/plugins/plotly-2.12.1.min.js' %}"></script>
+<script>
+
+    function dtFormat(dateTime) {
+        var dd = dateTime.getDate();
+        var yyyy = dateTime.getFullYear();
+        var mm = dateTime.getMonth() + 1;
+
+        mm = (mm < 10 ? '0' : '') + mm;
+        dd = (dd < 10 ? '0' : '') + dd;
+
+        // Now setting up Time Format (hh:mm:ss)
+        var hr = dateTime.getHours();
+        var min = dateTime.getMinutes();
+        var sec = dateTime.getSeconds();
+
+        hr = (hr < 10 ? '0' : '') + hr;
+        min = (min < 10 ? '0' : '') + min;
+        sec = (sec < 10 ? '0' : '') + sec;
+        var dt = yyyy + "/" + mm + "/" + dd + " " + hr + ":" + min;// + ":" + sec;
+        return dt;
+    }
+    var ddt = new Date("{{object_list.data.0.DateCreate|date:'Y-m-d H:i'}}");
+    //$("#LastUpdate").html(dtFormat(ddt));
+    console.log("{{object_list.data.0.DateCreate|date:'Y-m-d H:i'}}");
+    $("#LastUpdate").html(dtFormat(ddt));
+
+    
+
+    var layout_Dynachart = {
+		margin: {l:0,t:0,b:20,r:20},
+		autosize: true,
+
+        showlegend: true,
+
+		xaxis: {
+	  		autorange: true,
+            showgrid: true,
+            zeroline: true
+	    //range: ['2020-01-01', '2020-01-31'],
+	    	
+	    	//type: 'date'
+	    },
+	    yaxis: {
+	    	autorange: false,
+            showgrid: true,
+            zeroline: true,
+	    	range: [-1, 7],
+	    type: 'linear'
+		},
+
+        legend: {
+            x: -1,
+            y: 1
+        }
+		
+	}
+
+    var config = {
+        modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d', 'zoomOut2d'],
+        responsive: true,
+        displaylogo: false
+    }
+    
+    var counter = 0;
+    var data_PumpFill = [];
+    var data_Diagnosis = [];
+    var dateTime = [];
+    var data_SPM = [];
+
+    var data = [];
+
+    '{% for well in object_list.data %}'
+
+        var ddt = new Date("{{well.DateCreate|date:'Y/m/d H:i'}}");
+        dateTime.push(ddt);
+
+        data_SPM.push('{{well.SPM}}');
+        data_PumpFill.push('{{well.PumpFill}}');
+        data_Diagnosis = data_Diagnosis.concat('{{well.Diagnosis}}'.split(", "));
+
+        var SurfaceLoad = "{{well.SurfaceLoad}}";
+        //SurfaceLoad = SurfaceLoad.split(',');
+
+        var SurfacePosition = "{{well.SurfacePosition}}";
+        //SurfacePosition = SurfacePosition.split(',');
+
+        var DownLoad = "{{well.DownLoad}}";
+        //DownLoad = DownLoad.split(',');
+
+        var DownPosition = "{{well.DownPosition}}";
+        //DownPosition = DownPosition.split(',');
+
+        load = SurfaceLoad + "," + DownLoad;
+        pos = SurfacePosition + "," + DownPosition;
+
+        load = load.split(',');
+        pos = pos.split(',');
+
+        var trace = {
+            type: 'scatter',
+            x: pos,
+            y: load,
+            visible: true,
+            //mode: 'markers',
+            name: dtFormat(ddt) + ": "+ '{{well.Diagnosis}}' + " - " +'{{well.PumpFill}}%',
+            line: {
+                //color: '#465EAB',
+                width: 2
+            }
+        };
+        data.push(trace);
+        
+    '{% endfor %}'
+
+    Plotly.newPlot("dynachart", data, layout_Dynachart, { responsive: true,  staticPlot: false});
+
+    
+</script>
+
+<script src="{% static 'assets/js/plugins/chartjs.min.js' %}"></script>
+<script>
+    
+    // ============= RUN TIME PLOT =============
+    var ctx0 = document.getElementById("runTime").getContext("2d");
+
+    var dateTimeRT = [];
+    var data_runtime = [];
+
+    '{% for value in object_list.trends_runtime %}'
+        var ddt = new Date("{{value.date|date:'Y/m/d'}}");
+        dateTimeRT.push(dtFormat(ddt));
+        data_runtime.push('{{value.Bydays}}');
+    '{% endfor %}'
+
+    
+    new Chart(ctx0, {
+      type: "line",
+      data: {
+        //labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        labels: dateTimeRT,
+        datasets: [{
+            label: "Run Time",
+            tension: 0,
+            pointRadius: 3,
+            pointBackgroundColor: "#e91e63",
+            pointBorderColor: "transparent",
+            borderColor: "#e91e63",
+            borderWidth: 2,
+            backgroundColor: "transparent",
+            fill: true,
+            data: data_runtime,
+            //data: [50, 100, 200, 190, 400, 350, 500, 450, 700],
+            maxBarThickness: 6
+          }
+          /*{
+            label: "Fluid Production",
+            tension: 0,
+            borderWidth: 0,
+            pointRadius: 3,
+            pointBackgroundColor: "#3A416F",
+            pointBorderColor: "transparent",
+            borderColor: "#3A416F",
+            borderWidth: 2,
+            backgroundColor: "transparent",
+            fill: true,
+            data: [10, 30, 40, 120, 150, 220, 280, 250, 280],
+            maxBarThickness: 6
+          }*/
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+          }
+        },
+        interaction: {
+          intersect: false,
+          mode: 'index',
+        },
+        scales: {
+          y: {
+            grid: {
+              drawBorder: false,
+              display: true,
+              drawOnChartArea: true,
+              drawTicks: false,
+              borderDash: [5, 5],
+              color: '#c1c4ce5c'
+            },
+            ticks: {
+              display: true,
+              padding: 10,
+              color: '#9ca2b7',
+              font: {
+                size: 10,
+                weight: 300,
+                family: "Roboto",
+                style: 'normal',
+                lineHeight: 2
+              },
+            }
+          },
+          x: {
+            //type: 'time',
+            
+            grid: {
+              drawBorder: false,
+              display: true,
+              drawOnChartArea: true,
+              drawTicks: true,
+              borderDash: [5, 5],
+              color: '#c1c4ce5c'
+            },
+            ticks: {
+              display: true,
+              color: '#9ca2b7',
+              padding: 10,
+              font: {
+                size: 10,
+                weight: 300,
+                family: "Roboto",
+                style: 'normal',
+                lineHeight: 2
+              },
+            }
+          }
+          
+        },
+      },
+    })
+
+    // ============= FILL PUMP PLOT =============
+    var ctx1 = document.getElementById("FillPump").getContext("2d");
+    
+    var dateTimeFP = [];
+    var data_FP = [];
+    var data_SPM = [];
+
+    '{% for value in object_list.trends_fill_spm %}'
+        var ddt = new Date("{{value.DateCreate|date:'Y/m/d H:i'}}");
+        dateTimeFP.push(dtFormat(ddt));
+        data_FP.push('{{value.PumpFill}}');
+        data_SPM.push('{{value.SPM}}');
+    '{% endfor %}'
+
+    // Line chart
+    new Chart(ctx1, {
+      type: "line",
+      data: {
+        //labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        labels: dateTimeFP,
+        datasets: [{
+            label: "Fill Pump",
+            tension: 0,
+            pointRadius: 3,
+            pointBackgroundColor: "#e91e63",
+            pointBorderColor: "transparent",
+            borderColor: "#e91e63",
+            borderWidth: 2,
+            backgroundColor: "transparent",
+            fill: true,
+            data: data_FP,
+            //data: [50, 100, 200, 190, 400, 350, 500, 450, 700],
+            maxBarThickness: 6
+          },
+          {
+            label: "SPM",
+            tension: 0,
+            borderWidth: 0,
+            pointRadius: 3,
+            pointBackgroundColor: "#3A416F",
+            pointBorderColor: "transparent",
+            borderColor: "#3A416F",
+            borderWidth: 2,
+            backgroundColor: "transparent",
+            fill: true,
+            data: data_SPM,
+            maxBarThickness: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+          }
+        },
+        interaction: {
+          intersect: false,
+          mode: 'index',
+        },
+        scales: {
+          y: {
+            grid: {
+              drawBorder: false,
+              display: true,
+              drawOnChartArea: true,
+              drawTicks: false,
+              borderDash: [5, 5],
+              color: '#c1c4ce5c'
+            },
+            ticks: {
+              display: true,
+              padding: 10,
+              color: '#9ca2b7',
+              font: {
+                size: 10,
+                weight: 300,
+                family: "Roboto",
+                style: 'normal',
+                lineHeight: 2
+              },
+            }
+          },
+          x: {
+            //type: 'time',
+            
+            grid: {
+              drawBorder: false,
+              display: true,
+              drawOnChartArea: true,
+              drawTicks: true,
+              borderDash: [5, 5],
+              color: '#c1c4ce5c'
+            },
+            ticks: {
+              display: true,
+              color: '#9ca2b7',
+              padding: 10,
+              font: {
+                size: 10,
+                weight: 300,
+                family: "Roboto",
+                style: 'normal',
+                lineHeight: 2
+              },
+            }
+          }
+          
+        },
+      },
+    })
+
+
+</script>
+
+<script src="{% static 'assets/js/plugins/flatpickr.min.js' %}"></script>
+<script>
+    if (document.querySelector('.datetimepicker')) {
+        flatpickr('.datetimepicker', {
+            allowInput: true,
+            mode: "range"
+        }); // flatpickr
+    }
+</script>
+{% endblock JSscripts %}
