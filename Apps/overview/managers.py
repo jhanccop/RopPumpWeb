@@ -101,7 +101,8 @@ class RPDataManager(models.Manager):
                 "PumpFill",
                 "SPM",
                 "Recomendation",
-                "Diagnosis"
+                "Diagnosis",
+                "Status"
             ).order_by('-DateCreate')
             return result 
         else:
@@ -129,7 +130,8 @@ class RPDataManager(models.Manager):
                 "PumpFill",
                 "SPM",
                 "Recomendation",
-                "Diagnosis"
+                "Diagnosis",
+                "Status"
             ).order_by('-DateCreate')[:10]
         return result
 

@@ -254,7 +254,7 @@
 	    	//type: 'date'
 	    },
 	    yaxis: {
-	    	autorange: false,
+	    	autorange: true,
             showgrid: true,
             zeroline: true,
 	    	range: [-1, 7],
@@ -309,6 +309,8 @@
         load = load.split(',');
         pos = pos.split(',');
 
+        console.log("--->",'{{well.Status}}');
+        '{% if well.Status == "running" %}'
         var trace = {
             type: 'scatter',
             x: pos,
@@ -318,10 +320,12 @@
             name: dtFormat(ddt) + ": "+ '{{well.Diagnosis}}' + " - " +'{{well.PumpFill}}%',
             line: {
                 //color: '#465EAB',
-                width: 2
+                width: 2,
+                line: {shape: 'spline'},
             }
         };
         data.push(trace);
+        '{% endif %}'
         
     '{% endfor %}'
 
