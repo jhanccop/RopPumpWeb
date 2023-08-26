@@ -38,8 +38,15 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
 
     def get_queryset(self):
         # company = self.kwargs['company']
+        intervalDate = self.request.GET.get("dateKword", '')
         company = User.objects.get_company_id(
             self.request.user)[0]["CompanyName"]
+
+        if intervalDate == "this month" or intervalDate == "This Month" or intervalDate == "":
+            list_data = ProductionFluid.objects.search_today_all(company)
+        else:
+            list_data = ProductionFluid.objects.search_by_interval_all(
+                intervalDate, company)  # .order_by('-DateCreate')
         
         # -- get gropus in company --
         list_Batteries = Battery.objects.filter(Company=company)
@@ -63,7 +70,9 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
         allData = {
             #"rodpumpData": rodpumpData,
             #"wellsByDiagnosis":wellsByDiagnosis,
-            "batteryWells":batteryWells
+            "batteryWells":batteryWells,
+            "date": intervalDate,
+            "allProduction":list_data
         }
 
         return allData
@@ -123,12 +132,11 @@ class DataCreateView(LoginRequiredMixin, CompanyMixin, CreateView):
     model = ProductionFluid
     form_class = CreateDataForm
     
-
     def get_initial(self):
         wellName = self.kwargs['PumpName']
         pumpId = well.objects.search_id_pump(wellName)['id']
         payload = {
-            #"name": wellName,
+            "name": wellName,
             "PumpName": pumpId,
             "UserAuthor": self.request.user,
         }
@@ -143,24 +151,41 @@ class DataCreateView(LoginRequiredMixin, CompanyMixin, CreateView):
     def get_context_data(self, **kwargs):
         upload_url = reverse_lazy(
             "production_app:view", kwargs={"PumpName": self.kwargs['PumpName']})
+
         context = super().get_context_data(**kwargs)
         context['PumpName'] = self.kwargs['PumpName']
         context['UserAuthor'] = self.request.user
         context['upload_url'] = upload_url
         return context
 
+class NewCreateView(LoginRequiredMixin, CompanyMixin,CreateView):
+    template_name = "production/production_new.html"
+    login_url = reverse_lazy('user_app:user-login')
+    model = ProductionFluid
+    form_class = CreateDataForm
+
+    def get_initial(self):
+        company_id = User.objects.get_company_id(self.request.user)[0]["CompanyName"]
+        payload = {
+            "CompanyId": company_id,
+            "UserAuthor": self.request.user,
+        }
+        return payload
+
+    success_url = reverse_lazy('production_app:overview')
+
 class DataUpdateView(LoginRequiredMixin, CompanyMixin, UpdateView):
     template_name = "production/production_update.html"
     login_url = reverse_lazy('user_app:user-login')
 
     model = ProductionFluid
-
+    
     fields = [
         'PumpName',
         'OilProd',
         'WaterProd'
     ]
-    success_url = reverse_lazy('production_app:view')
+    success_url = reverse_lazy('production_app:overview')
     
 
 class DataRemoveView(LoginRequiredMixin, CompanyMixin, DeleteView):
@@ -168,7 +193,7 @@ class DataRemoveView(LoginRequiredMixin, CompanyMixin, DeleteView):
     login_url = reverse_lazy('user_app:user-login')
 
     model = ProductionFluid
-    success_url = reverse_lazy('production_app:view')
+    success_url = reverse_lazy('production_app:overview')
 
     
 

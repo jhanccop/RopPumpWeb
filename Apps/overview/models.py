@@ -35,7 +35,7 @@ class RodPumpData(models.Model):
         ('Shock of pump up', 'Shock of pump up'),
         ('Shock of pump down', 'Shock of pump down'),
         ('Recovering level', 'Recovering level'),
-        ("rods broken","rods broken")
+        ("Rods broken","Rods broken")
     )
     
     Diagnosis = MultiSelectField("Diagnosis", choices = DIAGNOSIS_CHOICES,max_choices=3,max_length=100,blank =True,null=True)

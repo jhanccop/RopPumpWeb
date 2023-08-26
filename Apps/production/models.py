@@ -14,6 +14,8 @@ class ProductionFluid(models.Model):
     UserAuthor = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL)
     OilProd = models.FloatField('Oil Production', null=True, blank =True)
     WaterProd = models.FloatField('Water Production', null=True, blank =True)
+    DateTest = models.DateField(auto_now_add=False, blank=True, null=True)
+    #TubingPressure = models.FloatField('Tubing Pressure', null=True, blank =True)
 
     objects = ProductionManager()
 

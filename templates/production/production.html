@@ -55,17 +55,126 @@
     </div>
 
     <!-- column for vew data -->
-    <div class="col-lg-10 col-md-10">
+    <div class="col-lg-6 col-md-6">
         <div class="card h-100">
-            
+            <div class="card-header pb-0">
+                <form method="GET">{% csrf_token %}
+                    <div class="row">
+                        <div class="col-xl-8 col-sm-8">
+                            <input class="bg-gradient-light form-control datetimepicker text-center"
+                                value="{{object_list.date}}" type="text" placeholder="This Month" id="dateKword"
+                                name="dateKword" />
+                        </div>
+                        <div class="col-xl-4 col-sm-4">
+                            <button class="btn bg-gradient-primary" type="submit"> Search </button>
+                        </div>
+                    </div>
+
+                </form>
+
+                <div class="d-lg-flex">
+                    <p class="text-sm"> Production records from all wells. </p>
+    
+                    <div class="ms-auto mt-lg-0">
+                        <button type="button" class="btn bg-gradient-secondary btn-sm mb-0 export1" data-bs-toggle="modal" data-type="csv" data-bs-target="#import">
+                            <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                            <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                        </button>
+                    
+                        <a href="/production/new/" class="btn bg-gradient-warning btn-sm mb-0">
+                            <i class="fas fa-plus text-sm"></i> &nbsp; New Register</a>
+    
+                    </div>
+                </div>
+                
+
+            </div>
+
+            <div class="card-body px-0 pb-2">
+                <div class="row mb-4 container">
+                    <!-- historical table -->
+                    <div class="col-lg-12 col-md-12 ">
+
+                        <div class="table-responsive">
+                            <table class="table align-items-center mb-0" id="datatable-basic2">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            Pump Name</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            Date Time</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            Oil </th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            Water </th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            User</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            Manage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in object_list.allProduction %}
+                                    <tr>
+                                        <td class="text-xs font-weight-normal text-center">{{data.PumpName}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{data.DateCreate|date:'Y-m-d'}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{data.OilProd}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{data.WaterProd}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{data.UserAuthor}}</td>
+                                        <td class="text-xs font-weight-normal text-center">
+                                            <div class="d-flex align-items-center text-sm">
+                                                <a class="btn btn-link text-danger text-sx mb-0 px-0 ms-4" href ="{% url 'production_app:remove' data.id %}">
+                                                    <i class="fas fa-trash text-sx position-relative me-1 text-danger"></i>
+                                                    Remove
+                                                </a>
+                                                <a class="btn btn-link text-success text-sx mb-0 px-0 ms-4" href ="{% url 'production_app:update' data.id %}">
+                                                    <i class="fas fa-edit text-sx position-relative me-1 text-success"></i>
+                                                    Edit
+                                                </a>
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                    {% endfor %}
+
+                                </tbody>
+                            </table>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+    
 
 </div>
 
 {% endblock content %}
 
 {% block JSscripts %}
+
+<!--Table-->
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+<script>
+    const dataTableBasic2 = new simpleDatatables.DataTable("#datatable-basic2", {
+        searchable: false,
+        fixedHeight: false,
+        perPage: 10
+    });
+</script>
+
+<!--Calendar-->
+<script src="{% static 'assets/js/plugins/flatpickr.min.js' %}"></script>
+<script>
+    if (document.querySelector('.datetimepicker')) {
+        flatpickr('.datetimepicker', {
+            allowInput: true,
+            mode: "range"
+        }); // flatpickr
+    }
+</script>
 
 
 {% endblock JSscripts %}

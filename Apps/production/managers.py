@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 
-from unittest import result
+#from unittest import result
 from django.db import models
 
 class ProductionManager(models.Manager):
@@ -31,4 +31,33 @@ class ProductionManager(models.Manager):
                 #DateCreate__day=Today.day,
                 PumpName__PumpName=wellName
             ).values("id","DateCreate","UserAuthor","OilProd","WaterProd").order_by('-DateCreate')
+        return result
+    
+    def search_by_interval_all(self, interval, company):
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+        print(intervals)
+        if len(intervals)==1:
+            result = self.filter(
+                DateCreate__year=intervals[0].year,
+                DateCreate__month=intervals[0].month,
+                DateCreate__day=intervals[0].day,
+                PumpName__UserAuthor__CompanyName=company
+            ).values("id","PumpName__PumpName","DateCreate","UserAuthor","OilProd","WaterProd").order_by('-DateCreate')
+            return result 
+        else:
+            result = self.filter(
+                DateCreate__range=(intervals[0],intervals[1]+timedelta(days=1)),
+                PumpName__UserAuthor__CompanyName=company
+            ).values("id","PumpName","DateCreate","UserAuthor","OilProd","WaterProd").order_by('-DateCreate')
+            return result
+
+    def search_today_all(self,company):
+        Today = date.today()
+        result = self.filter(
+                DateCreate__year=Today.year,
+                DateCreate__month=Today.month,
+                #DateCreate__day=Today.day,
+                PumpName__UserAuthor__CompanyName=company
+            ).values("id","PumpName","DateCreate","UserAuthor","OilProd","WaterProd").order_by('-DateCreate')
         return result

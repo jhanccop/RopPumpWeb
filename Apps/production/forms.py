@@ -1,25 +1,26 @@
 from django import forms
 from .models import ProductionFluid
+from Apps.wells.models import well
 
 class CreateDataForm(forms.ModelForm):
     #import_file = forms.FileField(required=False)
-    DateCreate = forms.DateField(
-        widget=forms.DateInput(attrs={
-            "class": "form-control datetimepicker text-center",
-            "type": "text"
-        }),
-        required=True
-    )
+
+    PumpName = forms.ModelChoiceField(
+        queryset = well.objects.filter(FieldName__Company=1), # put compnay id manually
+        initial = None,
+        required=True,
+        to_field_name="PumpName"
+        )
     
-    OilProd = forms.IntegerField(
+    OilProd = forms.DecimalField(
         widget=forms.NumberInput(attrs={
             "class": "form-control",
             "type": "number",
         }),
-        required=False
+        required=True
     )
 
-    WaterProd = forms.IntegerField(
+    WaterProd = forms.DecimalField(
         widget=forms.NumberInput(attrs={
             "class": "form-control",
             "type": "number"
@@ -31,26 +32,26 @@ class CreateDataForm(forms.ModelForm):
         model = ProductionFluid
         fields = (
             "PumpName",
-            "UserAuthor",
+            "DateTest",
             "OilProd",
             "WaterProd"
         )
-
         widgets = {
+
             'PumpName': forms.HiddenInput(
-                attrs = {
-                    "class":"multisteps-form__select form-control text-center",
-                    "required":"true",
-                    "type": "hidden",
+                attrs={
+                    "class":"form-control",
+                    "id":"PumpNameSelect",
+                    "required": "true",
                 }
             ),
-
-            'UserAuthor': forms.HiddenInput(
-                attrs = {
-                    "class":"multisteps-form__select form-control text-center",
-                    "required":"true",
-                    "type": "hidden",
+            'DateTest' : forms.DateInput(
+                attrs={
+                    "class": "form-control datetimepicker text-center",
+                    "type": "date",
+                    "required":True
                 }
-            )
+            ),
         }
 
+        

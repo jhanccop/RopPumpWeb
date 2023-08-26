@@ -19,3 +19,4 @@ class WellManager(models.Manager):
             PumpName=wellName
         ).first()
         return result
+
