@@ -115,7 +115,7 @@ DATETIME_FORMAT = '%d-%m-%Y %H:%M:%S'
 LANGUAGE_CODE = 'en-us'
 
 #TIME_ZONE = 'UTC'
-TIME_ZONE = 'America/Monterrey'
+TIME_ZONE = 'America/Lima'
 
 USE_I18N = True
 
