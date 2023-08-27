@@ -1,8 +1,8 @@
-{% extends 'production/base-production.html' %}
+{% extends 'wells/base-wells.html' %}
 
 {% load static %}
 
-{% block title %} Production {% endblock title %}
+{% block title %} Well Managament {% endblock title %}
 
 {% block company %} {{ CompanyName }} {% endblock company %}
 {% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
@@ -23,7 +23,7 @@
                 <form method="POST">{% csrf_token %}
                     <div class="row">
                         <div class="col-md-6">
-                            Do you want to delete this record?
+                            Are you sure to delete this record?
                         </div>
                         
                     </div>

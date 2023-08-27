@@ -111,10 +111,10 @@
                                 <tbody>
                                     {% for well in object_list.data %}
                                     <tr>
-                                        <td class="text-xs font-weight-normal text-center">{{well.DateCreate|date:'Y-m-d'}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.DateTest|date:'Y-m-d'}}</td>
                                         <td class="text-xs font-weight-normal text-center">{{well.OilProd}}</td>
                                         <td class="text-xs font-weight-normal text-center">{{well.WaterProd}}</td>
-                                        <td class="text-xs font-weight-normal text-center">{{well.UserAuthor}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.UserAuthor__UserName}}</td>
                                         <td class="text-xs font-weight-normal text-center">
                                             <div class="d-flex align-items-center text-sm">
                                                 <a class="btn btn-link text-danger text-sx mb-0 px-0 ms-4" href ="{% url 'production_app:remove' well.id %}">
@@ -183,6 +183,7 @@
 </script>
 
 <script src="{% static 'assets/js/plugins/chartjs.min.js' %}"></script>
+
 <script>
 
     function dtFormat(dateTime) {
@@ -190,133 +191,62 @@
         var yyyy = dateTime.getFullYear();
         var mm = dateTime.getMonth() + 1;
 
-        mm = (mm < 10 ? '0' : '') + mm;
-        dd = (dd < 10 ? '0' : '') + dd;
-
-        // Now setting up Time Format (hh:mm:ss)
-        var hr = dateTime.getHours();
-        var min = dateTime.getMinutes();
-        var sec = dateTime.getSeconds();
-
-        hr = (hr < 10 ? '0' : '') + hr;
-        min = (min < 10 ? '0' : '') + min;
-        sec = (sec < 10 ? '0' : '') + sec;
-        var dt = yyyy + "/" + mm + "/" + dd + " " + hr + ":" + min;// + ":" + sec;
+        var dt = yyyy + "/" + mm + "/" + dd;
         return dt;
     }
+
     // ============= RUN TIME PLOT =============
-    var ctx0 = document.getElementById("ProductionPlot").getContext("2d");
+    const ctx = document.getElementById('ProductionPlot');
 
     var dateTime = [];
     var data_oil = [];
     var data_water = [];
 
     '{% for value in object_list.data %}'
-        var ddt = new Date("{{value.DateCreate|date:'Y/m/d'}}");
-        dateTime.push(dtFormat(ddt));
-        data_oil.push('{{value.OilProd}}');
-        data_water.push('{{value.WaterProd}}');
+    var ddt = new Date("{{value.DateTest|date:'Y/m/d'}}");
+    //dateTime.push(ddt);
+    //dateTime.push(dtFormat(ddt));
+    data_oil.push({ x: dtFormat(ddt), y: '{{value.OilProd}}' });
+    data_water.push({ x: dtFormat(ddt), y: '{{value.WaterProd}}' });
     '{% endfor %}'
 
-    new Chart(ctx0, {
-      type: "line",
-      data: {
-        //labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-        labels: dateTime,
-        datasets: [{
-            label: "Oil",
-            tension: 0,
-            pointRadius: 3,
-            pointBackgroundColor: "#e91e63",
-            pointBorderColor: "transparent",
-            borderColor: "#e91e63",
-            borderWidth: 2,
-            backgroundColor: "transparent",
-            fill: true,
-            data: data_oil,
-            //data: [50, 100, 200, 190, 400, 350, 500, 450, 700],
-            maxBarThickness: 6
-          },
-          {
-            label: "Wather",
-            tension: 0,
-            borderWidth: 0,
-            pointRadius: 3,
-            pointBackgroundColor: "#3A416F",
-            pointBorderColor: "transparent",
-            borderColor: "#3A416F",
-            borderWidth: 2,
-            backgroundColor: "transparent",
-            fill: true,
-            data: data_water,
-            maxBarThickness: 6
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-          }
-        },
-        interaction: {
-          intersect: false,
-          mode: 'index',
-        },
-        scales: {
-          y: {
-            grid: {
-              drawBorder: false,
-              display: true,
-              drawOnChartArea: true,
-              drawTicks: false,
-              borderDash: [5, 5],
-              color: '#c1c4ce5c'
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            //labels: dateTime,
+            datasets: [{
+                label: 'Oil',
+                data: data_oil.reverse(),
+                borderWidth: 2,
+                borderColor: 'rgb(83, 78, 80)',
+                backgroundColor: 'rgba(83, 78, 80, 0.42)',
+                borderRadius: 5,
+                borderSkipped: false,
             },
-            ticks: {
-              display: true,
-              padding: 10,
-              color: '#9ca2b7',
-              font: {
-                size: 10,
-                weight: 300,
-                family: "Roboto",
-                style: 'normal',
-                lineHeight: 2
-              },
-            }
-          },
-          x: {
-            //type: 'time',
-            
-            grid: {
-              drawBorder: false,
-              display: true,
-              drawOnChartArea: true,
-              drawTicks: true,
-              borderDash: [5, 5],
-              color: '#c1c4ce5c'
-            },
-            ticks: {
-              display: true,
-              color: '#9ca2b7',
-              padding: 10,
-              font: {
-                size: 10,
-                weight: 300,
-                family: "Roboto",
-                style: 'normal',
-                lineHeight: 2
-              },
-            }
-          }
-          
+            {
+                label: 'water',
+                data: data_water.reverse(),
+                borderWidth: 2,
+                borderColor: 'rgb(4, 144, 209)',
+                backgroundColor: 'rgba(4, 144, 209, 0.49)',
+                borderRadius: 5,
+                borderSkipped: false,
+
+            }]
         },
-      },
-    })
+        options: {
+            responsive: true,
+            scales: {
+                xAxes: [
+                    {
+                        type: "time"
+                    }
+                ],
+            }
+        }
+    });
 </script>
+
 
 <!--Calendar-->
 <script src="{% static 'assets/js/plugins/flatpickr.min.js' %}"></script>

@@ -19,4 +19,24 @@ class WellManager(models.Manager):
             PumpName=wellName
         ).first()
         return result
+    
+    def search_all_pump(self, company):
+        result = self.filter(
+            UserAuthor__CompanyName = company
+        ).values("id",
+                 "PumpName",
+                 "FieldName__FieldName",
+                 "BatteryName__BatteryName",
+                 "GroupName__GroupName",
+                 "StrokeLength",
+                 "MotorType",
+                 "PolishedRodDiameter",
+                 "PumpIntake",
+                 "PlungerDiameter",
+                 "TrueVerticalDepth",
+                 "TotalRodLength",
+                 "TotalRodWeight"
+                 )
+        return result
+
 

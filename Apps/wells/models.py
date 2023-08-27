@@ -22,6 +22,23 @@ class well(models.Model):
     InstallationDate = models.DateField(auto_now_add = False)
     InstallationComment = models.TextField('Installation Comment', max_length=500)
     DesignStatus = models.IntegerField('Design Status', null=True, blank=True)
+
+    # SURFACE DATA
+    StrokeLength = models.FloatField('Stroke Length', null=True, blank =True)
+    TYPE_MOTOR_CHOICES = (
+        ("Electric", "Electric"),
+        ("Gas", "Gas"),
+    )
+    MotorType = models.CharField('Motor Type', max_length=50, choices=TYPE_MOTOR_CHOICES, default="Gas")
+    PolishedRodDiameter = models.FloatField('Polished Rod Diameter', null=True, blank =True)
+    
+    # DOWN DATA
+    PumpIntake = models.FloatField('Pump Intake', null=True, blank =True)
+    PlungerDiameter = models.FloatField('Plunger Diameter', null=True, blank =True)
+    TrueVerticalDepth = models.FloatField('True Vertical Depth', null=True, blank =True)
+    TotalRodLength = models.FloatField('Total Rod Length', null=True, blank =True)
+    TotalRodWeight = models.FloatField('Total Rod Weight', null=True, blank =True)
+    
     # type well
     TYPE_CHOICES = (
         ("Sucker Rod Pump", "Sucker Rod Pump"),

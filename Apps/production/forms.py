@@ -14,7 +14,7 @@ class CreateDataForm(forms.ModelForm):
     
     OilProd = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control",
+            "class": "form-control text-center",
             "type": "number",
         }),
         required=True
@@ -22,7 +22,7 @@ class CreateDataForm(forms.ModelForm):
 
     WaterProd = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control",
+            "class": "form-control text-center",
             "type": "number"
         }),
         required=True
@@ -34,7 +34,8 @@ class CreateDataForm(forms.ModelForm):
             "PumpName",
             "DateTest",
             "OilProd",
-            "WaterProd"
+            "WaterProd",
+            "UserAuthor"
         )
         widgets = {
 

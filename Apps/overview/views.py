@@ -10,11 +10,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.views.generic import (
     TemplateView,
-    ListView,
-    CreateView
+    ListView
 )
 
 from Apps.wells.models import well
+from Apps.production.models import ProductionFluid
 from Apps.groups.models import Group
 from Apps.settings.models import setting
 from .models import RodPumpData
@@ -24,8 +24,6 @@ from Apps.company.models import Company
 
 #from utils import IPR
 import numpy as np
-
-from collections import Counter
 
 #from .forms import CreateWellTestForm, CreateSampleTestForm, CreateBuildUpTestForm, SetExposureIndexESPForm, SetImprovementIndexESPForm
 #from applications.well.forms import CreateCompletionForm
@@ -199,11 +197,14 @@ class ListDataRodPump(LoginRequiredMixin, CompanyMixin, ListView):
 
                 tempData.append(tempPayload)
             groupsWells[group_i] = tempData
+        
+        productionData = ProductionFluid.objects.search_today(wellName)
 
         payload = {
             "name": wellName,
             "date": intervalDate,
             "data": list_data,
+            "productionData": productionData,
             "trends_fill_spm":trends_fill_spm,
             "trends_runtime":trends_runtime,#trends_runtime_prod
             "groupsWells":groupsWells

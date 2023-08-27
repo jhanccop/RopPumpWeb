@@ -1,9 +1,74 @@
-<h1>
-    Modif
-</h1>
+{% extends 'production/base-production.html' %}
 
-<form method="POST">{% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit"> Actu</button>
+{% load static %}
 
-</form>
+{% block title %} Production {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block app %} Production {% endblock app %}
+{% block PumpType %}  {% endblock PumpType %}
+{% block PumpName %}  {% endblock PumpName %}
+
+{% block content %}
+
+<div class="row  mb-4">
+    <div class="col-lg-8 col-md-8">
+        <div class="card h-100">
+            
+            <div class="card-header p-3 pb-0">
+                <h6>Input Production data: <span>{{ object }}</span></h6> 
+            </div>
+            <div class="card-body p-3">
+                <form method="POST">{% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4">
+                                <label for="PumpNameSelect" class="ms-0">Pump Name: &nbsp;&nbsp; </label>
+                                {{form.PumpName}}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4">
+                                <label class="form-label">Date</label>
+                                {{form.DateTest}}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4">
+                                <label class="form-label">Oil Production</label>
+                                {{form.OilProd}}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4">
+                                <label class="form-label">Water Production</label>
+                                {{form.WaterProd}}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div hidden>
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4">
+                                {{form.UserAuthor}}
+                                <input type="text" value = {{user}}>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-success" type="submit">save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock content %}
+

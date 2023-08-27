@@ -1,0 +1,134 @@
+{% extends 'wells/base-wells.html' %}
+
+{% load static %}
+
+{% block title %} SRP {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+
+{% block app %} Well Manage {% endblock app %}
+
+{% block content %}
+
+<div class="row">
+    <!-- column for view data -->
+    <div class="col-lg-12 col-md-12">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                
+
+                <div class="d-lg-flex">
+                    <h6 class="text-sm"> List wells. </h6>
+    
+                    <div class="ms-auto mt-lg-0">
+                        <button type="button" class="btn bg-gradient-secondary btn-sm mb-0 export1" data-bs-toggle="modal" data-type="csv" data-bs-target="#export">
+                            <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                            <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                        </button>
+                    
+                        <a href="/production/new/" class="btn bg-gradient-warning btn-sm mb-0">
+                            <i class="fas fa-plus text-sm"></i> &nbsp; New Register</a>
+    
+                    </div>
+                </div>
+                
+
+            </div>
+
+            <div class="card-body px-0 pb-2">
+                <div class="row">
+
+                    <!-- historical table -->
+                    <div class="col-lg-12 col-md-12 ">
+
+                        <div class="table-responsive">
+                            <table class="table align-items-center mb-0" id="datatable-basic1">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            Pump Name</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            Location</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            GroupName </th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            S. Length </th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            M. Type</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            P. R. Diameter</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            P. Intake</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            P. Diameter</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            TVD</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            T. Rod Length</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            T. Rod Weight</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                            Manage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for well in object_list.well_list %}
+                                    <tr>
+                                        <td class="text-xs font-weight-normal text-center">{{well.PumpName}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.FieldName__FieldName}}/{{well.BatteryName__BatteryName}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.GroupName__GroupName}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.StrokeLength}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.MotorType}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.PolishedRodDiameter}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.PumpIntake}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.PlungerDiameter}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.TrueVerticalDepth}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.TotalRodLength}}</td>
+                                        <td class="text-xs font-weight-normal text-center">{{well.TotalRodWeight}}</td>
+
+                                        <td class="text-xs font-weight-normal text-center">
+                                            <div class="d-flex align-items-center text-sm">
+                                                <!--
+                                                <a class="btn btn-link text-danger text-sx mb-0 px-0 ms-4" href ="{% url 'wells_app:remove' well.id %}">
+                                                    <i class="fas fa-trash text-sx position-relative me-1 text-danger"></i>
+                                                    Remove
+                                                </a>
+                                                -->
+                                                <a class="btn btn-link text-success text-sx mb-0 px-0 ms-4" href ="{% url 'wells_app:update' well.id %}">
+                                                    <i class="fas fa-edit text-sx position-relative me-1 text-success"></i>
+                                                    Edit
+                                                </a>
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                    {% endfor %}
+
+                                </tbody>
+                            </table>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+<!--Table-->
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+<script>
+    const dataTableBasic2 = new simpleDatatables.DataTable("#datatable-basic1", {
+        searchable: false,
+        fixedHeight: true,
+        perPage: 10
+    });
+</script>
+
+{% endblock JSscripts %}

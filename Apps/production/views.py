@@ -41,18 +41,11 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
         intervalDate = self.request.GET.get("dateKword", '')
         company = User.objects.get_company_id(
             self.request.user)[0]["CompanyName"]
-
-        if intervalDate == "this month" or intervalDate == "This Month" or intervalDate == "":
-            list_data = ProductionFluid.objects.search_today_all(company)
-        else:
-            list_data = ProductionFluid.objects.search_by_interval_all(
-                intervalDate, company)  # .order_by('-DateCreate')
         
         # -- get gropus in company --
         list_Batteries = Battery.objects.filter(Company=company)
 
         batteryWells = {}
-
         # -- get wells in company by groups--
         for battery in list_Batteries:
             list_wells = well.objects.filter(FieldName__Company=company, BatteryName=battery)
@@ -66,13 +59,28 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
                 tempData.append(tempPayload)
             batteryWells[battery] = tempData
         
+        # -- get production generals tables --
+        if intervalDate == "this month" or intervalDate == "This Month" or intervalDate == "":
+            list_data = ProductionFluid.objects.search_today_all(company)
+        else:
+            list_data = ProductionFluid.objects.search_by_interval_all(
+                intervalDate, company)  # .order_by('-DateCreate')
+            
+        # -- get production generals graphs --
+        if intervalDate == "this month" or intervalDate == "This Month" or intervalDate == "":
+            plotProduction = ProductionFluid.objects.search_today_all_plot(company)
+        else:
+            plotProduction = ProductionFluid.objects.search_by_interval_all_plot(
+                intervalDate, company)  # .order_by('-DateCreate')
+
 
         allData = {
             #"rodpumpData": rodpumpData,
             #"wellsByDiagnosis":wellsByDiagnosis,
             "batteryWells":batteryWells,
             "date": intervalDate,
-            "allProduction":list_data
+            "allProduction":list_data,
+            "plotProduction":plotProduction
         }
 
         return allData
@@ -179,12 +187,9 @@ class DataUpdateView(LoginRequiredMixin, CompanyMixin, UpdateView):
     login_url = reverse_lazy('user_app:user-login')
 
     model = ProductionFluid
+    form_class = CreateDataForm
     
-    fields = [
-        'PumpName',
-        'OilProd',
-        'WaterProd'
-    ]
+    
     success_url = reverse_lazy('production_app:overview')
     
 
