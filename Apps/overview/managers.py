@@ -132,7 +132,7 @@ class RPDataManager(models.Manager):
                 "Recomendation",
                 "Diagnosis",
                 "Status"
-            ).order_by('-DateCreate')[:10]
+            ).order_by('-DateCreate')[:50]
         return result
 
     def search_trends_fill_SPM_RPdata(self,wellName):
