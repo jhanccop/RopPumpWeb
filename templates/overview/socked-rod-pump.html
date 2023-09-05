@@ -14,7 +14,7 @@
     <div class="col-lg-2 col-md-2">
         <div class="card h-100">
             <div class="card-header pb-0">
-                <h6 class = "text-info">Explore wells</h6>
+                <h6 class = "text-info">Explore wells:</h6>
                 <hr class="horizontal dark mt-0 mb-2">
             </div>
             <div class="card-body p-3">
@@ -80,7 +80,7 @@
                     <!-- Dynachart -->
                     <div class="col-lg-12 col-md-12">
                         <div class="chart">
-                            <div ui-jp="plot"  id = "dynachart" style="height: 300px;"></div>
+                            <div ui-jp="plot"  id = "dynachart" style="height: 600px;"></div>
                         </div>
 
                     </div>
@@ -205,7 +205,7 @@
     const dataTableBasic2 = new simpleDatatables.DataTable("#datatable-basic2", {
         searchable: false,
         fixedHeight: false,
-        perPage: 10
+        perPage: 5
     });
 </script>
 
@@ -259,8 +259,8 @@
 		},
 
         legend: {
-            x: -1,
-            y: 1
+            x: 0,
+            y: -4
         }
 		
 	}
@@ -300,8 +300,8 @@
         var DownPosition = "{{well.DownPosition}}";
         //DownPosition = DownPosition.split(',');
 
-        load = SurfaceLoad + "," + DownLoad;
-        pos = SurfacePosition + "," + DownPosition;
+        load = SurfaceLoad + ",null," + DownLoad;
+        pos = SurfacePosition + ",null," + DownPosition;
 
         load = load.split(',');
         pos = pos.split(',');
@@ -316,9 +316,10 @@
             visible: true,
             //mode: 'markers',
             name: dtFormat(ddt) + ": "+ '{{well.Diagnosis}}' + " - " +'{{well.PumpFill}}%',
+
             line: {
                 width: 2,
-                line: {shape: 'spline'},
+                shape: 'spline'
             }
         };
         data.push(trace);
@@ -439,7 +440,7 @@
     new Chart(ctx0, {
       type: "line",
       data: {
-        labels: dateTimeRT,
+        labels: dateTimeRT.reverse(),
         datasets: [{
             label: "Run Time",
             tension: 0,
@@ -450,7 +451,7 @@
             borderWidth: 2,
             backgroundColor: "transparent",
             fill: true,
-            data: data_runtime,
+            data: data_runtime.reverse(),
             //data: [50, 100, 200, 190, 400, 350, 500, 450, 700],
             maxBarThickness: 6
           },
@@ -464,7 +465,7 @@
             borderWidth: 2,
             backgroundColor: "transparent",
             fill: true,
-            data: data_oilProd,
+            data: data_oilProd.reverse(),
             //data: [50, 100, 200, 190, 400, 350, 500, 450, 700],
             maxBarThickness: 6
           },
@@ -478,7 +479,7 @@
             borderWidth: 2,
             backgroundColor: "transparent",
             fill: true,
-            data: data_waterProd,
+            data: data_waterProd.reverse(),
             //data: [50, 100, 200, 190, 400, 350, 500, 450, 700],
             maxBarThickness: 6
           }
@@ -503,7 +504,7 @@
     new Chart(ctx1, {
       type: "line",
       data: {
-        labels: data_runtime,
+        labels: data_runtime.reverse(),
         datasets: [
           {
             label: "Oil production",
@@ -515,7 +516,7 @@
             borderWidth: 2,
             backgroundColor: "transparent",
             fill: true,
-            data: data_oilProd,
+            data: data_oilProd.reverse(),
             //data: [50, 100, 200, 190, 400, 350, 500, 450, 700],
             maxBarThickness: 6
           },
@@ -529,7 +530,7 @@
             borderWidth: 2,
             backgroundColor: "transparent",
             fill: true,
-            data: data_waterProd,
+            data: data_waterProd.reverse(),
             //data: [50, 100, 200, 190, 400, 350, 500, 450, 700],
             maxBarThickness: 6
           }

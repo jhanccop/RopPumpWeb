@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from django.db.models.functions import TruncDate, TruncDay
-from django.db.models import Sum
+from django.db.models import Sum, Max
 from django.utils.timezone import now
 
 from unittest import result
@@ -132,7 +132,7 @@ class RPDataManager(models.Manager):
                 "Recomendation",
                 "Diagnosis",
                 "Status"
-            ).order_by('-DateCreate')[:50]
+            ).order_by('-DateCreate')[:16]
         return result
 
     def search_trends_fill_SPM_RPdata(self,wellName):
@@ -150,6 +150,30 @@ class RPDataManager(models.Manager):
         return result
     
     def search_trends_runTime_RPdata(self,wellName):
+        Today = date.today()
+        now_ = now()
+        result = self.filter(
+                #DateCreate__year=Today.year,
+                PumpName__PumpName=wellName,
+                DateCreate__month=Today.month,
+                DateCreate__date__range=((now_-timedelta(weeks=52)), now_)
+                #DateCreate__day=Today.day, 
+            ).annotate(
+                date=TruncDay('DateCreate__date')
+            ).values(
+                "date"
+            ).annotate(
+                Bydays = Max("RunTime"),
+            ).values(
+                "date",
+                "Bydays"
+            ).order_by(
+                '-date'
+            )
+        return result
+
+
+    def search_trends_runTime_RPdata_or(self,wellName):
         Today = date.today()
         now_ = now()
         result = self.filter(
