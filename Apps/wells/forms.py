@@ -1,19 +1,50 @@
 from django import forms
 from Apps.wells.models import well
+from Apps.field.models import Field
+from Apps.batteries.models import Battery
+from Apps.groups.models import Group
 
 class CreateDataForm(forms.ModelForm):
     #import_file = forms.FileField(required=False)
 
-    PumpName = forms.ModelChoiceField(
-        queryset = well.objects.filter(FieldName__Company=1), # put compnay id manually
-        initial = None,
+    FieldName = forms.ModelChoiceField(
+        queryset = Field.objects.filter(Company=1), # put compnay id manually
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            }),
         required=True,
-        to_field_name="PumpName"
+        to_field_name="FieldName",
+        help_text="Field Name",
+        initial=True
+        )
+
+    BatteryName = forms.ModelChoiceField(
+        queryset = Battery.objects.filter(Company=1), # put compnay id manually
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'type':"text",
+            }),
+        required=True,
+        to_field_name="BatteryName",
+        help_text="Battery Name",
+        initial=True
+        )
+
+    GroupName = forms.ModelChoiceField(
+        queryset = Group.objects.filter(Company=1), # put compnay id manually
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'type':"text",
+            }),
+        required=True,
+        to_field_name="GroupName",
+        help_text="Group Name",
+        initial=True
         )
     
     StrokeLength = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control text-center",
+            "class": "form-control me-2 text-end",
             "type": "number",
         }),
         required=True
@@ -21,15 +52,30 @@ class CreateDataForm(forms.ModelForm):
 
     PolishedRodDiameter = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control text-center",
+            "class": "form-control text-end",
             "type": "number",
         }),
         required=True
     )
 
+    TYPE_MOTOR_CHOICES = (
+        ("Electric", "Electric"),
+        ("Gas", "Gas"),
+    )
+
+    MotorType = forms.ChoiceField(
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'type':"text",
+            }),
+        
+        choices=TYPE_MOTOR_CHOICES,
+        required=True
+    )
+
     PumpIntake = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control text-center",
+            "class": "form-control text-end",
             "type": "number"
         }),
         required=True
@@ -37,7 +83,7 @@ class CreateDataForm(forms.ModelForm):
 
     PlungerDiameter = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control text-center",
+            "class": "form-control text-end",
             "type": "number"
         }),
         required=True
@@ -45,7 +91,7 @@ class CreateDataForm(forms.ModelForm):
 
     TrueVerticalDepth = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control text-center",
+            "class": "form-control text-end",
             "type": "number"
         }),
         required=True
@@ -53,7 +99,7 @@ class CreateDataForm(forms.ModelForm):
 
     TotalRodLength = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control text-center",
+            "class": "form-control text-end",
             "type": "number"
         }),
         required=True
@@ -61,7 +107,7 @@ class CreateDataForm(forms.ModelForm):
 
     TotalRodWeight = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control text-center",
+            "class": "form-control text-end",
             "type": "number"
         }),
         required=True
@@ -70,7 +116,6 @@ class CreateDataForm(forms.ModelForm):
     class Meta:
         model = well
         fields = (
-            "PumpName",
             "FieldName",
             "BatteryName",
             "GroupName",
@@ -87,18 +132,12 @@ class CreateDataForm(forms.ModelForm):
 
             'PumpName': forms.HiddenInput(
                 attrs={
-                    "class":"form-control",
+                    "class":"choises",
                     "id":"PumpNameSelect",
                     "required": "true",
                 }
             ),
-            'DateTest' : forms.DateInput(
-                attrs={
-                    "class": "form-control datetimepicker text-center",
-                    "type": "date",
-                    "required":True
-                }
-            ),
+            
         }
 
         

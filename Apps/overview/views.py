@@ -22,9 +22,6 @@ from .models import RodPumpData
 from Apps.users.models import User
 from Apps.company.models import Company
 
-#from utils import IPR
-import numpy as np
-
 #from .forms import CreateWellTestForm, CreateSampleTestForm, CreateBuildUpTestForm, SetExposureIndexESPForm, SetImprovementIndexESPForm
 #from applications.well.forms import CreateCompletionForm
 
@@ -65,9 +62,9 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
                     'Field': well_i.FieldName,
                     'Battery': well_i.BatteryName,
                 }
-                settingWells = setting.objects.filter(PumpName=well_i).values("Available").last()
+                settingWells = setting.objects.filter(PumpName=well_i).values("Status").last()
                 if settingWells != None:
-                    tempPayload['Available'] = settingWells["Available"]
+                    tempPayload['Status'] = settingWells["Status"]
                 pass
 
                 dataWell = RodPumpData.objects.filter(PumpName=well_i).last()

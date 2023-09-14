@@ -9,9 +9,9 @@
 
 {% block content %}
 
-<div class="row  mb-4">
+<div class="row">
     <!-- column for list wells -->
-    <div class="col-lg-2 col-md-2">
+    <div class="col-lg-2 col-md-2 mb-4">
         <div class="card h-100">
             <div class="card-header pb-0">
                 <h6 class = "text-info">Explore wells:</h6>
@@ -35,10 +35,13 @@
                                     <i class="ni ni-bold-right text-success"></i>
                                 </span>
                                 <div class="timeline-content">
+                                    <h6 class="text-dark text-sm mb-0">{{well.PumpName}}</h6>
+                                    <!--
                                     <h6 class="text-dark text-sm mb-0">{{well.PumpName}} / {{well.Battery}} </h6>
                                     <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{well.Diagnosis}}</p>
                                     <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Last
                                         update: {{well.LastUpdate|date:'Y-m-d H:i'}}</p>
+                                    -->
                                 </div>
                             </div>
                         </a>
@@ -53,42 +56,104 @@
         </div>
     </div>
 
-    <!-- column for dynacharts -->
-    <div class="col-lg-6 col-md-6">
+    <!-- column plots and traces -->
+    <div class="col-lg-10 col-md-10 mb-4">
         <div class="card h-100">
-            <div class="card-header pb-0">
-                <form method="GET">{% csrf_token %}
-                    <div class="row">
-                        <div class="col-xl-8 col-sm-8">
-                            <input class="bg-gradient-light form-control datetimepicker text-center" value="{{object_list.date}}" type="text" placeholder="today" id="dateKword" name="dateKword" />
-                        </div>
-                        <div class="col-xl-4 col-sm-4">
-                            <button class="btn bg-gradient-primary" type="submit"> Search </button>
-                        </div>
-                    </div>
-                    
-                </form>
-                
-                <p class="text-sm"> <span class="text-md font-weight-bold"> {{object_list.name}} </span> &nbsp;&nbsp;  Last Update:&nbsp;&nbsp;<span class=" font-weight-bold" id = "LastUpdate"></span>
-                </p>
+            <div class="card-header">
+                <div class="nav-wrapper position-relative end-0">
+                    <ul class="nav nav-pills nav-fill p-1" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link mb-0 px-0 py-1 active " data-bs-toggle="tab" href="#Dynacharts" role="tab"
+                                aria-selected="true">
+                                <i class="fas fa-clock"></i>
+                                <span class="ms-1">Dynacharts</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link mb-0 px-0 py-1 " data-bs-toggle="tab" href="#trends" role="tab"
+                                aria-selected="false">
+                                <i class="fas fa-chart-line"></i>
+                                <span class="ms-1">Trends</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link mb-0 px-0 py-1 " data-bs-toggle="tab" href="#gearbox" role="tab"
+                                aria-selected="false">
+                                <i class="fas fa-chart-line"></i>
+                                <span class="ms-1">Gearbox Net Torque</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link mb-0 px-0 py-1 " data-bs-toggle="tab" href="#valvetest" role="tab"
+                                aria-selected="false">
+                                <i class="fas fa-chart-line"></i>
+                                <span class="ms-1">Valve test</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
                 
             </div>
+            <hr class="horizontal dark mt-0 mb-4">
+            <div class="card-body pt-0 p-3">
+
+                <!-- DYNACHART CARD -->
+                <div id="Dynacharts" class="collapse show">
+                    <form method="GET">{% csrf_token %}
+                        <div class="row mb-4">
+                            <div class="col-xl-4 col-sm-4">
+                                <p class="text-sm"> <span class="text-md font-weight-bold"> {{object_list.name}} </span> &nbsp;&nbsp;  Last Update:&nbsp;&nbsp;<span class=" font-weight-bold" id = "LastUpdate"></span>
+                                </p>
+                            </div>
             
-            <div class="card-body px-0 pb-2">
-                <div class="row mb-4 container">
-                    
-                    <!-- Dynachart -->
-                    <div class="col-lg-12 col-md-12">
-                        <div class="chart">
-                            <div ui-jp="plot"  id = "dynachart" style="height: 600px;"></div>
+                            <div class="col-xl-4 col-sm-4">
+                                <div class="input-group input-group-outline">
+                                    <input class="form-control datetimepicker text-center" value="{{object_list.date}}" type="text" placeholder="today" id="dateKword" name="dateKword" />
+                                </div>
+                                
+                            </div>
+                            <div class="col-xl-4 col-sm-4">
+                                <button class="btn bg-gradient-primary" type="submit"> Search </button>
+                            </div>
+                        </div>
+                    </form>
+    
+                    <div class="row mb-4">
+                        <!-- Dynachart  bg-light opacity-7 -->
+                        <div class="col-lg-6 col-md-8 card overflow-hidden">
+                            <h6>Dynachart</h6>
+                            <div class="chart">
+                                <div ui-jp="plot" id = "dynachart" style="height: 300px;"></div>
+                            </div>
+                        </div>
+                        <!-- PUMP FILL -->
+                        <div class="col-lg-6 col-md-4">
+                            <h6>Pump fill graphs</h6>
+                            <div class="chart">
+                                <div ui-jp="plot"  id = "AllPlots" style="height: 300px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="horizontal dark mt-0 mb-4">
+
+                    <div  class="row">
+                        <!-- historical table -->
+
+                        <div class="d-lg-flex">
+                            <h6>Historical table</h6>
+            
+                            <div class="ms-auto mt-lg-0">
+                                <button class="btn bg-gradient-warning btn-sm mb-0 export" data-type="csv" type="button">
+                                    <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                                    <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                                </button> 
+                            </div>
                         </div>
 
-                    </div>
-                </div>
-                <div  class="row mb-4 container">
-                    <!-- historical table -->
-                    <div class="col-lg-12 col-md-12 ">
                         
+                        <div class="col-lg-12 col-md-12 ">
+                            
                             <div class="table-responsive">
                                 <table class="table align-items-center mb-0" id="datatable-basic2">
                                     <thead class="thead-light">
@@ -125,67 +190,42 @@
                                     </tbody>
                                 </table>
                             </div>
-                        
-                        
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- column for trends runtime and fillage pump -->
-    <div class="col-lg-4 col-md-4">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <p class="text-sm">
-                    <i class="fa fa-chart-line text-info" aria-hidden="true"></i>
-                    <span class="font-weight-bold">Trends</span> for this month.
-                </p>
-            </div>
-            <div class="card-body p-3">
-                <div class="nav-wrapper position-relative end-0">
-                    <ul class="nav nav-pills nav-fill p-1" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link mb-0 px-0 py-1 active " data-bs-toggle="tab" href="#RunTime" role="tab"
-                                aria-selected="true">
-                                <i class="fas fa-clock"></i>
-                                <span class="ms-1">RunTime</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link mb-0 px-0 py-1 " data-bs-toggle="tab" href="#runtimeProduction" role="tab"
-                                aria-selected="false">
-                                <i class="fas fa-chart-line"></i>
-                                <span class="ms-1">Runtime vs Prod</span>
-                            </a>
-                        </li>
-                    </ul>
                 </div>
 
-                <div id="RunTime" class="collapse show">
-                    <h6> Datetime vs Runtime graph</h6>
-                    <div class="chart">
-                        <canvas id="runTime" class="chart-canvas" height="170"></canvas>
-                    </div>
-                </div>
-                
-                <div id="runtimeProduction" class="col s12 collapse">
-                    <h6> Run time vs Production graph</h6>
-                    <div class="chart">
-                        <canvas id="runtimevsProduction" class="chart-canvas" height="170"></canvas>
-                    </div>
+                <!-- TRENDS CARD -->
+                <div id="trends" class="collapse">
                     
+                    <h6 class="text-sm">
+                        <i class="fa fa-chart-line text-info" aria-hidden="true"></i>
+                        <span class="font-weight-bold">Trends</span> for this month.
+                    </h6>
+                    
+                    <h6> Datetime vs Runtime</h6>
+                    <div class="chart mb-4">
+                        <canvas id="runTime" class="chart-canvas" height="100px"></canvas>
+                    </div>
+
+                    <h6> Run time vs Production</h6>
+                    <div class="chart">
+                        <canvas id="runtimevsProduction" class="chart-canvas" height="100px"></canvas>
+                    </div>
+
                 </div>
 
-                <!-- fillage pump graphs -->
-                <br><br>
-                <h6>Pump fill graphs</h6>
-                <div class="chart">
-                    <div ui-jp="plot"  id = "AllPlots" style="height: 300px;"></div>
-                    <!-- <canvas id="chart-line" class="chart-canvas" height="300"></canvas> -->
+                <!-- GEARBOX NET TORQUE-->
+                <div id="gearbox" class="collapse">
+                    GEARBOX BUILDING
                 </div>
-                
+
+                <!-- VALVE TEST  -->
+                <div id="valvetest" class="collapse">
+                    VALVE TEST BUILDING
+                </div>
+    
             </div>
+
         </div>
 
     </div>
@@ -202,10 +242,27 @@
 <!--Table-->
 <script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
 <script>
-    const dataTableBasic2 = new simpleDatatables.DataTable("#datatable-basic2", {
+    const dataTableBasic1 = new simpleDatatables.DataTable("#datatable-basic2", {
         searchable: false,
         fixedHeight: false,
         perPage: 5
+    });
+
+    document.querySelectorAll(".export").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "historical_export_" + type,
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableBasic1.export(data);
+        });
     });
 </script>
 
@@ -237,15 +294,17 @@
     $("#LastUpdate").html(dtFormat(ddt));
 
     var layout_Dynachart = {
-		margin: {l:0,t:0,b:20,r:20},
+		margin: {l:20,t:0,b:20,r:10},
 		autosize: true,
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0.1)",
 
         showlegend: true,
 
 		xaxis: {
 	  		autorange: true,
             showgrid: true,
-            zeroline: true
+            zeroline: false,
 	    //range: ['2020-01-01', '2020-01-31'],
 	    	
 	    	//type: 'date'
@@ -253,14 +312,20 @@
 	    yaxis: {
 	    	autorange: true,
             showgrid: true,
-            zeroline: true,
+            zeroline: false,
 	    	range: [-1, 7],
-	    type: 'linear'
+            
+	        type: 'linear'
 		},
 
         legend: {
-            x: 0,
-            y: -4
+            x: 1,
+            y: 1,
+            font: {
+                family: 'roboto',
+                size: 12,
+                color: '#adb5bd',
+            },
         }
 		
 	}
@@ -315,7 +380,8 @@
             y: load,
             visible: true,
             //mode: 'markers',
-            name: dtFormat(ddt) + ": "+ '{{well.Diagnosis}}' + " - " +'{{well.PumpFill}}%',
+            name: dtFormat(ddt) + " -> " +'{{well.PumpFill}}%',
+            //name: dtFormat(ddt) + ": "+ '{{well.Diagnosis}}' + " - " +'{{well.PumpFill}}%',
 
             line: {
                 width: 2,
@@ -327,7 +393,7 @@
         
     '{% endfor %}'
 
-    Plotly.newPlot("dynachart", data, layout_Dynachart, { responsive: true,  staticPlot: false});
+    Plotly.newPlot("dynachart", data, layout_Dynachart, config);
 
     var trace0 = {
         type: "scatter",
@@ -352,14 +418,16 @@
     var layout = {
         //background : gradientStroke1,
         showlegend: true,
+        paper_bgcolor: "rgba(0,0,0,0",
+        plot_bgcolor: "rgba(0,0,0,0)",
         legend: {
             "orientation": "h",
-            x: 0.2,
+            x: 0,
             xanchor: 'left',
             y: 1
         },
 
-        margin: {l:40,t:10,b:10,r:30},
+        margin: {l:22,t:10,b:10,r:10},
 		autosize: true,
 
         yaxis2: {
@@ -393,8 +461,8 @@
             type: 'date'
         },
         yaxis: {
-            autorange: true,
-            //range: [0, 200],
+            autorange: false,
+            range: [0, 140],
             type: 'linear'
         }
     };

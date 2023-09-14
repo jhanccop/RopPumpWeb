@@ -7,14 +7,19 @@ class CreateDataForm(forms.ModelForm):
 
     PumpName = forms.ModelChoiceField(
         queryset = well.objects.filter(FieldName__Company=1), # put compnay id manually
-        initial = None,
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            }),
         required=True,
-        to_field_name="PumpName"
+        to_field_name="PumpName",
+        help_text="Pump Name",
+        initial=True
+
         )
     
     OilProd = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control text-center",
+            "class": "form-control text-end",
             "type": "number",
         }),
         required=True
@@ -22,7 +27,7 @@ class CreateDataForm(forms.ModelForm):
 
     WaterProd = forms.DecimalField(
         widget=forms.NumberInput(attrs={
-            "class": "form-control text-center",
+            "class": "form-control text-end",
             "type": "number"
         }),
         required=True

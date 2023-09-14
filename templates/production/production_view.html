@@ -96,27 +96,27 @@
                             <table class="table align-items-center mb-0" id="datatable-basic2">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Date Time</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Oil </th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Water </th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             User</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Manage</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for well in object_list.data %}
                                     <tr>
-                                        <td class="text-xs font-weight-normal text-center">{{well.DateTest|date:'Y-m-d'}}</td>
-                                        <td class="text-xs font-weight-normal text-center">{{well.OilProd}}</td>
-                                        <td class="text-xs font-weight-normal text-center">{{well.WaterProd}}</td>
-                                        <td class="text-xs font-weight-normal text-center">{{well.UserAuthor__UserName}}</td>
-                                        <td class="text-xs font-weight-normal text-center">
-                                            <div class="d-flex align-items-center text-sm">
+                                        <td class="text-xs font-weight-normal text-start">{{well.DateTest|date:'Y-m-d'}}</td>
+                                        <td class="text-xs font-weight-normal text-start">{{well.OilProd}}</td>
+                                        <td class="text-xs font-weight-normal text-start">{{well.WaterProd}}</td>
+                                        <td class="text-xs font-weight-normal text-start">{{well.UserAuthor__UserName}}</td>
+                                        <td class="text-xs font-weight-normal text-start">
+                                            <div class="d-flex align-items-start text-sm">
                                                 <a class="btn btn-link text-danger text-sx mb-0 px-0 ms-4" href ="{% url 'production_app:remove' well.id %}">
                                                     <i class="fas fa-trash text-sx position-relative me-1 text-danger"></i>
                                                     Remove

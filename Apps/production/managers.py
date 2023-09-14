@@ -79,7 +79,7 @@ class ProductionManager(models.Manager):
                 PumpName__UserAuthor__CompanyName=company
             ).values("PumpName__PumpName").annotate(
                 total_oil = Sum("OilProd"),
-                total_water = Sum("WaterProd")).order_by('-DateCreate')
+                total_water = Sum("WaterProd"))
             return result 
         else:
             result = self.filter(
@@ -87,7 +87,8 @@ class ProductionManager(models.Manager):
                 PumpName__UserAuthor__CompanyName=company
             ).values("PumpName__PumpName").annotate(
                 total_oil = Sum("OilProd"),
-                total_water = Sum("WaterProd")).order_by('-DateCreate')
+                total_water = Sum("WaterProd")
+                )
             return result
 
     def search_today_all_plot(self,company):
@@ -99,5 +100,6 @@ class ProductionManager(models.Manager):
                 PumpName__UserAuthor__CompanyName=company
             ).values("PumpName__PumpName").annotate(
                 total_oil = Sum("OilProd"),
-                total_water = Sum("WaterProd")).order_by('-DateCreate')
+                total_water = Sum("WaterProd"))
+        print(result)
         return result

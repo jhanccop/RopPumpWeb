@@ -23,6 +23,7 @@ urlpatterns = [
     re_path('', include('Apps.overview.urls')),
     re_path('', include('Apps.production.urls')),
     re_path('', include('Apps.wells.urls')),
+    re_path('', include('Apps.settings.urls')),
 
     re_path('', include('Apps.users.urls')),
 ]

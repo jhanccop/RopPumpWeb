@@ -76,12 +76,12 @@
                     <p class="text-sm"> Production records from all wells. </p>
     
                     <div class="ms-auto mt-lg-0">
-                        <button type="button" class="btn bg-gradient-secondary btn-sm mb-0 export1" data-bs-toggle="modal" data-type="csv" data-bs-target="#export">
+                        <button class="btn bg-gradient-warning btn-sm mb-0 export" data-type="csv" type="button">
                             <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
                             <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
                         </button>
                     
-                        <a href="/production/new/" class="btn bg-gradient-warning btn-sm mb-0">
+                        <a href="/production/new/" class="btn bg-gradient-success btn-sm mb-0">
                             <i class="fas fa-plus text-sm"></i> &nbsp; New Register</a>
     
                     </div>
@@ -100,31 +100,31 @@
                             <table class="table align-items-center mb-0" id="datatable-basic1">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Pump Name</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Date test</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Oil </th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Water </th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             User</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Manage</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for data in object_list.allProduction %}
                                     <tr>
-                                        <td class="text-xs font-weight-normal text-center">{{data.PumpName__PumpName}}</td>
-                                        <td class="text-xs font-weight-normal text-center">{{data.DateTest|date:'Y-m-d'}}</td>
-                                        <td class="text-xs font-weight-normal text-center">{{data.OilProd}}</td>
-                                        <td class="text-xs font-weight-normal text-center">{{data.WaterProd}}</td>
-                                        <td class="text-xs font-weight-normal text-center">{{data.UserAuthor__UserName}}</td>
-                                        <td class="text-xs font-weight-normal text-center">
-                                            <div class="d-flex align-items-center text-sm">
-                                                <a class="btn btn-link text-danger text-sx mb-0 px-0 ms-4" href ="{% url 'production_app:remove' data.id %}">
+                                        <td class="text-xs font-weight-normal text-start">{{data.PumpName__PumpName}}</td>
+                                        <td class="text-xs font-weight-normal text-start">{{data.DateTest|date:'Y-m-d'}}</td>
+                                        <td class="text-xs font-weight-normal text-start">{{data.OilProd}}</td>
+                                        <td class="text-xs font-weight-normal text-start">{{data.WaterProd}}</td>
+                                        <td class="text-xs font-weight-normal text-start">{{data.UserAuthor__UserName}}</td>
+                                        <td class="text-xs font-weight-normal text-start">
+                                            <div class="d-flex align-items-start text-sm">
+                                                <a class="btn btn-link text-danger text-sx mb-0 px-0" href ="{% url 'production_app:remove' data.id %}">
                                                     <i class="fas fa-trash text-sx position-relative me-1 text-danger"></i>
                                                     Remove
                                                 </a>
@@ -168,23 +168,23 @@
                 <!-- Resume table -->
                 <h6>Resume:</h6>
                 <div class="table-responsive">
-                    <table class="table align-items-center mb-0" id="datatable-basic2">
+                    <table class="table align-items-center mb-0" id="datatable-basic0">
                         <thead class="thead-light">
                             <tr>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                <th class="text-uppercase text-info text-start text-xxs font-weight-bolder opacity-7">
                                     Pump Name</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                    Total Oil</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
-                                    Total Water</th>
+                                <th class="text-uppercase text-info text-start text-xxs font-weight-bolder opacity-7">
+                                    T. Oil</th>
+                                <th class="text-uppercase text-info text-start text-xxs font-weight-bolder opacity-7">
+                                    T. Water</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for data in object_list.plotProduction %}
                             <tr>
-                                <td class="text-xs font-weight-normal text-center">{{data.PumpName__PumpName}}</td>
-                                <td class="text-xs font-weight-normal text-center text-dark">{{data.total_oil}}</td>
-                                <td class="text-xs font-weight-normal text-center text-info">{{data.total_water}}</td>
+                                <td class="text-xs font-weight-normal text-start">{{data.PumpName__PumpName}}</td>
+                                <td class="text-xs font-weight-normal text-start text-dark">{{data.total_oil}}</td>
+                                <td class="text-xs font-weight-normal text-start text-info">{{data.total_water}}</td>
                             </tr>
                             {% endfor %}
 
@@ -208,16 +208,33 @@
 <!--Table-->
 <script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
 <script>
+    const dataTableBasic0 = new simpleDatatables.DataTable("#datatable-basic0", {
+        searchable: false,
+        fixedHeight: false,
+        perPage: 10
+    });
+
     const dataTableBasic1 = new simpleDatatables.DataTable("#datatable-basic1", {
         searchable: false,
         fixedHeight: false,
         perPage: 10
     });
 
-    const dataTableBasic2 = new simpleDatatables.DataTable("#datatable-basic2", {
-        searchable: true,
-        fixedHeight: true,
-        perPage: 5
+    document.querySelectorAll(".export").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "production_export_" + type,
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableBasic1.export(data);
+        });
     });
 
 </script>

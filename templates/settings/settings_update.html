@@ -1,0 +1,117 @@
+{% extends 'settings/base-settings.html' %}
+
+{% load static %}
+
+{% block title %} Devices {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block app %} Devices {% endblock app %}
+{% block PumpType %}  {% endblock PumpType %}
+{% block PumpName %}  {% endblock PumpName %}
+
+{% block content %}
+
+<div class="row  mb-4">
+    <div class="col-lg-8 col-md-8">
+        <div class="card h-100">
+            
+            <div class="card-header p-3 pb-0">
+                <h6>Update <span class="font-weight-bold">{{ object.DeviceName }}</span> device.</h6>
+            </div>
+            <div class="card-body p-3">
+                <form method="POST">{% csrf_token %}
+                    <div class="row">
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4">
+                                <label class="ms-0">Well assigned: &nbsp;&nbsp; </label>
+                                {{form.PumpName}}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4">
+                                <label class="ms-0">Available: &nbsp;&nbsp; </label>
+                                {{form.Available}}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4 d-flex mb-2">
+                                <label class="form-label">Mac Address:</label>
+                                {{form.MacAddress}}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4 d-flex mb-2">
+                                <label class="form-label">Ip Address:</label>
+                                {{form.IpAddress}}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4 d-flex mb-2">
+                                <label class="form-label">Time On:</label>
+                                {{form.TimeOn}}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4 d-flex mb-2">
+                                <label class="form-label">Time Off:</label>
+                                {{form.TimeOff}}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4 d-flex mb-2">
+                                <label class="form-label">Alert1:</label>
+                                {{form.ThresholdAlert1}}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4 d-flex mb-2">
+                                <label class="form-label">Alert2:</label>
+                                {{form.ThresholdAlert2}}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4 d-flex mb-2">
+                                <label class="form-label">Stop:</label>
+                                {{form.ThresholdStop}}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4">
+                                <label class="ms-0">Refresh time: &nbsp;&nbsp; </label>
+                                {{form.Refresh}}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div hidden>
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-4">
+                                {{form.UserAuthor}}
+                                <input type="text" value = {{user}}>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-success" type="submit">save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock content %}
+
