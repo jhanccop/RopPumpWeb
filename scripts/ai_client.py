@@ -1,14 +1,16 @@
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import pymysql
 import random
 import numpy as np
 from tflite_runtime.interpreter import Interpreter
 
+import time
+
 import paho.mqtt.client as mqtt
-broker_address = "broker.emqx.io"
-#broker_address = 'broker.hivemq.com'
+#broker_address = "broker.emqx.io"
+broker_address = 'broker.hivemq.com'
 broker_port = 1883
 
 print(broker_address)
@@ -16,7 +18,7 @@ print(broker_address)
 client_id = 'edgemelast435rrrrerrtrtr'
 username = 'jhanccop'
 password = 'jhanccop1'
-topic_sub = "rodpumpdata/data"
+topic_sub = "jphOandG/data"
 
 labels = ["Full pump","Leak travel valve","Leak standing valve","Worn pump barrel","Light fluid stroke","Medium fluid stroke","Severe fluid stroke","Gas interference","Shock of pump up","Shock of pump down","Rods broken"]
 wells_dict = {
@@ -126,7 +128,7 @@ def db_local(exec):
                 host="localhost",
                 user="rpdeveloper",
                 passwd="C0l053n5353:20@",
-                database="RPdatabase")
+                database="RPdatabase2")
                 cursor = conexion.cursor()
                 cursor.execute(exec)
                 filas = cursor.fetchall()
@@ -140,7 +142,7 @@ def db_get(exec):
                 host="localhost",
                 user="rpdeveloper",
                 passwd="C0l053n5353:20@",
-                database="RPdatabase")
+                database="RPdatabase2")
 
                 cursor = conexion.cursor()
                 cursor.execute(exec)
@@ -162,14 +164,25 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, message):
         try:
-                #client.subscribe(topic_sub)
+        #client.subscribe(topic_sub)
                 topic_in = str(message.topic)
                 data_in = str(message.payload.decode("utf-8"))
-                print(data_in)
-                if data_in == "Device connected":
-                        pass
+                m_mqtt = json.loads(data_in)
+                print("data", m_mqtt)
+                if m_mqtt["type"] == "tank":
+                        print("-------")
+                        status = m_mqtt.get("status","NULL")
+                        WellName = str(m_mqtt["name"])
+                        now = datetime.now() - timedelta(hours=5)
+                        date_time = now.strftime("%Y/%m/%d %H:%M:%S")
+                        DT = date_time 
+                        TankLevel = m_mqtt["value"]
+                        sql_query = 'INSERT INTO overview_rodpumpdata (PumpName_id,DateCreate,Status,TankLevel) VALUES ("{0}","{1}","{2}",{3});'.format(1,DT,status,TankLevel)
+                        print(sql_query)
+                        db_local(sql_query)
+                        client.publish("jphOandG/device/tank/finish", "finish")
                 else:
-                        m_mqtt = json.loads(data_in)
+                        #m_mqtt = json.loads(data_in)
                         status = m_mqtt.get("status","NULL")
                         WellName = str(m_mqtt["well"]) + "_"
                         RunTime = round(m_mqtt.get("runtime",0),3)
@@ -208,4 +221,12 @@ client.connect(broker_address, broker_port, 15)
 client.on_connect = on_connect
 client.on_message = on_message
 #client.connect(broker_address, broker_port, 15)
-client.loop_forever()
+#client.loop_forever()
+
+client.loop_start()
+
+while 1:
+        client.publish("jphOandG/device/tank/start", json.dumps({"mac":"64:B7:08:CA:18:DC","name":"BLACKMON No. 1","timeSleep":120,"TankHeight":315,"TankFactor":0.0001347}))
+        time.sleep(130)
+
+
