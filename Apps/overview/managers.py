@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from django.db.models.functions import TruncDate, TruncDay
-from django.db.models import Sum, Max
+from django.db.models import Sum, Max, F
 from django.utils.timezone import now
 
 from unittest import result
@@ -83,7 +83,7 @@ class DataManager(models.Manager):
 
 
 class RPDataManager(models.Manager):
-    def search_by_interval_RPdata(self, interval, wellName):
+    def search_by_interval_RPdata(self, interval, wellName, TankFactor,TankHeight):
         Intervals = interval.split(' to ')
         intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
         #print(intervals)
@@ -102,7 +102,11 @@ class RPDataManager(models.Manager):
                 "SPM",
                 "Recomendation",
                 "Diagnosis",
+                "TankLevel",
                 "Status"
+            ).annotate(
+                bblOil = F("TankLevel") * TankFactor,
+                TankLevelPer = F("TankLevel") * 100 / TankHeight
             ).order_by('-DateCreate')
             return result 
         else:
@@ -112,7 +116,7 @@ class RPDataManager(models.Manager):
             ).order_by('-DateCreate')
             return result
 
-    def search_today_RPdata(self,wellName):
+    def search_today_RPdata(self,wellName, TankFactor,TankHeight):
         #Today = date.today()
         result = self.filter(
                 #DateCreate__year=Today.year,
@@ -131,8 +135,12 @@ class RPDataManager(models.Manager):
                 "SPM",
                 "Recomendation",
                 "Diagnosis",
+                "TankLevel",
                 "Status"
-            ).order_by('-DateCreate')[:16]
+            ).annotate(
+                bblOil = F("TankLevel") * TankFactor,
+                TankLevelPer = F("TankLevel") * 100 / TankHeight
+            ).order_by('-DateCreate')#[:16]
         return result
 
     def search_trends_fill_SPM_RPdata(self,wellName):

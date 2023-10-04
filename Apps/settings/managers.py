@@ -12,6 +12,7 @@ class SettingManager(models.Manager):
         ).values("id",
                 "DeviceName",
                 "PumpName__PumpName",
+                "DeviceType",
                 "Available",
                 "MacAddress",
                 "IpAddress",
@@ -21,7 +22,10 @@ class SettingManager(models.Manager):
                 "ThresholdAlert1",
                 "ThresholdAlert2",
                 "ThresholdStop",
-                "Refresh"
+                "Refresh",
+                "TankHeight",
+                "TankFactor"
+                
                  ).order_by('PumpName')
         return result
 

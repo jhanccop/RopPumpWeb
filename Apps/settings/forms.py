@@ -16,12 +16,24 @@ class UpdateDataForm(forms.ModelForm):
         initial=True
 
         )
+    
+    Types_CHOICES = (
+        ("Rod Pump Analyzer","Rod Pump Analyzer"),
+        ("Tank Level Meter","Tank Level Meter")
+    )
+    DeviceType = forms.ChoiceField(
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'type':"text",
+            }),
+        choices=Types_CHOICES,
+        required=True
+    )
 
     AVAILABLE_CHOICES = (
         (True, "Available"),
         (False, "No available"),
     )
-
     Available = forms.ChoiceField(
         widget=forms.Select(attrs={
             'class': 'form-control',
@@ -76,7 +88,7 @@ class UpdateDataForm(forms.ModelForm):
             "class": "form-control text-end",
             "type": "number"
         }),
-        required=True
+        required=False
     )
 
     ThresholdStop = forms.DecimalField(
@@ -84,7 +96,7 @@ class UpdateDataForm(forms.ModelForm):
             "class": "form-control text-end",
             "type": "number"
         }),
-        required=True
+        required=False
     )
 
     REFRESH_CHOICES = (
@@ -105,11 +117,28 @@ class UpdateDataForm(forms.ModelForm):
         choices=REFRESH_CHOICES,
         required=True
     )
+
+    TankHeight = forms.DecimalField(
+        widget=forms.NumberInput(attrs={
+            "class": "form-control text-end",
+            "type": "number"
+        }),
+        required=False
+    )
+
+    TankFactor = forms.DecimalField(
+        widget=forms.NumberInput(attrs={
+            "class": "form-control text-end",
+            "type": "number"
+        }),
+        required=False
+    )
     
     class Meta:
         model = setting
         fields = (
             "PumpName",
+            "DeviceType",
             "Available",
             "MacAddress",
             "IpAddress",
@@ -118,7 +147,9 @@ class UpdateDataForm(forms.ModelForm):
             "ThresholdAlert1",
             "ThresholdAlert2",
             "ThresholdStop",
-            "Refresh"
+            "Refresh",
+            "TankFactor",
+            "TankHeight"
         )
         widgets = {
 
@@ -160,6 +191,19 @@ class CreateDataForm(forms.ModelForm):
         initial=True
 
         )
+    
+    Types_CHOICES = (
+        ("Rod Pump Analyzer","Rod Pump Analyzer"),
+        ("Tank Level Meter","Tank Level Meter")
+    )
+    DeviceType = forms.ChoiceField(
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'type':"text",
+            }),
+        choices=Types_CHOICES,
+        required=True
+    )
 
     AVAILABLE_CHOICES = (
         (True, "Available"),
@@ -220,7 +264,7 @@ class CreateDataForm(forms.ModelForm):
             "class": "form-control text-end",
             "type": "number"
         }),
-        required=True
+        required=False
     )
 
     ThresholdStop = forms.DecimalField(
@@ -228,7 +272,7 @@ class CreateDataForm(forms.ModelForm):
             "class": "form-control text-end",
             "type": "number"
         }),
-        required=True
+        required=False
     )
 
     REFRESH_CHOICES = (
@@ -249,12 +293,29 @@ class CreateDataForm(forms.ModelForm):
         choices=REFRESH_CHOICES,
         required=True
     )
+
+    TankHeight = forms.DecimalField(
+        widget=forms.NumberInput(attrs={
+            "class": "form-control text-end",
+            "type": "number"
+        }),
+        required=False
+    )
+
+    TankFactor = forms.DecimalField(
+        widget=forms.NumberInput(attrs={
+            "class": "form-control text-end",
+            "type": "number"
+        }),
+        required=False
+    )
     
     class Meta:
         model = setting
         fields = (
             "DeviceName",
             "PumpName",
+            "DeviceType",
             "Available",
             "MacAddress",
             "IpAddress",
@@ -263,7 +324,9 @@ class CreateDataForm(forms.ModelForm):
             "ThresholdAlert1",
             "ThresholdAlert2",
             "ThresholdStop",
-            "Refresh"
+            "Refresh",
+            "TankFactor",
+            "TankHeight"
         )
         
 

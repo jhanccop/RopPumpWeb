@@ -10,7 +10,7 @@ class setting(models.Model):
 
     DateCreated = models.DateTimeField(auto_now_add= True)
     DeviceName = models.CharField('Device Name', max_length=100, unique=True, null=True, blank =True)
-    PumpName = models.OneToOneField(well, on_delete=models.CASCADE,null=True, blank=False)
+    PumpName = models.ForeignKey(well, on_delete=models.CASCADE, null=True, blank=True)
   
     # Operational information
     Available_CHOICES = (
@@ -18,6 +18,11 @@ class setting(models.Model):
         (False,"not available")
     )
     Available = models.BooleanField('Available',choices=Available_CHOICES, default=True)
+    Types_CHOICES = (
+        ("Rod Pump Analyzer","Rod Pump Analyzer"),
+        ("Tank Level Meter","Tank Level Meter")
+    )
+    DeviceType = models.CharField('Device Type', max_length=50, choices=Types_CHOICES, default="Rod Pump Analyzer")
     MacAddress = models.CharField('Mac Address', max_length=100, unique=True, null=True, blank =True)
     IpAddress = models.CharField('Ip Address', max_length=100, unique=True)
     Status_CHOICES = (
@@ -32,6 +37,8 @@ class setting(models.Model):
     ThresholdAlert1 = models.FloatField('Threshold Alert 1',null=True, blank =True)
     ThresholdAlert2 = models.FloatField('Threshold Alert 2',null=True, blank =True)
     ThresholdStop = models.FloatField('Threshold Stop',null=True, blank =True)
+    TankHeight = models.FloatField('Tank Height',null=True, blank =True)
+    TankFactor = models.FloatField('Tank Factor',null=True, blank =True)
 
     Refresh_CHOICES = (
         (30,"30s"),

@@ -128,7 +128,7 @@
                         </div>
                         <!-- PUMP FILL -->
                         <div class="col-lg-6 col-md-4">
-                            <h6>Pump fill graphs</h6>
+                            <h6>Barrels in tank and pump filling</h6>
                             <div class="chart">
                                 <div ui-jp="plot"  id = "AllPlots" style="height: 300px;"></div>
                             </div>
@@ -158,10 +158,11 @@
                                 <table class="table align-items-center mb-0" id="datatable-basic2">
                                     <thead class="thead-light">
                                         <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Diagnosis</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Fill</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">SPM</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Hours running today</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Diagnosis</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Tank level (in)</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Fill</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">SPM</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Hours running today</th>
                                             
                                         </tr>
                                     </thead>
@@ -177,6 +178,18 @@
                                                     <div class="d-flex flex-column justify-content-center">
                                                         <h5 class="mb-0 text-xs">{{well.Diagnosis}}</h5>
                                                         <p class="text-xs font-weight-bold text-secondary mb-0"><span class="text-secondary">{{well.DateCreate|date:'Y-m-d H:i'}}</span></p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <div class="progress-wrapper w-75 mx-auto">
+                                                    <div class="progress-info">
+                                                    <div class="progress-percentage">
+                                                    <span class="text-xs font-weight-bold">{{well.bblOil|floatformat:2}} bbl ( {{well.TankLevel}} in )</span>
+                                                    </div>
+                                                    </div>
+                                                    <div class="progress">
+                                                    <div class="progress-bar bg-gradient-secondary w-{{well.TankLevelPer|floatformat:0}}" role="progressbar" aria-valuenow="{{well.TankLevelPer|floatformat:0}}" aria-valuemin="0" aria-valuemax="100"></div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -340,7 +353,7 @@
     var data_PumpFill = [];
     var data_Diagnosis = [];
     var dateTime = [];
-    var data_SPM = [];
+    var data_level = [];
 
     var data = [];
 
@@ -349,7 +362,7 @@
         var ddt = new Date("{{well.DateCreate|date:'Y/m/d H:i'}}");
         dateTime.push(ddt);
 
-        data_SPM.push('{{well.SPM}}');
+        data_level.push('{{well.TankLevel}}');
         data_PumpFill.push('{{well.PumpFill}}');
         data_Diagnosis = data_Diagnosis.concat('{{well.Diagnosis}}'.split(", "));
 
@@ -406,9 +419,9 @@
 
     var trace1 = {
         x: dateTime.reverse(),
-        y: data_SPM,
+        y: data_level,
         mode: "line+smarkers",
-        name: 'SPM',
+        name: 'Tank Level',
         type: 'scatter',
         line: {color: '#ffb967',shape: 'spline'},
     };

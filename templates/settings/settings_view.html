@@ -52,7 +52,9 @@
                                         <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Device Name</th>
                                         <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
-                                            Assigned Well</th>
+                                            Name</th>
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
+                                            Device Type</th>
                                         <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Available</th>
                                         <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
@@ -73,6 +75,10 @@
                                             Stop</th>
                                         <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
                                             Refresh<br>(s)</th>
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
+                                            Tank<br>Height (in)</th>
+                                        <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7 text-start">
+                                            Tank Factor<br>(bbl/in)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -92,6 +98,7 @@
                                             </div>
                                         </td>
                                         <td class="text-xs font-weight-normal text-start">{{device.PumpName__PumpName}}</td>
+                                        <td class="text-xs font-weight-normal text-start">{{device.DeviceType}}</td>
                                         <td class="text-xs font-weight-normal text-center">
                                             {% if device.Available %}
                                             <i class="fas fa-toggle-on text-lg position-relative me-1 text-success"></i>
@@ -116,6 +123,8 @@
                                         <td class="text-xs font-weight-normal text-start">{{device.ThresholdAlert2}}</td>
                                         <td class="text-xs font-weight-normal text-start">{{device.ThresholdStop}}</td>
                                         <td class="text-xs font-weight-normal text-start">{{device.Refresh}}</td>
+                                        <td class="text-xs font-weight-normal text-start">{{device.TankHeight}}</td>
+                                        <td class="text-xs font-weight-normal text-start">{{device.TankFactor}}</td>
 
                                     </tr>
                                     {% endfor %}

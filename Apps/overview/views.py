@@ -62,16 +62,26 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
                     'Field': well_i.FieldName,
                     'Battery': well_i.BatteryName,
                 }
-                settingWells = setting.objects.filter(PumpName=well_i).values("Status").last()
-                if settingWells != None:
-                    tempPayload['Status'] = settingWells["Status"]
-                pass
+                TankFactor = 0
+                TankHeight = 0
+                settingWellsWA = setting.objects.filter(PumpName = well_i, DeviceType = "Rod Pump Analyzer").values("Status").last()
+                if settingWellsWA != None:
+                    tempPayload['Status'] = settingWellsWA["Status"]
+
+                settingWellsTank = setting.objects.filter(PumpName = well_i, DeviceType = "Tank Level Meter").values("TankFactor","TankHeight").last()
+                if settingWellsTank != None:
+                    TankFactor = settingWellsTank["TankFactor"]
+                    TankHeight = settingWellsTank["TankHeight"]
 
                 dataWell = RodPumpData.objects.filter(PumpName=well_i).last()
                 if dataWell != None:
                     tempPayload['LastUpdate'] = dataWell.DateCreate
                     #tempPayload['Position'] = dataWell.Position
                     #tempPayload['LoadPump'] = dataWell.LoadPump
+                    tempPayload['bblOil'] = dataWell.TankLevel * TankFactor
+                    tempPayload['TankLevel'] = dataWell.TankLevel
+                    tper = dataWell.TankLevel*100/TankHeight
+                    tempPayload['TankLevelPer'] = int(tper) - int(tper) % int(5)
                     tempPayload['SPM'] = dataWell.SPM
                     tempPayload['PumpFill'] = dataWell.PumpFill
                     tempPayload['Diagnosis'] = dataWell.Diagnosis
@@ -143,13 +153,23 @@ class ListDataRodPump(LoginRequiredMixin, CompanyMixin, ListView):
         wellName = self.kwargs['PumpName']
         intervalDate = self.request.GET.get("dateKword", '')
 
+        TankFactor = 0
+        #settingWellsWA = setting.objects.filter(PumpName = wellName, DeviceType = "Rod Pump Analyzer").values("Status").last()
+        #if settingWellsWA != None:
+        #    tempPayload['Status'] = settingWellsWA["Status"]
+
+        settingWellsTank = setting.objects.filter(PumpName__PumpName = wellName, DeviceType = "Tank Level Meter").values("TankFactor","TankHeight").last()
+        if settingWellsTank != None:
+            TankFactor = settingWellsTank["TankFactor"]
+            TankHeight = settingWellsTank["TankHeight"]
+
         #pump = well.objects.search_type_pump(wellName)
 
         if intervalDate == "today" or intervalDate == "Today" or intervalDate == "":
-            list_data = RodPumpData.objects.search_today_RPdata(wellName)
+            list_data = RodPumpData.objects.search_today_RPdata(wellName, TankFactor,TankHeight)
         else:
             list_data = RodPumpData.objects.search_by_interval_RPdata(
-                intervalDate, wellName)  # .order_by('-DateCreate')
+                intervalDate, wellName, TankFactor,TankHeight)  # .order_by('-DateCreate')
         
         trends_fill_spm = RodPumpData.objects.search_trends_fill_SPM_RPdata(wellName)
         trends_runtime = RodPumpData.objects.search_trends_runTime_RPdata(wellName)

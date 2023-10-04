@@ -86,8 +86,8 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Well/battery</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Group</th>
                                             <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Last<br>Report<br>Time</th>
-                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Tank Level (in)</th>
                                             <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Diagnosis</th>
                                             <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Pump<br>Fillage<br>(%)</th>
                                             <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">SPM</th>
@@ -105,22 +105,11 @@
                                                     <span class="badge badge-sm bg-gradient-secondary"> {{well.PumpName}} / {{well.Battery}} </span>
                                                 </a>
                                             </td>
-                                            
+                                            <td class="text-sm font-weight-normal text-start">{{key}}</td>
                                             <td class="text-sm font-weight-normal text-start">{{well.LastUpdate|date:'Y-m-d H:i'}}</td>
-                                            <td class="align-middle">
-                                                <div class="progress-wrapper w-75 mx-auto">
-                                                    <div class="progress-info">
-                                                    <div class="progress-percentage">
-                                                    <span class="text-xs font-weight-bold">{{well.bblOil|floatformat:2}} bbl ( {{well.TankLevel}} in )</span>
-                                                    </div>
-                                                    </div>
-                                                    <div class="progress">
-                                                    <div class="progress-bar bg-gradient-secondary w-{{well.TankLevelPer|floatformat:0}}" role="progressbar" aria-valuenow="{{well.TankLevelPer|floatformat:0}}" aria-valuemin="0" aria-valuemax="100"></div>
-                                                    </div>
-                                                </div>
-                                            </td>
                                             <td class="text-sm font-weight-bolder text-start mb-0">
                                                 {{well.Diagnosis}}
+                                                
                                             </td>
                                             <td class="text-sm font-weight-normal text-start">{{well.PumpFill}}</td>
                                             <td class="text-sm font-weight-normal text-start">{{well.SPM}}</td>

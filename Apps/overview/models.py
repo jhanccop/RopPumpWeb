@@ -21,6 +21,7 @@ class RodPumpData(models.Model):
     CasingPressure = models.FloatField('Casing Pressure', null=True, blank =True)
     SPM = models.FloatField('SPM', null=True, blank =True)
     Status = models.CharField('Status', max_length=20,null=True, blank =True)
+    TankLevel = models.FloatField('Tank Level', null=True, blank =True)
 
     DIAGNOSIS_CHOICES = (
         ('None', 'None'),
