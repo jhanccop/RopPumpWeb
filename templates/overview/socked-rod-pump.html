@@ -362,7 +362,7 @@
         var ddt = new Date("{{well.DateCreate|date:'Y/m/d H:i'}}");
         dateTime.push(ddt);
 
-        data_level.push('{{well.TankLevel}}');
+        data_level.push('{{well.bblOil|floatformat:2}}');
         data_PumpFill.push('{{well.PumpFill}}');
         data_Diagnosis = data_Diagnosis.concat('{{well.Diagnosis}}'.split(", "));
 
