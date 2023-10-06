@@ -159,7 +159,7 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Diagnosis</th>
-                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Tank level (in)</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Tank<br>information</th>
                                             <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Fill</th>
                                             <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">SPM</th>
                                             <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Hours running today</th>
@@ -185,7 +185,7 @@
                                                 <div class="progress-wrapper w-75 mx-auto">
                                                     <div class="progress-info">
                                                     <div class="progress-percentage">
-                                                    <span class="text-xs font-weight-bold">{{well.bblOil|floatformat:2}} bbl ( {{well.TankLevel}} in )</span>
+                                                    <span class="text-xs font-weight-bold">{{well.bblOil|floatformat:2}} bbl ( {{well.TankLevel|floatformat:2}} ft )</span>
                                                     </div>
                                                     </div>
                                                     <div class="progress">
