@@ -176,7 +176,7 @@ def on_message(client, userdata, message):
                         now = datetime.now() - timedelta(hours=5)
                         date_time = now.strftime("%Y/%m/%d %H:%M:%S")
                         DT = date_time 
-                        TankLevel = m_mqtt["value"]
+                        TankLevel = m_mqtt["height"]
                         sql_query = 'INSERT INTO overview_rodpumpdata (PumpName_id,DateCreate,Status,TankLevel) VALUES ("{0}","{1}","{2}",{3});'.format(1,DT,status,TankLevel)
                         print(sql_query)
                         db_local(sql_query)
