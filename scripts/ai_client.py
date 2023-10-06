@@ -226,7 +226,7 @@ client.on_message = on_message
 client.loop_start()
 
 while 1:
-        client.publish("jphOandG/device/tank/start", json.dumps({"mac":"64:B7:08:CA:18:DC","name":"BLACKMON No. 1","timeSleep":120,"TankHeight":315,"TankFactor":0.0001347}))
-        time.sleep(130)
+        client.publish("jphOandG/device/tank/start", json.dumps({"mac":"64:B7:08:CA:18:DC","name":"BLACKMON No. 1","timeSleep":275,"TankHeight":15,"TankFactor":13.9886}))
+        time.sleep(300)
 
 
