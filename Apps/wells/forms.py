@@ -112,6 +112,25 @@ class CreateDataForm(forms.ModelForm):
         }),
         required=True
     )
+
+    REFRESH_CHOICES = (
+        (30,"30s"),
+        (60,"1m"),
+        (120,"2m"),
+        (300,"5m"),
+        (600,"10m"),
+        (900,"15m"),
+        (1800,"30m"),
+    )
+
+    Refresh = forms.ChoiceField(
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'type':"text",
+            }),
+        choices=REFRESH_CHOICES,
+        required=True
+    )
     
     class Meta:
         model = well
@@ -126,7 +145,8 @@ class CreateDataForm(forms.ModelForm):
             "PlungerDiameter",
             "TrueVerticalDepth",
             "TotalRodLength",
-            "TotalRodWeight"
+            "TotalRodWeight",
+            "Refresh"
         )
         widgets = {
 

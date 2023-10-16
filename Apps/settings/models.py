@@ -30,6 +30,7 @@ class setting(models.Model):
         ("running", "running"),
         ("low battery", "low battery"),
         ("no signal", "no signal"),
+        ("not synchronized", "not synchronized"),
     )
     Status = models.CharField('Status', max_length=50, choices=Status_CHOICES, default="stopped")
     TimeOn = models.FloatField('Time On',null=True, blank =True)
@@ -39,17 +40,6 @@ class setting(models.Model):
     ThresholdStop = models.FloatField('Threshold Stop',null=True, blank =True)
     TankHeight = models.FloatField('Tank Height',null=True, blank =True)
     TankFactor = models.FloatField('Tank Factor',null=True, blank =True)
-
-    Refresh_CHOICES = (
-        (30,"30s"),
-        (60,"1m"),
-        (120,"2m"),
-        (300,"5m"),
-        (600,"10m"),
-        (900,"15m"),
-        (1800,"30m"),
-    )
-    Refresh = models.FloatField('Refresh', choices=Refresh_CHOICES,null=True, blank =True,default=120)
 
     objects = SettingManager()
 

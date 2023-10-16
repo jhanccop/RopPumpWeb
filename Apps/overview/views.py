@@ -78,9 +78,9 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
                     tempPayload['LastUpdate'] = dataWell.DateCreate
                     #tempPayload['Position'] = dataWell.Position
                     #tempPayload['LoadPump'] = dataWell.LoadPump
-                    tempPayload['bblOil'] = dataWell.TankLevel * TankFactor
-                    tempPayload['TankLevel'] = dataWell.TankLevel
-                    tper = dataWell.TankLevel*100/TankHeight
+                    tempPayload['bblOil'] = (TankHeight - dataWell.TankLevel) * TankFactor
+                    tempPayload['TankLevel'] = TankHeight - dataWell.TankLevel
+                    tper = (TankHeight - dataWell.TankLevel) * 100/TankHeight
                     tempPayload['TankLevelPer'] = int(tper) - int(tper) % int(5)
                     tempPayload['SPM'] = dataWell.SPM
                     tempPayload['PumpFill'] = dataWell.PumpFill

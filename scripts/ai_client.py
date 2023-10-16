@@ -13,12 +13,14 @@ import paho.mqtt.client as mqtt
 broker_address = 'broker.hivemq.com'
 broker_port = 1883
 
-print(broker_address)
-
 client_id = 'edgemelast435rrrrerrtrtr'
 username = 'jhanccop'
 password = 'jhanccop1'
 topic_sub = "jphOandG/data"
+
+print(broker_address, topic_sub)
+
+well_id = 1
 
 labels = ["Full pump","Leak travel valve","Leak standing valve","Worn pump barrel","Light fluid stroke","Medium fluid stroke","Severe fluid stroke","Gas interference","Shock of pump up","Shock of pump down","Rods broken"]
 wells_dict = {
@@ -164,53 +166,100 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, message):
         try:
-        #client.subscribe(topic_sub)
+                #client.subscribe(topic_sub)
                 topic_in = str(message.topic)
                 data_in = str(message.payload.decode("utf-8"))
                 m_mqtt = json.loads(data_in)
-                print("data", m_mqtt)
-                if m_mqtt["type"] == "tank":
-                        print("-------")
-                        status = m_mqtt.get("status","NULL")
-                        WellName = str(m_mqtt["name"])
-                        now = datetime.now() - timedelta(hours=5)
-                        date_time = now.strftime("%Y/%m/%d %H:%M:%S")
-                        DT = date_time 
-                        TankLevel = m_mqtt["height"]
-                        sql_query = 'INSERT INTO overview_rodpumpdata (PumpName_id,DateCreate,Status,TankLevel) VALUES ("{0}","{1}","{2}",{3});'.format(1,DT,status,TankLevel)
-                        print(sql_query)
-                        db_local(sql_query)
-                        client.publish("jphOandG/device/tank/finish", "finish")
-                else:
-                        #m_mqtt = json.loads(data_in)
-                        status = m_mqtt.get("status","NULL")
-                        WellName = str(m_mqtt["well"]) + "_"
-                        RunTime = round(m_mqtt.get("runtime",0),3)
-                        if status == "running":
-                                acc = acc = m_mqtt.get("p")
-                                pos_surf = vec_str(acc_to_distance_model(str_vec(acc)) * 63)
-                                
-                                load_surf = vec_str(str_vec(m_mqtt["l"]) + 6)
-                                
-                                pos_down = vec_str(pos_down_model(str_vec(pos_surf)) * 55)
-                                load_down = vec_str(load_down_model(str_vec(load_surf)) * 4)
-                                SPM =  m_mqtt.get("SPM",0)
-                                fillPump = fill_model(str_vec(load_surf))
-                                diagnosis = diagnosis_model(str_vec(load_down))
+                print("data input: ", m_mqtt)
 
-                                DT = m_mqtt["dt"]
+               
 
-                                sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,SurfaceLoad,SurfacePosition,SPM,Diagnosis,PumpFill,Recomendation,PumpName_id,RunTime,RawAcceleration,Status,DownLoad,DownPosition) VALUES ("{0}","{1}","{2}",{3},"{4}",{5},"{6}",{7},{8},"{9}","{10}","{11}","{12}");'.format(DT,load_surf,pos_surf,SPM,diagnosis,fillPump,"Good work area",wells_dict[WellName],RunTime,acc,status,load_down,pos_down)
-                                #print(sql_query)
+                WellName = str(m_mqtt["name"])
+                idTest = str(m_mqtt["idTest"])
+                mac = str(m_mqtt.get("mac","NULL"))
+                DT = idTest 
+
+                print("finish published")
+                client.publish("jphOandG/device/finish", mac)
+                
+                # hacer una consulta para obtener el id del pozo con el nombre, altura de tanque y factor
+                sql_query = 'SELECT PumpName_id FROM overview_rodpumpdata WHERE DateCreate = "{0}" AND PumpName_id = {1};'.format(DT, well_id)
+                print(sql_query)
+                raws = db_get(sql_query)
+
+                print(raws)
+
+                if len(raws) == 0: # CREATE NEW RAW
+                        if m_mqtt["type"] == "tank":
+                                status = m_mqtt.get("status","NULL")
+                                TankLevel = 15 - m_mqtt["value"]
+                                sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,Status,TankLevel,PumpName_id) VALUES ("{0}","{1}",{2},{3});'.format(DT,status,TankLevel,well_id)
+                                print(sql_query)
                                 db_local(sql_query)
+                                #client.publish("jphOandG/device/finish/tank", "finish")
+                        
+                        elif m_mqtt["type"] == "analyzer":
+                                status = m_mqtt.get("status","NULL")
+                                RunTime = round(m_mqtt.get("runtime",0),3)
+                                if status == "running":
+                                        acc = acc = m_mqtt.get("p")
+                                        #pos_surf = vec_str(acc_to_distance_model(str_vec(acc)) * 63)
+                                        pos_surf = vec_str(acc_to_distance_model(acc) * 63)
+                                        
+                                        #load_surf = vec_str(str_vec(m_mqtt["l"]) + 6)
+                                        load_surf = vec_str(np.array(m_mqtt["l"]) + 6)
+                                        
+                                        pos_down = vec_str(pos_down_model(str_vec(pos_surf)) * 55)
+                                        load_down = vec_str(load_down_model(str_vec(load_surf)) * 4)
+                                        SPM =  m_mqtt.get("SPM",0)
+                                        fillPump = fill_model(str_vec(load_surf))
+                                        diagnosis = diagnosis_model(str_vec(load_down))
 
-                        elif status == "stopped":
-                                SPM = m_mqtt.get("SPM",0)
-                                fillPump = m_mqtt["f"]
-                                diagnosis = status #m_mqtt["diag"]
-                                DT = m_mqtt["dt"]
-                                sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,PumpName_id,Diagnosis,PumpFill,SPM,RunTime) VALUES ("{0}",{1},"{2}",{3},{4},{5})'.format(DT,wells_dict[WellName],"Recovering level",0,0,RunTime)
+                                        sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,SurfaceLoad,SurfacePosition,SPM,Diagnosis,PumpFill,Recomendation,PumpName_id,RunTime,RawAcceleration,Status,DownLoad,DownPosition,TankLevel) VALUES ("{0}","{1}","{2}",{3},"{4}",{5},"{6}",{7},{8},"{9}","{10}","{11}","{12}",{});'.format(DT,load_surf,pos_surf,SPM,diagnosis,fillPump,"Good work area",well_id,RunTime,acc,status,load_down,pos_down,0)
+                                        print(sql_query)
+                                        db_local(sql_query)
+
+                                elif status == "stopped":
+                                        SPM = m_mqtt.get("SPM",0)
+                                        fillPump = m_mqtt["fill"]
+                                        diagnosis = status #m_mqtt["diag"]
+                                        sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,PumpName_id,Diagnosis,PumpFill,SPM,RunTime,TankLevel) VALUES ("{0}",{1},"{2}",{3},{4},{5})'.format(DT,well_id,"Recovering level",0,0,RunTime,0)
+                                        db_local(sql_query)
+
+                else:   # UPDATE
+                        if m_mqtt["type"] == "tank":
+                                status = m_mqtt.get("status","NULL")
+                                TankLevel = 15 - m_mqtt["value"]
+                                sql_query = 'UPDATE overview_rodpumpdata  SET TankLevel = {0}, Status = "{1}" WHERE  PumpName_id = {2} AND DateCreate = "{3}";'.format(TankLevel,status,1,DT)
+                                print(sql_query)
                                 db_local(sql_query)
+                                
+                        elif m_mqtt["type"] == "analyzer":
+                                status = m_mqtt.get("status","NULL")
+                                RunTime = round(m_mqtt.get("runtime",0),3)
+                                if status == "running":
+                                        acc = acc = m_mqtt.get("p")
+                                        pos_surf = vec_str(acc_to_distance_model(str_vec(acc)) * 63)
+                                        
+                                        load_surf = vec_str(str_vec(m_mqtt["l"]) + 6)
+                                        
+                                        pos_down = vec_str(pos_down_model(str_vec(pos_surf)) * 55)
+                                        load_down = vec_str(load_down_model(str_vec(load_surf)) * 4)
+                                        SPM =  m_mqtt.get("SPM",0)
+                                        fillPump = fill_model(str_vec(load_surf))
+                                        diagnosis = diagnosis_model(str_vec(load_down))
+                                        sql_query = 'UPDATE overview_rodpumpdata SET SurfaceLoad="{0}",SurfacePosition="{1}",SPM={2},Diagnosis="{3}",PumpFill={4},Recomendation="{5}",RunTime={6},RawAcceleration="{7}",Status="{8}",DownLoad="{9}",DownPosition="{10}" WHERE DateCreate = "{11}" AND PumpName_id = {12};'.format(load_surf,pos_surf,SPM,diagnosis,fillPump,"Good work area",RunTime,acc,status,load_down,pos_down,DT,well_id)
+                                        #print(sql_query)
+                                        db_local(sql_query)
+
+                                elif status == "stopped":
+                                        SPM = m_mqtt.get("SPM",0)
+                                        fillPump = m_mqtt["f"]
+                                        diagnosis = status #m_mqtt["diag"]
+                                        sql_query = 'UPDATE overview_rodpumpdata SET Diagnosis="{0}",PumpFill={1},SPM={2},RunTime={3} WHERE DateCreate="{4}" AND PumpName_id={5};'.format("Recovering level",0,0,RunTime,DT,well_id)
+                                        db_local(sql_query)
+                        
+                
         except Exception as e:
                 print('Arrival message error..... ', e)
 
@@ -225,8 +274,17 @@ client.on_message = on_message
 
 client.loop_start()
 
+time.sleep(10)
+
 while 1:
-        client.publish("jphOandG/device/tank/start", json.dumps({"mac":"64:B7:08:CA:18:DC","name":"BLACKMON No. 1","timeSleep":30,"TankHeight":15,"TankFactor":13.9886}))
-        time.sleep(60)
+        sql_query = 'SELECT Refresh, PumpName FROM wells_well WHERE id = {0}'.format(well_id)
+        raws = db_get(sql_query)
+
+        now = datetime.now() - timedelta(hours=5)
+        date_time = now.strftime("%Y/%m/%d %H:%M:%S")
+        #client.publish("jphOandG/device/start", json.dumps({"name":raws[0][1],"dt":date_time,"timeSleep":raws[0][0]-30,"TankHeight":15,"TankFactor":13.9886}))
+        print("start published")
+        client.publish("jphOandG/device/start", json.dumps({"name":raws[0][1],"dt":date_time,"timeSleep":raws[0][0]-30}))
+        time.sleep(raws[0][0])
 
 

@@ -42,9 +42,21 @@ class well(models.Model):
     # type well
     TYPE_CHOICES = (
         ("Sucker Rod Pump", "Sucker Rod Pump"),
-        ("Electrical Submersible Pump", "Electrical Submersible Pump"),
+        ("Plunger Lift", "Plunger Lift"),
     )
     PumpType = models.CharField('Pump Type', max_length=50, choices=TYPE_CHOICES, default="Sucker Rod Pump")
+
+    # Monitoring data
+    Refresh_CHOICES = (
+        (30,"30s"),
+        (60,"1m"),
+        (120,"2m"),
+        (300,"5m"),
+        (600,"10m"),
+        (900,"15m"),
+        (1800,"30m"),
+    )
+    Refresh = models.FloatField('Refresh', choices=Refresh_CHOICES,null=True, blank =True,default=120)
 
     objects = WellManager()
     class Meta:

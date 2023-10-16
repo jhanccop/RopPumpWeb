@@ -35,7 +35,8 @@ class WellManager(models.Manager):
                  "PlungerDiameter",
                  "TrueVerticalDepth",
                  "TotalRodLength",
-                 "TotalRodWeight"
+                 "TotalRodWeight",
+                 "Refresh"
                  )
         return result
 

@@ -99,25 +99,6 @@ class UpdateDataForm(forms.ModelForm):
         required=False
     )
 
-    REFRESH_CHOICES = (
-        (30,"30s"),
-        (60,"1m"),
-        (120,"2m"),
-        (300,"5m"),
-        (600,"10m"),
-        (900,"15m"),
-        (1800,"30m"),
-    )
-
-    Refresh = forms.ChoiceField(
-        widget=forms.Select(attrs={
-            'class': 'form-control',
-            'type':"text",
-            }),
-        choices=REFRESH_CHOICES,
-        required=True
-    )
-
     TankHeight = forms.DecimalField(
         widget=forms.NumberInput(attrs={
             "class": "form-control text-end",
@@ -147,7 +128,6 @@ class UpdateDataForm(forms.ModelForm):
             "ThresholdAlert1",
             "ThresholdAlert2",
             "ThresholdStop",
-            "Refresh",
             "TankFactor",
             "TankHeight"
         )
@@ -275,25 +255,6 @@ class CreateDataForm(forms.ModelForm):
         required=False
     )
 
-    REFRESH_CHOICES = (
-        (30,"30s"),
-        (60,"1m"),
-        (120,"2m"),
-        (300,"5m"),
-        (600,"10m"),
-        (900,"15m"),
-        (1800,"30m"),
-    )
-
-    Refresh = forms.ChoiceField(
-        widget=forms.Select(attrs={
-            'class': 'form-control',
-            'type':"text",
-            }),
-        choices=REFRESH_CHOICES,
-        required=True
-    )
-
     TankHeight = forms.DecimalField(
         widget=forms.NumberInput(attrs={
             "class": "form-control text-end",
@@ -324,7 +285,6 @@ class CreateDataForm(forms.ModelForm):
             "ThresholdAlert1",
             "ThresholdAlert2",
             "ThresholdStop",
-            "Refresh",
             "TankFactor",
             "TankHeight"
         )

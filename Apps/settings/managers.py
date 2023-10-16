@@ -22,7 +22,6 @@ class SettingManager(models.Manager):
                 "ThresholdAlert1",
                 "ThresholdAlert2",
                 "ThresholdStop",
-                "Refresh",
                 "TankHeight",
                 "TankFactor"
                 
