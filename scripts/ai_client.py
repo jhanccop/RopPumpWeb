@@ -187,13 +187,13 @@ def on_message(client, userdata, message):
                 #raws = db_get(sql_query)
 
                 if m_mqtt["type"] == "tank":
-                        sql_query = 'SELECT TankHeight FROM wells_tank WHERE TankName_id = {1};'.format(tank_id)
-                        raws = db_get(sql_query)
+                        sql_query = 'SELECT TankHeight FROM wells_tank WHERE id = {0};'.format(tank_id)
+                        raw = db_get(sql_query)
 
                         status = m_mqtt.get("status","NULL")
                         #TankLevel = 15.14583333 - m_mqtt["value"]
-                        TankLevel = raws[0][0] - m_mqtt["value"]
-                        sql_query = 'INSERT INTO overview_tankdata (DateCreate,Status,OilLevel,WaterLevel,TankName_id) VALUES ("{0}","{1}",{2},{3});'.format(DT,status,TankLevel,0,tank_id)
+                        TankLevel = raw[0][0] - m_mqtt["value"]
+                        sql_query = 'INSERT INTO overview_tankdata (DateCreate,Status,OilLevel,WaterLevel,TankName_id) VALUES ("{0}","{1}",{2},{3},{4});'.format(DT,status,TankLevel,0,tank_id)
                         #print(sql_query)
                         db_local(sql_query)
                         #client.publish("jphOandG/device/finish/tank", "finish")
@@ -246,8 +246,10 @@ client.loop_start()
 time.sleep(10)
 
 while 1:
-        sql_query = 'SELECT Refresh, PumpName FROM wells_well WHERE id = {0}'.format(well_id)
+        sql_query = 'SELECT Refresh, TankName FROM wells_tank WHERE id = {0}'.format(tank_id)
         raws = db_get(sql_query)
+
+        #print(raws)
 
         now = datetime.now() - timedelta(hours=5)
         date_time = now.strftime("%Y/%m/%d %H:%M:%S")

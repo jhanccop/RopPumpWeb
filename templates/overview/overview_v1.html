@@ -1,0 +1,187 @@
+{% extends 'overview/base-overview.html' %}
+
+{% load static %}
+
+{% block title %} Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block app %} Overview {% endblock app %}
+{% block PumpType %}  {% endblock PumpType %}
+{% block PumpName %}  {% endblock PumpName %}
+
+{% block content %}
+
+<div class="row">
+    <!-- column for list wells 
+    <div class="col-lg-2 col-md-2">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <h6 class = "text-info">Explore wells</h6>
+                <hr class="horizontal dark mt-0 mb-2">
+            </div>
+            <div class="card-body p-3">
+                <ul class="navbar-nav">
+                    
+                    {% for key, value in object_list.groupsWells.items %}
+                    <li class="nav-item">
+                        <a data-bs-toggle="collapse" href="#{{key}}" class="nav-link" aria-controls="{{key}}" role="button" aria-expanded="true">
+                            <span class="text-dark text-sm font-weight-bold mb-0">{{key}}</span>
+                        </a>
+                    </li>
+                    <div class="timeline timeline-one-side collapse show" id="{{key}}">
+                        
+                        {% for well in value %}
+                        <a class="nav-link text-white active" href="/overview/{{well.PumpName}}">
+                            <div class="timeline-block mb-0">
+                                <span class="timeline-step">
+                                    <i class="ni ni-bold-right text-success"></i>
+                                </span>
+                                <div class="timeline-content">
+                                    <h6 class="text-dark text-sm mb-0">{{well.PumpName}} / {{well.Battery}} </h6>
+                                    <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{well.Diagnosis}}</p>
+                                    <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Last
+                                        update: {{well.LastUpdate|date:'Y-m-d H:i'}}</p>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                        
+                    </div>
+                    {% endfor %}
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+    -->
+
+    <!-- column for vew data -->
+    <div class="col-lg-12 col-md-12">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <div class="d-lg-flex">
+                    <p class="text-sm">
+                        <i class="fa fa-chart-line text-info" aria-hidden="true"></i>
+                        <span class="font-weight-bold">Resume</span> oilfield.
+                    </p>
+    
+                    <div class="ms-auto mt-lg-0">
+                        <button class="btn bg-gradient-warning btn-sm mb-0 export" data-type="csv" type="button">
+                            <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                            <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                        </button> 
+                    </div>
+                </div>
+                
+            </div>
+            <div class="card-body p-3">
+                <div  class="row mb-4">
+                    <!-- historical table -->
+                    <div class="col-lg-12 col-md-12 ">
+                        
+                            <div class="table-responsive">
+                                <table class="table align-items-center mb-0" id="datatable-basic2">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Well/battery</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Last<br>Report<br>Time</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Tank<br>information</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Diagnosis</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Pump<br>Fillage<br>(%)</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">SPM</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Hours <br>running<br>today </th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Production <br>(m³)</th>
+                                            <th class="text-uppercase text-info text-xxs font-weight-bolder opacity-7">Analyzer<br>state</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for key, value in object_list.groupsWells.items %}
+                                        {% for well in value %}
+                                        <tr>
+                                            <td class="text-sm font-weight-normal text-start">
+                                                <a class="nav-link text-white active" href="/overview/{{well.PumpName}}">
+                                                    <span class="badge badge-sm bg-gradient-secondary"> {{well.PumpName}} / {{well.Battery}} </span>
+                                                </a>
+                                            </td>
+                                            
+                                            <td class="text-sm font-weight-normal text-start">{{well.LastUpdate|date:'Y-m-d H:i'}}</td>
+                                            <td class="align-middle">
+                                                <div class="progress-wrapper w-75 mx-auto">
+                                                    <div class="progress-info">
+                                                    <div class="progress-percentage">
+                                                    <span class="text-xs font-weight-bold">{{well.bblOil|floatformat:2}} bbl ( {{well.TankLevel|floatformat:2}} ft )</span>
+                                                    </div>
+                                                    </div>
+                                                    <div class="progress">
+                                                    <div class="progress-bar bg-gradient-secondary w-{{well.TankLevelPer|floatformat:0}}" role="progressbar" aria-valuenow="{{well.TankLevelPer|floatformat:0}}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-sm font-weight-bolder text-start mb-0">
+                                                {{well.Diagnosis}}
+                                            </td>
+                                            <td class="text-sm font-weight-normal text-start">{{well.PumpFill}}</td>
+                                            <td class="text-sm font-weight-normal text-start">{{well.SPM}}</td>
+                                            <td class="text-sm font-weight-normal text-start">{{well.RunTime}}</td>
+                                            <td class="text-sm font-weight-normal text-start">{{well.RunTime}}</td>
+                                            <td class="text-sm font-weight-normal text-start">
+                                                {% if well.Status == "running" %} 
+                                                <span class="badge badge-sm bg-gradient-success">{{well.Status}}</span>
+                                                {% elif well.Status == "low battery" %} 
+                                                <span class="badge badge-sm bg-gradient-warning">{{well.Status}}</span>
+                                                {% elif well.Status == "no signal" %} 
+                                                <span class="badge badge-sm bg-gradient-danger">{{well.Status}}</span>
+                                                {% endif %}
+                                            </td>
+                                            
+                                        </tr>
+                                        {% endfor %}
+                                        {% endfor %}
+                
+                                    </tbody>
+                                </table>
+                            </div>
+                        
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+{% endblock content %}
+
+{% block JSscripts %}
+<!--Table-->
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+<script>
+    const dataTableBasic1 = new simpleDatatables.DataTable("#datatable-basic2", {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 5
+    });
+
+    document.querySelectorAll(".export").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "overview_export_" + type,
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableBasic1.export(data);
+        });
+    });
+</script>
+
+{% endblock JSscripts %}
