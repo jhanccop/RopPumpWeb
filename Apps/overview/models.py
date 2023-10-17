@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 
-from Apps.wells.models import well
+from Apps.wells.models import well, tank
 from multiselectfield import MultiSelectField
 
 from .managers import RPDataManager
@@ -63,8 +63,7 @@ class RodPumpData(models.Model):
         #return str(self.id) + '-' + self.PumpName
 
 class TankData(models.Model):
-    TankName = models.CharField('Tank Name', max_length=20,null=True, blank =True)
-    PumpName = models.ForeignKey(well, on_delete=models.CASCADE, null=True, blank=True)
+    TankName = models.ForeignKey(tank, on_delete=models.CASCADE, null=True, blank=True)
 
     DateCreate = models.DateTimeField(auto_now_add= True, blank =True)
     Status = models.CharField('Status', max_length=20,null=True, blank =True)
@@ -76,4 +75,4 @@ class TankData(models.Model):
         verbose_name_plural = 'All Tank Data'
 
     def __str__(self):
-        return str(self.PumpName)
+        return str(self.TankName)

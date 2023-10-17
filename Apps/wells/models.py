@@ -67,3 +67,33 @@ class well(models.Model):
         #return '%s (%s)' % (self.PumpName,self.Available)
         return self.PumpName
         #return str(self.id) + '-' + self.PumpName
+
+class tank(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    # General information
+    DateCreate = models.DateTimeField(auto_now_add= True )
+    TankName = models.CharField('Tank Name', max_length=100, unique=True)
+    GroupName = models.ForeignKey(Group, on_delete=models.CASCADE, unique=False,blank=True,null=True)
+
+    # tank dimensions
+    TankHeight = models.FloatField('Tank Height',null=True, blank =True)
+    TankFactor = models.FloatField('Tank Factor',null=True, blank =True)
+
+    # Monitoring data
+    Refresh_CHOICES = (
+        (30,"30s"),
+        (60,"1m"),
+        (120,"2m"),
+        (300,"5m"),
+        (600,"10m"),
+        (900,"15m"),
+        (1800,"30m"),
+    )
+    Refresh = models.FloatField('Refresh', choices=Refresh_CHOICES,null=True, blank =True,default=120)
+
+    class Meta:
+        verbose_name = 'tank'
+        verbose_name_plural = 'tanks'
+
+    def __str__(self):
+        return self.TankName
