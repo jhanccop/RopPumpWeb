@@ -192,7 +192,7 @@ def on_message(client, userdata, message):
                 if len(raws) == 0: # CREATE NEW RAW
                         if m_mqtt["type"] == "tank":
                                 status = m_mqtt.get("status","NULL")
-                                TankLevel = 15 - m_mqtt["value"]
+                                TankLevel = 15.14583333 - m_mqtt["value"]
                                 sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,Status,TankLevel,PumpName_id) VALUES ("{0}","{1}",{2},{3});'.format(DT,status,TankLevel,well_id)
                                 print(sql_query)
                                 db_local(sql_query)
@@ -229,7 +229,7 @@ def on_message(client, userdata, message):
                 else:   # UPDATE
                         if m_mqtt["type"] == "tank":
                                 status = m_mqtt.get("status","NULL")
-                                TankLevel = 15 - m_mqtt["value"]
+                                TankLevel = 15.14583333 - m_mqtt["value"]
                                 sql_query = 'UPDATE overview_rodpumpdata  SET TankLevel = {0}, Status = "{1}" WHERE  PumpName_id = {2} AND DateCreate = "{3}";'.format(TankLevel,status,1,DT)
                                 print(sql_query)
                                 db_local(sql_query)
