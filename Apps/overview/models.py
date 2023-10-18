@@ -4,7 +4,7 @@ from django.conf import settings
 from Apps.wells.models import well, tank
 from multiselectfield import MultiSelectField
 
-from .managers import RPDataManager
+from .managers import RPDataManager, TankDataManager
 
 class RodPumpData(models.Model):
     PumpName = models.ForeignKey(well, on_delete=models.CASCADE, null=True, blank=True)
@@ -69,6 +69,8 @@ class TankData(models.Model):
     Status = models.CharField('Status', max_length=20,null=True, blank =True)
     OilLevel = models.FloatField('Oil Level', null=True, blank =True)
     WaterLevel = models.FloatField('Water Level', null=True, blank =True)
+
+    objects = TankDataManager()
 
     class Meta:
         verbose_name = 'Tank Data'

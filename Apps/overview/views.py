@@ -13,11 +13,11 @@ from django.views.generic import (
     ListView
 )
 
-from Apps.wells.models import well
+from Apps.wells.models import well, tank
 from Apps.production.models import ProductionFluid
 from Apps.groups.models import Group
 from Apps.settings.models import setting
-from .models import RodPumpData
+from .models import RodPumpData, TankData
 
 from Apps.users.models import User
 from Apps.company.models import Company
@@ -55,6 +55,10 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
         # -- get wells in company by groups--
         for group_i in list_group:
             list_wells = well.objects.filter(FieldName__Company=company, GroupName=group_i)
+
+            dict_dev = {}
+
+            # ==== get data for well analyzer ====
             tempData = []
             for well_i in list_wells:
                 tempPayload = {
@@ -62,26 +66,26 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
                     'Field': well_i.FieldName,
                     'Battery': well_i.BatteryName,
                 }
-                TankFactor = 0
-                TankHeight = 0
+                #TankFactor = 0
+                #TankHeight = 0
                 settingWellsWA = setting.objects.filter(PumpName = well_i, DeviceType = "Rod Pump Analyzer").values("Status").last()
                 if settingWellsWA != None:
                     tempPayload['Status'] = settingWellsWA["Status"]
 
-                settingWellsTank = setting.objects.filter(PumpName = well_i, DeviceType = "Tank Level Meter").values("TankFactor","TankHeight").last()
-                if settingWellsTank != None:
-                    TankFactor = settingWellsTank["TankFactor"]
-                    TankHeight = settingWellsTank["TankHeight"]
+                #settingWellsTank = setting.objects.filter(PumpName = well_i, DeviceType = "Tank Level Meter").values("TankFactor","TankHeight").last()
+                #if settingWellsTank != None:
+                #    TankFactor = settingWellsTank["TankFactor"]
+                #    TankHeight = settingWellsTank["TankHeight"]
 
                 dataWell = RodPumpData.objects.filter(PumpName=well_i).last()
                 if dataWell != None:
                     tempPayload['LastUpdate'] = dataWell.DateCreate
                     #tempPayload['Position'] = dataWell.Position
                     #tempPayload['LoadPump'] = dataWell.LoadPump
-                    tempPayload['bblOil'] = (TankHeight - dataWell.TankLevel) * TankFactor
-                    tempPayload['TankLevel'] = TankHeight - dataWell.TankLevel
-                    tper = (TankHeight - dataWell.TankLevel) * 100/TankHeight
-                    tempPayload['TankLevelPer'] = int(tper) - int(tper) % int(5)
+                    #tempPayload['bblOil'] = (TankHeight - dataWell.OilLevel) * TankFactor
+                    #tempPayload['TankLevel'] = TankHeight - dataWell.OilLevel
+                    #tper = (TankHeight - dataWell.TankLevel) * 100/TankHeight
+                    #tempPayload['TankLevelPer'] = int(tper) - int(tper) % int(5)
                     tempPayload['SPM'] = dataWell.SPM
                     tempPayload['PumpFill'] = dataWell.PumpFill
                     tempPayload['Diagnosis'] = dataWell.Diagnosis
@@ -93,46 +97,32 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
                         tempPayload['CurrentContidition'] = "No data today"
 
                 tempData.append(tempPayload)
-            groupsWells[group_i] = tempData
-        """
-        list_wells = well.objects.filter(
-            FieldName__Company=company, PumpType="Sucker Rod Pump")
-        rodpumpData = []
-        for well_i in list_wells:
-            temp2 = {
-                'PumpName': well_i.PumpName,
-                'Field': well_i.FieldName,
-                'Battery': well_i.BatteryName,
-            }
+            
+            dict_dev["wells"] = tempData
+            
 
-            settingWells = setting.objects.filter(
-                PumpName=well_i).values("Available").last()
-            if settingWells != None:
-                temp2['Available'] = settingWells["Available"]
+            # ==== get data for tank meter ====
+            tempData = []
+            list_tanks = tank.objects.filter(GroupName=group_i).values("TankName","Status","TankHeight","TankFactor")
+            #print(list_tanks)
+            for tank_i in list_tanks:
+                #print(tank_i["TankName"])
+                tempTankPayload = {
+                    'TankName': tank_i["TankName"],
+                    'Status': tank_i["Status"]
+                }
+                TankFactor = tank_i["TankFactor"]
+                TankHeight = tank_i["TankHeight"]
 
-            dataWells2 = RodPumpData.objects.filter(PumpName=well_i).last()
-            if dataWells2 != None:
-                temp2['LastUpdate'] = dataWells2.DateCreate
-                #temp2['Position'] = dataWells2.Position
-                #temp2['LoadPump'] = dataWells2.LoadPump
-                #temp2['PIP'] = dataWells2.HeadPressure
-                temp2['SPM'] = dataWells2.SPM
-                temp2['PumpFill'] = dataWells2.PumpFill
-                temp2['Diagnosis'] = dataWells2.Diagnosis
+                list_data = TankData.objects.search_today_Tankdata(tank_i["TankName"], TankFactor,TankHeight)
+                tempTankPayload['list_data'] = list_data
 
-                if datetime.now().date() == dataWells2.DateCreate.date():
-                    temp2['CurrentContidition'] = dataWells2.Status
-                else:
-                    temp2['CurrentContidition'] = "No data today"
+                tempData.append(tempTankPayload)
 
-            rodpumpData.append(temp2)
+            dict_dev["tanks"] = tempData
 
-        wellsByDiagnosis = []
-        if len(rodpumpData) != 0:
-            TempDiagnosis = dict(Counter(np.concatenate([ x.get("Diagnosis",[]) for x in rodpumpData])))
-            wellsByDiagnosis = [",".join(map(str,list(TempDiagnosis.keys()))),",".join(map(str,list(TempDiagnosis.values())))]
-        
-        """
+            groupsWells[group_i] = dict_dev
+       
 
         allData = {
             #"rodpumpData": rodpumpData,

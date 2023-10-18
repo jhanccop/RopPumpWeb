@@ -6,6 +6,8 @@ from django.utils.timezone import now
 from unittest import result
 from django.db import models
 
+import math
+
 
 class DataManager(models.Manager):
     def search_by_interval_data(self, interval, wellName):
@@ -202,4 +204,26 @@ class RPDataManager(models.Manager):
             ).order_by(
                 'date'
             )
+        return result
+
+class TankDataManager(models.Manager):
+    def search_today_Tankdata(self,TankName, TankFactor,TankHeight):
+        Today = date.today()
+        result = self.filter(
+                DateCreate__year = Today.year,
+                DateCreate__month = Today.month,
+                DateCreate__day = Today.day,
+                TankName__TankName = TankName
+            ).values(
+                "id",
+                "DateCreate",
+                "OilLevel",
+                "WaterLevel",
+                "Status"
+            ).annotate(
+                total = F("OilLevel") + F("WaterLevel"),
+                bblOil =  (F("OilLevel") - F("WaterLevel")) * TankFactor,
+                TankLevelPer = (F("OilLevel") - F("WaterLevel")) * 100 / TankHeight,
+                #inches = math.floor(((TankHeight - F("OilLevel")[0] - F("WaterLevel")[0]) % 1) * 12)
+            ).order_by('-DateCreate')
         return result

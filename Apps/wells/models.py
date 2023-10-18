@@ -80,6 +80,15 @@ class tank(models.Model):
     TankFactor = models.FloatField('Tank Factor',null=True, blank =True)
 
     # Monitoring data
+    Status_CHOICES = (
+        ("stopped", "stopped"),
+        ("running", "running"),
+        ("low battery", "low battery"),
+        ("no signal", "no signal"),
+        ("not synchronized", "not synchronized"),
+    )
+    Status = models.CharField('Status', max_length=50, choices=Status_CHOICES, default="stopped")
+
     Refresh_CHOICES = (
         (30,"30s"),
         (60,"1m"),
