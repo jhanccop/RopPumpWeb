@@ -69,7 +69,7 @@ class TankData(models.Model):
     Status = models.CharField('Status', max_length=20,null=True, blank =True)
     OilLevel = models.FloatField('Oil Level', null=True, blank =True)
     WaterLevel = models.FloatField('Water Level', null=True, blank =True)
-
+    Temperature = models.FloatField('Temperature', null=True, blank =True)
     objects = TankDataManager()
 
     class Meta:

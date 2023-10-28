@@ -191,9 +191,10 @@ def on_message(client, userdata, message):
                         raw = db_get(sql_query)
 
                         status = m_mqtt.get("status","NULL")
-                        #TankLevel = 15.14583333 - m_mqtt["value"]
-                        TankLevel = raw[0][0] - m_mqtt["value"]
-                        sql_query = 'INSERT INTO overview_tankdata (DateCreate,Status,OilLevel,WaterLevel,TankName_id) VALUES ("{0}","{1}",{2},{3},{4});'.format(DT,status,TankLevel,0,tank_id)
+                        temperature = m_mqtt.get("temp","NULL")
+                        #TankLevel = 15.01 - m_mqtt["value"]; #15.5
+                        TankLevel = raw[0][0] - m_mqtt["value"] - 0.5
+                        sql_query = 'INSERT INTO overview_tankdata (DateCreate,Status,OilLevel,WaterLevel,Temperature,TankName_id) VALUES ("{0}","{1}",{2},{3},{4},{5});'.format(DT,status,TankLevel,0,temperature,tank_id)
                         #print(sql_query)
                         db_local(sql_query)
                         #client.publish("jphOandG/device/finish/tank", "finish")
@@ -202,20 +203,26 @@ def on_message(client, userdata, message):
                         status = m_mqtt.get("status","NULL")
                         RunTime = round(m_mqtt.get("runtime",0),3)
                         if status == "running":
-                                acc = acc = m_mqtt.get("p")
-                                #pos_surf = vec_str(acc_to_distance_model(str_vec(acc)) * 63)
-                                pos_surf = vec_str(acc_to_distance_model(acc) * 63)
-                                
+                                acc = vec_str(m_mqtt.get("p",[]))
+                                #print(type(acc))
+                                #pos_surf = vec_str(acc_to_distance_model(m_mqtt.get("p",[])) * 63)
+                                pos_surf = vec_str(acc_to_distance_model((m_mqtt.get("p",[])))*64)
+                                print(2)
                                 #load_surf = vec_str(str_vec(m_mqtt["l"]) + 6)
                                 load_surf = vec_str(np.array(m_mqtt["l"]) + 6)
-                                
+                                print(3)
                                 pos_down = vec_str(pos_down_model(str_vec(pos_surf)) * 55)
+                                print(4)
                                 load_down = vec_str(load_down_model(str_vec(load_surf)) * 4)
+                                print(5)
                                 SPM =  m_mqtt.get("SPM",0)
+                                print(6)
                                 fillPump = fill_model(str_vec(load_surf))
+                                print(7)
                                 diagnosis = diagnosis_model(str_vec(load_down))
+                                print(8)
 
-                                sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,SurfaceLoad,SurfacePosition,SPM,Diagnosis,PumpFill,Recomendation,PumpName_id,RunTime,RawAcceleration,Status,DownLoad,DownPosition,TankLevel) VALUES ("{0}","{1}","{2}",{3},"{4}",{5},"{6}",{7},{8},"{9}","{10}","{11}","{12}",{});'.format(DT,load_surf,pos_surf,SPM,diagnosis,fillPump,"Good work area",well_id,RunTime,acc,status,load_down,pos_down,0)
+                                sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,SurfaceLoad,SurfacePosition,SPM,Diagnosis,PumpFill,Recomendation,PumpName_id,RunTime,RawAcceleration,Status,DownLoad,DownPosition) VALUES ("{0}","{1}","{2}",{3},"{4}",{5},"{6}",{7},{8},"{9}","{10}","{11}","{12}");'.format(DT,load_surf,pos_surf,SPM,diagnosis,fillPump,"Good work area",well_id,RunTime,acc,status,load_down,pos_down)
                                 print(sql_query)
                                 db_local(sql_query)
 
@@ -223,7 +230,7 @@ def on_message(client, userdata, message):
                                 SPM = m_mqtt.get("SPM",0)
                                 fillPump = m_mqtt["fill"]
                                 diagnosis = status #m_mqtt["diag"]
-                                sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,PumpName_id,Diagnosis,PumpFill,SPM,RunTime,TankLevel) VALUES ("{0}",{1},"{2}",{3},{4},{5})'.format(DT,well_id,"Recovering level",0,0,RunTime,0)
+                                sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,PumpName_id,Diagnosis,PumpFill,SPM,RunTime) VALUES ("{0}",{1},"{2}",{3},{4},{5})'.format(DT,well_id,"Recovering level",0,0,RunTime)
                                 db_local(sql_query)
 
                                 #sql_query = 'UPDATE overview_rodpumpdata  SET TankLevel = {0}, Status = "{1}" WHERE  PumpName_id = {2} AND DateCreate = "{3}";'.format(TankLevel,status,1,DT)
