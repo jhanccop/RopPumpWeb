@@ -1,0 +1,300 @@
+{% extends 'overview/base-overview.html' %}
+
+{% load static %}
+
+{% block title %} Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block app %} Overview {% endblock app %}
+{% block PumpType %}  {% endblock PumpType %}
+{% block PumpName %}  {% endblock PumpName %}
+
+{% block content %}
+
+<div class="row">
+
+    <!-- column for vew data -->
+    {% for key, value in object_list.groupsWells.items %}
+    <div class="col-lg-12 col-md-12 mb-4">
+        <div class="card h-100">
+            <div class="card-body p-3">
+
+                <div class="d-lg-flex">
+                    <p class="text-sm">
+                        <i class="fa fa-chart-line text-info" aria-hidden="true"></i>
+                        <span class="font-weight-bold">{{key}}</span> Well.
+                    </p>
+                    
+                </div>
+
+                <div  class="row mb-4">
+                    <!-- Tank card -->
+                    <div class="col-lg-8 mt-lg-0 mt-4">
+                        <div class="card overflow-hidden h-100">
+                            <div class="card-header p-3 pb-0">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                                        <i class="fa fa-database text-lg opacity-10" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <p class="text-sm mb-0 text-capitalize font-weight-normal">Tank</p>
+                                        <h6 class="font-weight-bolder mb-0">
+                                            <span class=" font-weight-bold" id = "bblOil">--</span> bbl ( <span id = "ft">--</span>ft <span id = "in">--</span>in <span id = "qq">--</span>)
+                                        </h6>
+                                    </div>
+                                    <div class="progress-wrapper ms-auto w-50">
+                                        </span> &nbsp;&nbsp;  Last Update:&nbsp;&nbsp;<span class=" font-weight-bold" id = "LastUpdate"></span>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body mt-3 p-0">
+                                <div  class="row mb-4">
+                                    <div class="col-lg-3 mt-lg-0 mt-4">
+                                        <div class="chart mb-4">
+                                            <canvas id="tank_bar" style="width:40%;max-width:700px;height:100%;max-height:900px"></canvas>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-9 mt-lg-0 mt-4">
+                                        <div class="chart">
+                                            <div ui-jp="plot" id = "tank_history" style="height: 400px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynachart card -->
+                    <div class="col-lg-2 col-md-6 ">
+                        <h6>
+                        <a class="nav-link text-white active" href="/overview/BLACKMON No. 1">
+                            <span class="badge badge-sm bg-gradient-secondary"> Dynachart</span>
+                        </a>
+                        </h6>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+
+
+
+{% endblock content %}
+
+{% block JSscripts %}
+<!--Table-->
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+<script>
+    const dataTableBasic1 = new simpleDatatables.DataTable("#datatable-basic2", {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 5
+    });
+
+    document.querySelectorAll(".export").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "overview_export_" + type,
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableBasic1.export(data);
+        });
+    });
+</script>
+
+<script src="{% static 'assets/js/plugins/plotly-2.12.1.min.js' %}"></script>
+<script>
+    function dtFormat(dateTime) {
+        var dd = dateTime.getDate();
+        var yyyy = dateTime.getFullYear();
+        var mm = dateTime.getMonth() + 1;
+
+        mm = (mm < 10 ? '0' : '') + mm;
+        dd = (dd < 10 ? '0' : '') + dd;
+
+        // Now setting up Time Format (hh:mm:ss)
+        var hr = dateTime.getHours();
+        var min = dateTime.getMinutes();
+        var sec = dateTime.getSeconds();
+
+        hr = (hr < 10 ? '0' : '') + hr;
+        min = (min < 10 ? '0' : '') + min;
+        sec = (sec < 10 ? '0' : '') + sec;
+        var dt = yyyy + "/" + mm + "/" + dd + " " + hr + ":" + min;// + ":" + sec;
+        return dt;
+    }
+
+    function levelFormat(level){
+        let ft = Math.floor(level);
+        let indec = (level % 1) * 12;
+        let indecdec = indec % 1;
+        let strIn = "";
+        if(indecdec > 0 && indecdec <= 0.25)
+        {
+            strIn = "1/4";
+        }else if(indecdec > 0.25 && indecdec <= 0.5){
+            strIn = "1/2";
+        }else if(indecdec > 0.5 && indecdec <= 0.75){
+            strIn = "3/4";
+        }else if(indecdec > 0.75 && indecdec <= 1){
+            strIn = "";
+            indec = indec + 1;
+            if(indec > 12){
+                ft = ft + 1;
+                indec = 0;
+            }
+        }
+
+        return [ft, Math.floor(indec),strIn];
+    }
+
+    //var ddt = new Date("{{object_list.data.0.DateCreate|date:'Y-m-d H:i'}}");
+    //$("#LastUpdate").html(dtFormat(ddt));
+    //console.log("mel","{{object_list.groupsWells}}");
+    //$("#LastUpdate").html(dtFormat(ddt));
+
+    var DateTime = [];
+    var data_bbl = [];
+    var data_level = [];
+
+    '{% for key, value in object_list.groupsWells.items %}'
+
+        '{% for i in value.tanks.0.list_data %}'
+        data_bbl.push('{{i.bblOil|floatformat:2}}');
+        var ddt = new Date("{{i.DateCreate|date:'Y/m/d H:i'}}");
+        DateTime.push(ddt);
+        data_level.push('{{i.total|floatformat:2}}');
+        '{% endfor %}'
+
+    '{% endfor %}'
+    $("#LastUpdate").html(dtFormat(DateTime[0]));
+    $("#bblOil").html(data_bbl[0]);
+    let level = levelFormat(data_level[0]);
+    $("#ft").html(level[0]);
+    $("#in").html(level[1]);
+    $("#qq").html(level[2]);
+
+    var trace0 = {
+        type: "scatter",
+        mode: "lines+markers",
+        name: 'Pump Fill',
+        x: DateTime.reverse(),
+        y: data_bbl.reverse(),
+        line: {color: '#6CA8FF',shape: 'spline'},
+    }
+
+    var data = [trace0];
+
+    var config = {
+        modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d', 'zoomOut2d'],
+        responsive: true,
+        displaylogo: false
+    }
+
+    var layout = {
+        //background : gradientStroke1,
+        showlegend: true,
+        paper_bgcolor: "rgba(0,0,0,0",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        legend: {
+            "orientation": "h",
+            x: 0,
+            xanchor: 'left',
+            y: 1
+        },
+
+        margin: {l:22,t:10,b:10,r:10},
+		autosize: true,
+
+        yaxis2: {
+            domain: [0.6, 0.95],
+            anchor: 'x2'
+        },
+        xaxis2: {
+            domain: [0.6, 0.95],
+            anchor: 'y2'
+        },
+        xaxis: {
+            autorange: true,
+            //range: ['2015-02-17', '2017-02-16'],
+            rangeselector: {buttons: [
+                {
+                count: 1,
+                label: '1h',
+                step: 'hour',
+                stepmode: 'backward'
+                },
+                {
+                count: 12,
+                label: '12h',
+                step: 'hour',
+                stepmode: 'backward'
+                },
+                {step: 'all'}
+            ]},
+            //rangeslider: {range: ['2022-08-13', '2022-08-13']},
+            rangeslider: {autorange:true},
+            type: 'date'
+        },
+        yaxis: {
+            autorange: false,
+            range: [0, 210],
+            type: 'linear'
+        }
+    };
+    Plotly.newPlot('tank_history', data, layout, config);
+</script>
+
+<script src="{% static 'assets/js/plugins/chartjs.min.js' %}"></script>
+<script>
+    var ctx0 = document.getElementById("tank_bar").getContext("2d");
+    new Chart(ctx0, {
+      type: "bar",
+      data: {
+        //labels: dateTimeRT.reverse(),
+        labels: ["Tank"],
+        datasets: [{
+            label: "Level",
+            tension: 0,
+            pointRadius: 3,
+            pointBackgroundColor: "#e91e63",
+            pointBorderColor: "transparent",
+            borderColor: "#641E16",
+            borderWidth: 1,
+            backgroundColor: "#E6B0AA",
+            fill: true,
+            //data: data_runtime.reverse(),
+            data: [data_level[0]],
+            maxBarThickness: 100
+          }
+        ]
+      },
+      options: {
+            responsive: true,
+            scales: {
+                y: {
+                    min: 0,
+                    max: 15,
+                }
+            }
+        }
+    })
+</script>
+
+
+{% endblock JSscripts %}

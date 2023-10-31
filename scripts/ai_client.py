@@ -13,10 +13,10 @@ import paho.mqtt.client as mqtt
 broker_address = 'broker.hivemq.com'
 broker_port = 1883
 
-client_id = 'edgemelast435rrrrerrtrtr'
+client_id = 'edgemelast435rrrrerrddtrtr'
 username = 'jhanccop'
 password = 'jhanccop1'
-topic_sub = "jphOandG/data"
+topic_sub = "jphOandG/mexdata"
 
 print(broker_address, topic_sub)
 
@@ -24,18 +24,6 @@ well_id = 1
 tank_id = 1
 
 labels = ["Full pump","Leak travel valve","Leak standing valve","Worn pump barrel","Light fluid stroke","Medium fluid stroke","Severe fluid stroke","Gas interference","Shock of pump up","Shock of pump down","Rods broken"]
-wells_dict = {
-        "TEST1":10,
-        "12014":9,
-        "12019":8,
-        "12017":7,
-        "12022":6,
-        "12090":5,
-        "12009":4,
-        "12026_":3,
-        "12026":2,
-        "12044":1
-}
 
 def Norm(x):
         x_norm = (x-np.min(x))/(np.max(x)-np.min(x))
@@ -155,8 +143,17 @@ def db_get(exec):
         finally:
                 conexion.close()
 
-def configure(m_mqtt):
-        pass
+def configure_wells(client,mac):
+        sql_query_id = 'SELECT id FROM wells_well WHERE MacAddress = "{0}"'.format(mac)
+        raws_id = db_get(sql_query_id)
+        well_id = raws_id[0][0]
+
+        sql_query = 'SELECT Refresh, PumpName FROM wells_well WHERE id = {0}'.format(well_id)
+        raws = db_get(sql_query)
+
+        topic_pub = "jphOandG/mexdevice/finish/{}".format(mac)
+        client.publish(topic_pub, json.dumps({"name":raws[0][1],"timeSleep":raws[0][0]-30}))
+        
 
 def on_connect(client, userdata, flags, rc):
         print("Connected with result code " + str(rc))
@@ -173,18 +170,14 @@ def on_message(client, userdata, message):
                 m_mqtt = json.loads(data_in)
                 print("data input: ", m_mqtt)
 
-                #WellName = str(m_mqtt["name"])
-                idTest = str(m_mqtt["idTest"])
                 mac = str(m_mqtt.get("mac","NULL"))
-                DT = idTest 
+
+                now = datetime.now() - timedelta(hours=4)
+                date_time = now.strftime("%Y/%m/%d %H:%M:%S")
+                DT = date_time 
 
                 print("finish published")
-                client.publish("jphOandG/device/finish", mac)
-                
-                # hacer una consulta para obtener el id del pozo con el nombre, altura de tanque y factor
-                #sql_query = 'SELECT PumpName_id FROM overview_rodpumpdata WHERE DateCreate = "{0}" AND PumpName_id = {1};'.format(DT, well_id)
-                #print(sql_query)
-                #raws = db_get(sql_query)
+                configure_wells(client,mac)
 
                 if m_mqtt["type"] == "tank":
                         sql_query = 'SELECT TankHeight FROM wells_tank WHERE id = {0};'.format(tank_id)
@@ -253,16 +246,16 @@ client.loop_start()
 time.sleep(10)
 
 while 1:
-        sql_query = 'SELECT Refresh, TankName FROM wells_tank WHERE id = {0}'.format(tank_id)
+        sql_query = 'SELECT Refresh, PumpName FROM wells_well WHERE id = {0}'.format(well_id)
         raws = db_get(sql_query)
 
         #print(raws)
 
-        now = datetime.now() - timedelta(hours=5)
+        now = datetime.now() - timedelta(hours=4)
         date_time = now.strftime("%Y/%m/%d %H:%M:%S")
         #client.publish("jphOandG/device/start", json.dumps({"name":raws[0][1],"dt":date_time,"timeSleep":raws[0][0]-30,"TankHeight":15,"TankFactor":13.9886}))
         print("start published")
-        client.publish("jphOandG/device/start", json.dumps({"name":raws[0][1],"dt":date_time,"timeSleep":raws[0][0]-30}))
+        client.publish("jphOandG/mexdevice/start", json.dumps({"name":raws[0][1],"dt":date_time,"timeSleep":raws[0][0]-30}))
         time.sleep(raws[0][0])
 
 

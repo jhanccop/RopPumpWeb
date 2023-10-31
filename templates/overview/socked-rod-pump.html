@@ -101,7 +101,7 @@
                 <div id="Dynacharts" class="collapse show">
                     <form method="GET">{% csrf_token %}
                         <div class="row mb-4">
-                            <div class="col-xl-4 col-sm-4">
+                            <div class="col-xl-6 col-sm-6">
                                 <p class="text-sm"> <span class="text-md font-weight-bold"> {{object_list.name}} </span> &nbsp;&nbsp;  Last Update:&nbsp;&nbsp;<span class=" font-weight-bold" id = "LastUpdate"></span>
                                 </p>
                             </div>
@@ -112,7 +112,7 @@
                                 </div>
                                 
                             </div>
-                            <div class="col-xl-4 col-sm-4">
+                            <div class="col-xl-2 col-sm-2">
                                 <button class="btn bg-gradient-primary" type="submit"> Search </button>
                             </div>
                         </div>
@@ -128,7 +128,7 @@
                         </div>
                         <!-- PUMP FILL -->
                         <div class="col-lg-6 col-md-4">
-                            <h6>Barrels in tank and pump filling</h6>
+                            <h6>Pump filling</h6>
                             <div class="chart">
                                 <div ui-jp="plot"  id = "AllPlots" style="height: 300px;"></div>
                             </div>
@@ -285,27 +285,32 @@
 <script>
 
     function dtFormat(dateTime) {
-        var dd = dateTime.getDate();
-        var yyyy = dateTime.getFullYear();
-        var mm = dateTime.getMonth() + 1;
+        console.log(dateTime);
+        if(dateTime == "Invalid Date"){
+            return "No data for today";
+        }else{
+            var dd = dateTime.getDate();
+            var yyyy = dateTime.getFullYear();
+            var mm = dateTime.getMonth() + 1;
 
-        mm = (mm < 10 ? '0' : '') + mm;
-        dd = (dd < 10 ? '0' : '') + dd;
+            mm = (mm < 10 ? '0' : '') + mm;
+            dd = (dd < 10 ? '0' : '') + dd;
 
-        // Now setting up Time Format (hh:mm:ss)
-        var hr = dateTime.getHours();
-        var min = dateTime.getMinutes();
-        var sec = dateTime.getSeconds();
+            // Now setting up Time Format (hh:mm:ss)
+            var hr = dateTime.getHours();
+            var min = dateTime.getMinutes();
+            var sec = dateTime.getSeconds();
 
-        hr = (hr < 10 ? '0' : '') + hr;
-        min = (min < 10 ? '0' : '') + min;
-        sec = (sec < 10 ? '0' : '') + sec;
-        var dt = yyyy + "/" + mm + "/" + dd + " " + hr + ":" + min;// + ":" + sec;
-        return dt;
+            hr = (hr < 10 ? '0' : '') + hr;
+            min = (min < 10 ? '0' : '') + min;
+            sec = (sec < 10 ? '0' : '') + sec;
+            var dt = yyyy + "/" + mm + "/" + dd + " " + hr + ":" + min;// + ":" + sec;
+            return dt;
+        }
+        
     }
     var ddt = new Date("{{object_list.data.0.DateCreate|date:'Y-m-d H:i'}}");
     //$("#LastUpdate").html(dtFormat(ddt));
-    console.log("{{object_list.data.0.DateCreate|date:'Y-m-d H:i'}}");
     $("#LastUpdate").html(dtFormat(ddt));
 
     var layout_Dynachart = {
@@ -364,7 +369,7 @@
         var ddt = new Date("{{well.DateCreate|date:'Y/m/d H:i'}}");
         dateTime.push(ddt);
 
-        data_level.push('{{well.bblOil|floatformat:2}}');
+        //data_level.push('{{well.bblOil|floatformat:2}}');
         data_PumpFill.push('{{well.PumpFill}}');
         data_Diagnosis = data_Diagnosis.concat('{{well.Diagnosis}}'.split(", "));
 
@@ -419,16 +424,7 @@
         line: {color: '#6CA8FF',shape: 'spline'},
     }
 
-    var trace1 = {
-        x: dateTime.reverse(),
-        y: data_level,
-        mode: "line+smarkers",
-        name: 'Tank Level',
-        type: 'scatter',
-        line: {color: '#ffb967',shape: 'spline'},
-    };
-
-    var data = [trace0,trace1];
+    var data = [trace0];
     
     var layout = {
         //background : gradientStroke1,

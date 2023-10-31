@@ -119,11 +119,11 @@ class RPDataManager(models.Manager):
             return result
 
     def search_today_RPdata(self,wellName, TankFactor,TankHeight):
-        #Today = date.today()
+        Today = date.today()
         result = self.filter(
-                #DateCreate__year=Today.year,
-                #DateCreate__month=Today.month,
-                #DateCreate__day=Today.day,
+                DateCreate__year=Today.year,
+                DateCreate__month=Today.month,
+                DateCreate__day=Today.day,
                 PumpName__PumpName=wellName
             ).values(
                 "id",

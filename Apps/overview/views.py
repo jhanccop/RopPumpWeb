@@ -36,8 +36,73 @@ class CompanyMixin(object):
         context['CompanyName'] = company_name
         return context
 
-
 class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
+    template_name = "overview/overview.html"
+    login_url = reverse_lazy('user_app:user-login')
+    # paginate_by = 2
+
+    def get_queryset(self):
+        # company = self.kwargs['company']
+        company = User.objects.get_company_id(
+            self.request.user)[0]["CompanyName"]
+        
+        # --  get wells by company ---
+        list_wells = well.objects.filter(UserAuthor__CompanyName=company)
+        wells_data = []
+        for well_i in list_wells:
+            tempPayload = {
+                'PumpName': well_i.PumpName,
+                'Field': well_i.FieldName,
+                'Battery': well_i.BatteryName,
+                'AnalyzerStatus': well_i.Status
+            }
+
+            dataWell = RodPumpData.objects.filter(PumpName=well_i).last()
+            if dataWell != None:
+                tempPayload['LastUpdate'] = dataWell.DateCreate
+                tempPayload['SPM'] = dataWell.SPM
+                tempPayload['PumpFill'] = dataWell.PumpFill
+                tempPayload['Diagnosis'] = dataWell.Diagnosis
+                tempPayload['RunTime'] = dataWell.RunTime
+
+                if datetime.now().date() == dataWell.DateCreate.date():
+                    tempPayload['WellStatus'] = dataWell.Status
+                else:
+                    tempPayload['WellStatus'] = "No data today"
+
+            wells_data.append(tempPayload)
+
+        # --  get tanks by company ---
+        list_tanks = tank.objects.filter(UserAuthor__CompanyName=company)
+        tanks_data = []
+        for tank_i in list_tanks:
+            tempPayloadTank = {
+                'TankName': tank_i.TankName,
+                'GroupName': tank_i.GroupName,
+                'Status': tank_i.Status,
+            }
+
+            dataTank = TankData.objects.filter(TankName=tank_i).last()
+            if dataTank != None:
+                tempPayloadTank['LastUpdate'] = dataTank.DateCreate
+                tempPayloadTank['OilLevel'] = dataTank.OilLevel
+                tempPayloadTank['WaterLevel'] = dataWell.WaterLevel
+
+                if datetime.now().date() == dataTank.DateCreate.date():
+                    tempPayloadTank['CurrentContidition'] = dataTank.Status
+                else:
+                    tempPayloadTank['CurrentContidition'] = "No data today"
+
+            tanks_data.append(tempPayloadTank) 
+
+        allData = {
+            "rodpumpData": wells_data,
+            "tankData":tanks_data,
+        }
+
+        return allData
+
+class ListOverview_v0(LoginRequiredMixin, CompanyMixin, ListView):
     template_name = "overview/overview.html"
     login_url = reverse_lazy('user_app:user-login')
     # paginate_by = 2

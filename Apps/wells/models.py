@@ -47,6 +47,21 @@ class well(models.Model):
     PumpType = models.CharField('Pump Type', max_length=50, choices=TYPE_CHOICES, default="Sucker Rod Pump")
 
     # Monitoring data
+    Status_CHOICES = (
+        ("stopped", "stopped"),
+        ("running", "running"),
+        ("low battery", "low battery"),
+        ("no signal", "no signal"),
+        ("not synchronized", "not synchronized"),
+    )
+    Status = models.CharField('Status', max_length=50, choices=Status_CHOICES, default="stopped")
+    MacAddress = models.CharField('Mac Address', max_length=100, unique=True, null=True, blank =True)
+    
+    Available_CHOICES = (
+        (True,"available"),
+        (False,"not available")
+    )
+    Available = models.BooleanField('Available',choices=Available_CHOICES, default=True)
     Refresh_CHOICES = (
         (30,"30s"),
         (60,"1m"),
@@ -70,6 +85,7 @@ class well(models.Model):
 
 class tank(models.Model):
     id = models.BigAutoField(primary_key=True)
+    UserAuthor = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL)
     # General information
     DateCreate = models.DateTimeField(auto_now_add= True )
     TankName = models.CharField('Tank Name', max_length=100, unique=True)
