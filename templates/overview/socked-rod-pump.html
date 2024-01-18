@@ -117,16 +117,16 @@
                             </div>
                         </div>
                     </form>
-    
+                    <!-- 
                     <div class="row mb-4">
-                        <!-- Dynachart  bg-light opacity-7 -->
+                        --Dynachart  bg-light opacity-7 --
                         <div class="col-lg-6 col-md-8 card overflow-hidden">
                             <h6>Dynachart</h6>
                             <div class="chart">
                                 <div ui-jp="plot" id = "dynachart" style="height: 300px;"></div>
                             </div>
                         </div>
-                        <!-- PUMP FILL -->
+                        -- PUMP FILL -- 
                         <div class="col-lg-6 col-md-4">
                             <h6>Pump filling</h6>
                             <div class="chart">
@@ -134,6 +134,7 @@
                             </div>
                         </div>
                     </div>
+                    -->
 
                     <hr class="horizontal dark mt-0 mb-4">
 
@@ -176,7 +177,17 @@
                 
                                                     -->
                                                     <div class="d-flex flex-column justify-content-center">
-                                                        <h5 class="mb-0 text-xs">{{well.Diagnosis}}</h5>
+                                                        <!-- <h5 class="mb-0 text-xs">{{well.Diagnosis}}</h5> 
+                                                        <h5 class="mb-0 text-xs">{{well.Status}}</h5>
+                                                        -->
+                                                        {% if well.Status == "Normal running" %} 
+                                                        <span class="badge badge-sm bg-gradient-success">{{well.Status}}</span>
+                                                        {% elif well.Status == "Stopped unit" %} 
+                                                        <span class="badge badge-sm bg-gradient-warning">{{well.Status}}</span>
+                                                        {% else %} 
+                                                        <span class="badge badge-sm bg-gradient-secondary">{{well.Status}}</span>
+                                                        {% endif %}
+                                                        
                                                         <p class="text-xs font-weight-bold text-secondary mb-0"><span class="text-secondary">{{well.DateCreate|date:'Y-m-d H:i'}}</span></p>
                                                     </div>
                                                 </div>
@@ -374,26 +385,22 @@
         data_Diagnosis = data_Diagnosis.concat('{{well.Diagnosis}}'.split(", "));
 
         var SurfaceLoad = "{{well.SurfaceLoad}}";
-        //SurfaceLoad = SurfaceLoad.split(',');
-
         var SurfacePosition = "{{well.SurfacePosition}}";
-        //SurfacePosition = SurfacePosition.split(',');
-
         var DownLoad = "{{well.DownLoad}}";
-        //DownLoad = DownLoad.split(',');
-
         var DownPosition = "{{well.DownPosition}}";
-        //DownPosition = DownPosition.split(',');
-
+        
         load = SurfaceLoad + ",null," + DownLoad;
-        pos = SurfacePosition + ",null," + DownPosition;
+        pos = SurfacePosition + ",null," + SurfacePosition;
+
+        //load = SurfaceLoad;
+        //pos = SurfacePosition;
 
         load = load.split(',');
         pos = pos.split(',');
 
         //console.log("--->",'{{well.Status}}');
 
-        '{% if well.Status == "running" %}'
+        '{% if well.Status == "Normal running" or well.Status == "running"%}'
         var trace = {
             type: 'scatter',
             x: pos,
@@ -420,7 +427,7 @@
         mode: "lines+markers",
         name: 'Pump Fill',
         x: dateTime.reverse(),
-        y: data_PumpFill,
+        y: data_PumpFill.reverse(),
         line: {color: '#6CA8FF',shape: 'spline'},
     }
 
@@ -438,7 +445,7 @@
             y: 1
         },
 
-        margin: {l:22,t:10,b:10,r:10},
+        margin: {l:25,t:10,b:10,r:10},
 		autosize: true,
 
         yaxis2: {
@@ -473,7 +480,7 @@
         },
         yaxis: {
             autorange: false,
-            range: [0, 210],
+            range: [0, 110],
             type: 'linear'
         }
     };

@@ -10,6 +10,8 @@ class RodPumpData(models.Model):
     PumpName = models.ForeignKey(well, on_delete=models.CASCADE, null=True, blank=True)
 
     DateCreate = models.DateTimeField(auto_now_add= True, blank =True)
+    RawSurfaceLoad = models.TextField('Raw Surf Load',  null=True, blank =True)
+    RawSurfacePosition = models.TextField('Raw Surf Position', null=True, blank =True)
     SurfaceLoad = models.TextField('Surf Load',  null=True, blank =True)
     SurfacePosition = models.TextField('Surf Position', null=True, blank =True)
     DownLoad = models.TextField('Down Load',  null=True, blank =True)

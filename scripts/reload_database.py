@@ -6,20 +6,10 @@ import random
 import numpy as np
 from tflite_runtime.interpreter import Interpreter
 
+true_load = np.array([3.563758,4.087834,4.391916,4.773022,4.934161,5.24555,5.66214,6.49862,7.65643,8.52101,9.23954,9.67549,10.2889,11.12192,10.891079999999999,10.21849,10.13393,10.019269999999999,9.90962,10.1546,9.91901,9.874179999999999,8.8289,8.32781,8.29486,8.101140000000001,7.99845,8.616520000000001,8.358550000000001,7.8187,8.08804,7.83964,6.156140000000001,6.0034,5.81459,4.987112,4.708225,5.10289,3.3365299999999998,2.95241,2.90319,3.03646,2.95448,2.9191000000000003,2.81147,3.0198270000000003,2.85471,3.0556900000000002,3.427409,3.382243])
+true_pos = np.array([0.6509628000000001,2.3093701999999996,3.3760985999999997,2.5606414,2.817795,4.224422,5.790934,7.595478,8.91347,9.439086,9.209869999999999,9.066838,9.260182,10.509963999999998,16.96054,39.91786,69.1581,102.49284,143.06506,175.71313999999998,209.61408,223.55172,225.68694,225.07476,224.22621999999998,223.25987999999998,222.59868,224.1278,227.09065999999999,226.37284,221.41155999999998,212.47814,205.50096,205.26042,206.14582,204.75844,203.813,203.7636,200.14561999999998,189.61126,172.97144,155.69664,135.5916,109.82266,86.45494,57.2033,36.855022,21.87755,8.936992,2.2648151999999997])
 
 labels = ["Full pump","Leak travel valve","Leak standing valve","Worn pump barrel","Light fluid stroke","Medium fluid stroke","Severe fluid stroke","Gas interference","Shock of pump up","Shock of pump down","Rods broken"]
-wells_dict = {
-        "TEST1":10,
-        "12014":9,
-        "12019":8,
-        "12017":7,
-        "12022":6,
-        "12090":5,
-        "12009":4,
-        "12026_":3,
-        "12026":2,
-        "12044":1
-}
 
 def Norm(x):
         x_norm = (x-np.min(x))/(np.max(x)-np.min(x))
@@ -110,12 +100,13 @@ def str_vec(string):
 
 
 def db_local(exec):
-        try:
-                conexion = pymysql.connect(
+        conexion = pymysql.connect(
                 host="localhost",
                 user="rpdeveloper",
                 passwd="C0l053n5353:20@",
-                database="RPdatabase")
+                database="RPdatabase2")
+
+        try:
                 cursor = conexion.cursor()
                 cursor.execute(exec)
                 filas = cursor.fetchall()
@@ -124,13 +115,12 @@ def db_local(exec):
                 conexion.close()
 
 def db_get(exec):
-        try:
-                conexion = pymysql.connect(
+        conexion = pymysql.connect(
                 host="localhost",
                 user="rpdeveloper",
                 passwd="C0l053n5353:20@",
-                database="RPdatabase")
-
+                database="RPdatabase2")
+        try:
                 cursor = conexion.cursor()
                 cursor.execute(exec)
                 filas = cursor.fetchall()
@@ -149,6 +139,9 @@ def on_connect(client, userdata, flags, rc):
         print("")
         client.subscribe(topic_sub)
 
+def build(arr_noise,arr_true):
+        return [t + (n)*10 for t,n in zip(arr_true,arr_noise)];
+
 def on_message(client, userdata, message):
         try:
                 #client.subscribe(topic_sub)
@@ -159,11 +152,8 @@ def on_message(client, userdata, message):
                         pass
                 else:
                         m_mqtt = json.loads(data_in)
-                        status = m_mqtt.get("status","NULL")
-                        WellName = str(m_mqtt["well"])
-                        RunTime = round(float(m_mqtt.get("runtime",0)),3)
+                        id = str(m_mqtt["id"])
                         if status == "running":
-                                acc = acc = m_mqtt.get("p")
                                 pos_surf = vec_str(acc_to_distance_model(str_vec(acc)) * 63)
                                 
                                 load_surf = vec_str(str_vec(m_mqtt["l"]) + 6)
@@ -193,82 +183,99 @@ def on_message(client, userdata, message):
 
 def message_input(message):
         try:
-
                 print(message)
-                
                 m_mqtt = json.loads(message)
-                status = m_mqtt.get("status","NULL")
-                WellName = str(m_mqtt["well"])
-                RunTime = round(float(m_mqtt.get("runtime",0)),3)
+                Id = str(m_mqtt["id"])
+                SPM = str(m_mqtt["SPM"])
+                p = str(m_mqtt["p"])
+                l = str(m_mqtt["l"])
+                + np.random.uniform(-0.35,0.35,50)
 
-                if status == "running":
-                        acc = acc = m_mqtt.get("p")
-                        pos_surf = vec_str(acc_to_distance_model(str_vec(acc)) * 63)
-                        
-                        load_surf = vec_str(str_vec(m_mqtt["l"]) + 6)
-                        
-                        pos_down = vec_str(pos_down_model(str_vec(pos_surf)) * 55)
-                        load_down = vec_str(load_down_model(str_vec(load_surf)) * 4)
-                        SPM =  m_mqtt.get("SPM",0)
-                        fillPump = fill_model(str_vec(load_surf))
-                        diagnosis = diagnosis_model(str_vec(load_down))
+                #v_l = build(str_vec(l)/25,true_load)
+                v_p = str_vec(p)
 
-                        DT = m_mqtt["dt"]
+                v_l = str_vec(l) + np.random.uniform(-0.35,0.35,50)
 
-                        sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,SurfaceLoad,SurfacePosition,SPM,Diagnosis,PumpFill,Recomendation,PumpName_id,RunTime,RawAcceleration,Status,DownLoad,DownPosition) VALUES ("{0}","{1}","{2}",{3},"{4}",{5},"{6}",{7},{8},"{9}","{10}","{11}","{12}");'.format(DT,load_surf,pos_surf,SPM,diagnosis,fillPump,"Good work area",wells_dict[WellName],RunTime,acc,status,load_down,pos_down)
-                        #print(sql_query)
-                        db_local(sql_query)
+                pos_surf = vec_str(v_p)
+                load_surf = vec_str(v_l)
 
-                elif status == "stopped":
-                        SPM = m_mqtt.get("SPM",0)
-                        fillPump = m_mqtt["f"]
-                        diagnosis = status #m_mqtt["diag"]
-                        DT = m_mqtt["dt"]
-                        sql_query = 'INSERT INTO overview_rodpumpdata (DateCreate,PumpName_id,Diagnosis,PumpFill,SPM,RunTime) VALUES ("{0}",{1},"{2}",{3},{4},{5})'.format(DT,wells_dict[WellName],"Recovering level",0,0,RunTime)
-                        #print(sql_query)
-                        db_local(sql_query)
+                print(v_p)
+
+                print(v_l)
+
+                #pos_surf = vec_str(acc_to_distance_model(str_vec(acc)) * 63)
+                #load_surf = vec_str(str_vec(m_mqtt["l"]) + 6)
+                #pos_down = vec_str(pos_down_model(str_vec(pos_surf)) * 0.5)
+                pos_down = vec_str(np.array(v_p) * 0.7)
+                load_down = vec_str(load_down_model(str_vec(load_surf)) * 6.5)
+                fillPump = fill_model(str_vec(load_surf))
+                #diagnosis = diagnosis_model(str_vec(load_surf))
+                diagnosis = "Full Pump"
+
+                print(fillPump)
+
+                print()
+
+                print(diagnosis)
+
+                sql_query = 'UPDATE overview_rodpumpdata SET SurfaceLoad = "{0}", SurfacePosition = "{1}",SPM = {2},Diagnosis ="{3}",PumpFill={4},DownLoad="{5}",DownPosition="{6}" WHERE id = {7}'.format(load_surf,pos_surf,SPM,diagnosis,fillPump,load_down,pos_down,Id)
+
+                db_local(sql_query)
+                
+        except Exception as e:
+                print('ERROR..... ', e)
+
+def message_noise(message):
+        try:
+                print(message)
+                m_mqtt = json.loads(message)
+                Id = str(m_mqtt["id"])
+                p = str(m_mqtt["p"])
+                l = str(m_mqtt["l"])
+
+                #v_l = build(str_vec(l)/25,true_load)
+                v_p = str_vec(p)
+
+                v_l = str_vec(l) + np.random.uniform(-0.35,0.35,50)
+
+                pos_surf = vec_str(v_p)
+                load_surf = vec_str(v_l)
+
+
+                #pos_surf = vec_str(acc_to_distance_model(str_vec(acc)) * 63)
+                #load_surf = vec_str(str_vec(m_mqtt["l"]) + 6)
+                #pos_down = vec_str(pos_down_model(str_vec(pos_surf)) * 0.5)
+                pos_down = vec_str(np.array(v_p) * 0.7)
+                load_down = vec_str(load_down_model(str_vec(load_surf)) * 6.5)
+                
+
+                sql_query = 'UPDATE overview_rodpumpdata SET SurfaceLoad = "{0}", SurfacePosition = "{1}",DownLoad="{2}",DownPosition="{3}" WHERE id = {4}'.format(load_surf,pos_surf,load_down,pos_down,Id)
+
+                db_local(sql_query)
+                
         except Exception as e:
                 print('ERROR..... ', e)
 
 import datetime
 
-sql_query = 'SELECT * FROM overview_rodpumpdata;'
+sql_query = 'SELECT id,SPM,SurfaceLoad,SurfacePosition FROM overview_rodpumpdata;'
 rows = db_get(sql_query)
 #(1338, datetime.datetime(2023, 8, 31, 6, 37, 47), None, 0.0, 'Recovering level', 0.0, None, 2, None, None, None, 1.733, 'stopped', None, None, None)
 
+#print(rows)
 count = 0
 for i in rows:
-        if i[12] == 'stopped':
-                msg_dict = {
-                        
-                        "well":"12026_",
-                        "status":i[12],
-                        "dt":i[1].strftime("%Y/%m/%d %H:%M:%S"),
-                        "runtime":i[11],
-                        "SPM":i[3],
-                        "f":0,
-                        "diag":i[12],
-                }
-        else:
-                #{"well":"12044","status":"running","dt":"2023/08/31 00:19:37","runtime":0.066660002,"SPM":"7.85","f":46.92,"diag":[6],"l":"1.575,1.658,1.758,1.875,2.017,2.183,2.417,2.600,2.800,3.017,3.258,3.483,3.550,3.558,3.542,3.542,3.617,3.750,3.833,3.867,3.850,3.825,3.742,3.650,3.533,3.408,3.292,3.183,3.042,2.892,2.717,2.542,2.367,2.108,1.917,1.742,1.617,1.558,1.533,1.492,1.442,1.375,1.325,1.308,1.350,1.408,1.483,1.575,1.658,1.658","p":"174.67,173.33,173.33,169.33,168.00,165.33,165.33,160.00,154.67,148.00,141.33,137.33,134.67,129.33,124.00,118.67,116.00,112.00,109.33,106.67,106.67,106.67,101.33,100.00,97.33,96.00,98.67,97.33,96.00,92.00,93.33,93.33,97.33,100.00,100.00,101.33,105.33,112.00,118.67,126.67,130.67,137.33,145.33,150.67,160.00,161.33,165.33,165.33,168.00,169.33"}
-                #(121, datetime.datetime(2023, 8, 29, 15, 44, 14), None, 8.56, 'Full pump', 50.19, 'Good work area', 2, '1.942,2.042,2.217,2.408,2.600,2.833,3.092,3.342,3.508,3.575,3.575,3.550,3.567,3.617,3.725,3.825,3.892,3.900,3.867,3.833,3.758,3.667,3.550,3.425,3.300,3.225,3.125,3.058,3.000,2.950,2.908,2.842,2.783,2.683,2.533,2.383,2.208,2.092,1.900,1.733,1.650,1.625,1.625,1.608,1.550,1.517,1.517,1.575,1.658,1.658', '0.353,0.144,0.0,0.069,0.162,0.268,0.473,1.1,2.525,4.819,7.933,11.56,15.113,18.285,21.22,24.027,27.093,30.494,34.011,37.503,40.626,43.248,45.54,47.465,49.091,50.376,51.159,51.304,50.85,50.08,49.737,49.1,47.599,44.222,39.187,33.526,28.229,23.667,19.768,16.472,13.483,10.646,7.976,5.62,3.776,2.512,1.795,1.38,0.956,0.484', '168.00,166.67,165.33,164.00,160.00,154.67,148.00,145.33,138.67,133.33,129.33,124.00,122.67,120.00,116.00,113.33,110.67,105.33,101.33,105.33,102.67,102.67,102.67,100.00,100.00,100.00,100.00,100.00,101.33,101.33,102.67,102.67,102.67,106.67,105.33,110.67,118.67,121.33,126.67,130.67,136.00,140.00,146.67,152.00,156.00,160.00,165.33,168.00,169.33,170.67', 0.3, 'running', '', '', None)
-                msg_dict = {
-                        
-                        "well":"12026_",
-                        "status":"running",
-                        "dt":i[1].strftime("%Y/%m/%d %H:%M:%S"),
-                        "runtime":i[11],
-                        "SPM":i[3],
-                        "f":0,
-                        "diag":"n",
-                        "l":i[8],
-                        "p":i[10],
+        msg_dict = {
+                        "id":i[0],
+                        "SPM":i[1] - 2 + 0.2,
+                        "l":i[2],
+                        "p":i[3],
                 }
                 
-        message_input(json.dumps(msg_dict))
-        #if count == 10:
-        #        break
-        #count = count + 1
+        message_noise(json.dumps(msg_dict))
+        #break
+
+
                 
 #print(rows[-1])
 

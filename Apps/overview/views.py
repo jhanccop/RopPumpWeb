@@ -209,6 +209,7 @@ class ListDataRodPump(LoginRequiredMixin, CompanyMixin, ListView):
         intervalDate = self.request.GET.get("dateKword", '')
 
         TankFactor = 0
+        TankHeight = 0
         #settingWellsWA = setting.objects.filter(PumpName = wellName, DeviceType = "Rod Pump Analyzer").values("Status").last()
         #if settingWellsWA != None:
         #    tempPayload['Status'] = settingWellsWA["Status"]

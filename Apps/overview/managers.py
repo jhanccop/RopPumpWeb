@@ -142,7 +142,7 @@ class RPDataManager(models.Manager):
             ).annotate(
                 bblOil = F("TankLevel") * TankFactor,
                 TankLevelPer = F("TankLevel") * 100 / TankHeight
-            ).order_by('-DateCreate')[:16]
+            ).order_by('-DateCreate')[:5]
         return result
 
     def search_trends_fill_SPM_RPdata(self,wellName):
