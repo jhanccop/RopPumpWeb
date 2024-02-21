@@ -4,13 +4,13 @@ from django.db import models
 
 from .managers import CompanyManager
 class Company(models.Model):
-
+    id = models.BigAutoField(primary_key=True)
     # General information
-    DateCreate = models.DateTimeField(auto_now_add=True)
     CompanyName = models.CharField('Company Name', max_length=100, unique=True)
     LocationState = models.CharField('Location State', max_length=100)
     LocationCounty = models.CharField('Location County', max_length=100)
-
+    DateCreate = models.DateTimeField(auto_now_add=True)
+    
     objects = CompanyManager()
 
     class Meta:
@@ -19,4 +19,4 @@ class Company(models.Model):
     
     def __str__(self):
         return self.CompanyName
-        #return str(self.CompanyName)
+        #return str(self.CompanyName) 

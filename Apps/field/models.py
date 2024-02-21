@@ -9,8 +9,8 @@ class Field(models.Model):
     DateCreated = models.DateTimeField(auto_now_add= True)
     FieldName = models.CharField('Field Name', max_length=100, unique=True, blank=True)
     Company = models.ForeignKey(Company, on_delete=models.CASCADE, unique=False, blank=True)
-    LocationState = models.CharField('Location State', max_length=100)
-    LocationCounty = models.CharField('Location County', max_length=100)
+    #LocationState = models.CharField('Location State', max_length=100)
+    #LocationCounty = models.CharField('Location County', max_length=100)
 
     objects = FieldManager()
     

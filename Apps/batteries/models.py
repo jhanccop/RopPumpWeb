@@ -6,6 +6,7 @@ from .managers import BatteryManager
 
 # Create your models here.
 class Battery(models.Model):
+    id = models.BigAutoField(primary_key=True)
     DateCreated = models.DateTimeField(auto_now_add= True)
     BatteryName = models.CharField('Battery Name', max_length=100,unique=True,blank=True)
     Company = models.ForeignKey(Company, on_delete=models.CASCADE, unique=False,blank=True)

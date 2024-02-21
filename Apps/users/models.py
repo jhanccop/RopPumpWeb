@@ -9,16 +9,21 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
 # Create your models here.
 class User(AbstractBaseUser, PermissionsMixin):
-    UserName = models.CharField(max_length=20, unique=True)
-    Email = models.EmailField()
     Name = models.CharField(max_length=30, blank=True)
     LastName = models.CharField(max_length=30,blank=True)
+    UserName = models.CharField(max_length=20, unique=True)
     #CompanyName = models.CharField(max_length=30)
-    CompanyName = models.ForeignKey(Company,on_delete=models.CASCADE,null=True,related_name='company_user')
-   
+    CompanyId = models.ForeignKey(Company,on_delete=models.CASCADE,null=True,related_name='company_user')
+    Email = models.EmailField()
     is_staff = models.BooleanField(default=False)
     #is_superuser = models.BooleanField(default=False)
 
+    ROLE_CHOICES = (
+        ("Manager", "Manager"),
+        ("Worker", "Worker"),
+    )
+    Role = models.CharField('Role', max_length=10, choices=ROLE_CHOICES, default="Worker")
+    
     USERNAME_FIELD = "UserName"
 
     REQUIRED_FIELDS = ["Email",]
