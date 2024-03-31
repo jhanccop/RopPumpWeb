@@ -20,6 +20,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     ROLE_CHOICES = (
         ("Manager", "Manager"),
+        ("Supervisor", "Supervisor"),
         ("Worker", "Worker"),
     )
     Role = models.CharField('Role', max_length=10, choices=ROLE_CHOICES, default="Worker")
