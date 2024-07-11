@@ -6,7 +6,7 @@ class CompanyManager(models.Manager):
 
     def get_company_name(self, company_id):
         result = self.filter(
-                id=company_id
+                id = company_id
             ).values("CompanyName")
         return result
         

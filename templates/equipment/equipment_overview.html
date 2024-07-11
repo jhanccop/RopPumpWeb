@@ -1,0 +1,329 @@
+{% extends 'equipment/base_equipment.html' %}
+
+{% load static %}
+
+{% block title %} Equipment Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} EQUIPMENT OVERVIEW {% endblock appName %}
+{% block Type %} ALL {% endblock Type %}
+
+{% block content %}
+
+<h4>PLACES OR EQUIPMENT</h4>
+
+<div class="row">
+    <!-- column for rod pumps -->
+    <div class="col-lg-6 col-md-12 mb-4" hidden>
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="row align-items-center">
+                    <div class="col-md-6 col-sm-6">
+                        <h5 class="mb-0">Sucker Rod Pumps</h5>
+                    </div>
+                    <div class="col-md-6 col-sm-6">
+                        <div class="text-end pt-1">
+                            <button class="btn bg-gradient-info btn-sm mb-0 export" data-type="csv" type="button">
+                                <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                                <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center justify-content-center mb-0" id="datatable-rodPump">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Well name</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Engine<br>Tipe</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Status</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for well in object_list.RodPumpWell_list %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div>
+                                            <img src="{% static 'assets/img/oil-rig.png' %}" class="avatar avatar-sm me-3 border-radius-xs" alt="user1">
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a class="nav-link mb-0 text-sm active font-weight-bolder" href="/data-rod-pump/{{well.WellName}}">
+                                                {{well.WellName}}
+                                            </a>
+                                            <span> {{well.FieldName__FieldName}} / {{well.BatteryName__BatteryName}}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-md font-weight-normal text-start">{{well.EngineType}}</td>
+                                <td class="text-md font-weight-normal text-start">
+                                    {% if well.Status == "Normal running" %}
+                                    <span class="text-md font-weight-bolder text-success">{{well.Status}}</span>
+                                    {% elif well.Status == "Out of service" %} 
+                                    <span class="text-md font-weight-bolder text-danger">{{well.Status}}</span>
+                                    {% else %} 
+                                    <span class="text-md font-weight-bolder text-warning">{{well.Status}}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="rating ms-auto my-auto">
+                                        <a href=""><i class="fas fa-edit text-success text-lg"></i></a>
+                                        <a href=""><i class="far fa-trash-alt text-danger text-lg ms-2"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- column for tanks -->
+    <div class="col-lg-6 col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="row align-items-center">
+                    <div class="col-md-6 col-sm-6">
+                        <h5 class="mb-0">Tanks</h5>
+                    </div>
+                    <div class="col-md-6 col-sm-6">
+
+                        <div class="text-end pt-1 align-items-center">
+                            <a href="{% url 'equipment_app:add_tank' %}" class="btn bg-gradient-dark btn-sm mb-0">Add New</a>
+                            <button class="btn bg-gradient-info btn-sm mb-0 export2" data-type="csv" type="button">
+                                <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                                <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="dark horizontal my-0">
+
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center justify-content-center mb-0" id="datatable-tank">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tank name</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Well<br>Assigned</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Status</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tank in object_list.Tank_list %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div>
+                                            <img src="{% static 'assets/img/oil-tank_2.png' %}" class="avatar avatar-sm me-3 border-radius-xs" alt="user1">
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a class="nav-link mb-0 text-sm active font-weight-bolder" href="/equipments/view_tank/{{tank.id}}">
+                                                {{tank.TankName}}
+                                            </a>
+                                            <span>
+                                                {{tank.BatteryName__BatteryName}}
+                                            </span>
+                                            
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-md font-weight-normal text-start">Blackmon01</td>
+                                <td class="text-md font-weight-normal text-start">
+                                    {% if tank.Status == "Normal running" %}
+                                    <span class="text-md font-weight-bolder text-success">{{tank.Status}}</span>
+                                    {% elif tank.Status == "Out of service" %} 
+                                    <span class="text-md font-weight-bolder text-danger">{{tank.Status}}</span>
+                                    {% else %} 
+                                    <span class="text-md font-weight-bolder text-warning">{{tank.Status}}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="rating ms-auto my-auto">
+                                        <a href="{% url 'equipment_app:update_tank' tank.id %}"><i class="fas fa-edit text-success text-lg"></i></a>
+                                        <a href="{% url 'equipment_app:remove_tank' tank.id %}"><i class="far fa-trash-alt text-danger text-lg ms-2"></i></a>
+                                    </div>
+                                    
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- column for envorinmetal -->
+    <div class="col-lg-6 col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="row align-items-center">
+                    <div class="col-md-6 col-sm-6">
+                        <h5 class="mb-0">Environments</h5>
+                    </div>
+                    <div class="col-md-6 col-sm-6">
+                        <div class="text-end pt-1">
+                            <a href="{% url 'equipment_app:add_environmental' %}" class="btn bg-gradient-dark btn-sm mb-0">Add New</a>
+                            <button class="btn bg-gradient-info btn-sm mb-0 export3" data-type="csv" type="button">
+                                <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                                <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="dark horizontal my-0">
+
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center justify-content-center mb-0" id="datatable-env">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Name</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Group</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Status</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for j in object_list.Environmental_list %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div>
+                                            <img src="{% static 'assets/img/temperature.png' %}" class="avatar avatar-sm me-3 border-radius-xs" alt="user1">
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a class="nav-link mb-0 text-sm active font-weight-bolder" href="/equipments/view_tank/{{tank.id}}">
+                                                {{j.EnvironmentalName}}
+                                            </a>
+                                            <span>
+                                                {{j.GroupName}}
+                                            </span>
+                                            
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-md font-weight-normal text-start">{{j.GroupName__GroupName}}</td>
+                                <td class="text-md font-weight-normal text-start">
+                                    {% if j.Status == "Normal running" %}
+                                    <span class="text-md font-weight-bolder text-success">{{j.Status}}</span>
+                                    {% elif j.Status == "Out of service" %} 
+                                    <span class="text-md font-weight-bolder text-danger">{{j.Status}}</span>
+                                    {% else %} 
+                                    <span class="text-md font-weight-bolder text-warning">{{j.Status}}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="rating ms-auto my-auto">
+                                        <a href="{% url 'equipment_app:update_environmental' j.id %}"><i class="fas fa-edit text-success text-lg"></i></a>
+                                        <a href="{% url 'equipment_app:remove_environmental' j.id %}"><i class="far fa-trash-alt text-danger text-lg ms-2"></i></a>
+                                       
+                                    </div>
+                                    
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+<script>
+    
+    const dataTableRodPump = new simpleDatatables.DataTable("#datatable-rodPump", {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 5
+    });
+
+    document.querySelectorAll(".export").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "wells_export_" + type,
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableRodPump.export(data);
+        });
+    });
+    
+    const dataTableTank = new simpleDatatables.DataTable("#datatable-tank", {
+        searchable: true,
+        fixedHeight: true,
+        perPage: 5
+    });
+
+    document.querySelectorAll(".export2").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "tank_export_" + type,
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableTank.export(data);
+        });
+    });
+
+    const dataTableEnv = new simpleDatatables.DataTable("#datatable-env", {
+        searchable: true,
+        fixedHeight: true,
+        perPage: 5
+    });
+
+    document.querySelectorAll(".export3").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "env_export",
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableEnv.export(data);
+        });
+    });
+</script>
+
+{% endblock JSscripts %}

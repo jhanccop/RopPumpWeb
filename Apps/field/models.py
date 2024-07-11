@@ -19,9 +19,7 @@ class Field(models.Model):
         verbose_name_plural = 'Fields'
 
     def __str__(self):
-        #return '%s (%s)' % (self.PumpName,self.Available)
         return self.FieldName
-        #return str(self.id)
 
-    def __str__(self):
-        return f'{self.id}: {self.FieldName}'
+    #def __str__(self):
+    #    return f'{self.id}: {self.FieldName}'

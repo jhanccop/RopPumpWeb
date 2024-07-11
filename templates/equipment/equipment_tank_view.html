@@ -1,0 +1,164 @@
+{% extends 'equipment/base_equipment.html' %}
+
+{% load static %}
+
+{% block title %} Equipment Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} DETAIL VIEW {% endblock appName %}
+{% block Type %} TANK {% endblock Type %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-6 mt-lg-0 mt-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="font-weight-bolder">{{Tank.TankName}}</h5>
+
+                <br>
+                <h6 class="font-weight-bolder">General data</h6>
+
+                <div class="row mt-4">
+                    <div class="col-12 col-sm-6">
+                        <div class="input-group input-group-dynamic focuded is-focused">
+                            <label class="form-label">Tank</label>
+                            <input type="text" class="form-control w-100" aria-describedby="emailHelp"
+                                onfocus="focused(this)" onfocusout="defocused(this)" value = "{{Tank.TankName}}">
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 mt-3 mt-sm-0">
+                        <div class="input-group input-group-dynamic focuded is-focused">
+                            <label class="form-label">Field</label>
+                            <input type="text" class="form-control w-100" onfocus="focused(this)"
+                                onfocusout="defocused(this)" value = "{{Tank.BatteryName}}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12 col-sm-6">
+                        <div class="input-group input-group-dynamic focuded is-focused">
+                            <label class="form-label">Battery</label>
+                            <input type="text" class="form-control w-100" aria-describedby="emailHelp"
+                                onfocus="focused(this)" onfocusout="defocused(this)" value = "{{Tank.BatteryName}}">
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 mt-3 mt-sm-0">
+                        <div class="input-group input-group-dynamic focuded is-focused">
+                            <label class="form-label">Group</label>
+                            <input type="text" class="form-control w-100" onfocus="focused(this)"
+                                onfocusout="defocused(this)" value = "{{Tank.GroupName}}">
+                        </div>
+                    </div>
+                </div>
+
+                <br>
+                <br>
+                <h6 class="font-weight-bolder">Location</h6>
+                
+                <div class="row mt-4">
+                    <div class="col-12 col-sm-6">
+                        <div class="input-group input-group-dynamic focuded is-focused">
+                            <label class="form-label">Location - latitude</label>
+                            <input type="number" class="form-control w-100" aria-describedby="emailHelp"
+                                onfocus="focused(this)" onfocusout="defocused(this)" value = "{{Tank.LatLocation}}">
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 mt-3 mt-sm-0">
+                        <div class="input-group input-group-dynamic focuded is-focused">
+                            <label class="form-label">Location - longitude</label>
+                            <input type="number" class="form-control w-100" onfocus="focused(this)"
+                                onfocusout="defocused(this)" value = "{{Tank.LonLocation}}">
+                        </div>
+                    </div>
+                </div>
+
+                <br><br>
+                <h6 class="font-weight-bolder">Dimensions</h6>
+
+                <div class="row mt-4">
+                    <div class="col-12 col-sm-6">
+                        <div class="input-group input-group-dynamic focuded is-focused">
+                            <label class="form-label">Tank Height
+                                <span>
+                                <p class="form-text text-muted text-xs ms-1 d-inline">
+                                (in meters)
+                                </p>
+                                </span>
+                            </label>
+                            <input type="number" class="form-control w-100" aria-describedby="emailHelp"
+                                onfocus="focused(this)" onfocusout="defocused(this)" value = "{{Tank.TankHeight}}">
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div class="input-group input-group-dynamic focuded is-focused">
+                            <label class="form-label">Tank Factor
+                                <span>
+                                <p class="form-text text-muted text-xs ms-1 d-inline">
+                                (bbl per inches)
+                                </p>
+                                </span>
+                            </label>
+                            <input type="number" class="form-control w-100" aria-describedby="emailHelp"
+                                onfocus="focused(this)" onfocusout="defocused(this)" value = "{{Tank.TankFactor}}">
+                        </div>
+                    </div>
+                </div>
+
+                <br><br>
+                <h6 class="font-weight-bolder">Operation</h6>
+
+                <div class="row mt-4">
+                    <div class="col-12 col-sm-6">
+                        <div class="input-group input-group-dynamic focuded is-focused">
+                            <label class="form-label">Supervisor</label>
+                            <input type="text" class="form-control w-100" aria-describedby="emailHelp"
+                                onfocus="focused(this)" onfocusout="defocused(this)" value = "{{Tank.SupervisorUser}}">
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div class="input-group input-group-dynamic focuded is-focused">
+                            <label class="form-label">Status</label>
+                            <input type="text" class="form-control w-100" aria-describedby="emailHelp"
+                                onfocus="focused(this)" onfocusout="defocused(this)" value = "{{Tank.Status}}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12 col-sm-6">
+                        <table class="table align-items-center justify-content-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-primary text-xxs font-weight-bolder opacity-7 ps-2">Wells Assigned</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for well in Tank.WellsAssigned.all %}
+                                <tr>
+                                    <td>
+                                        <p class="text-sm font-weight-normal mb-0">{{ well.WellName }}</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-12 col-sm-12 text-end">
+                    <a href="javascript:;" class="btn btn-sm bg-gradient-success mb-0">EDIT TANK</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+{% endblock JSscripts %}

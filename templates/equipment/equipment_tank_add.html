@@ -1,0 +1,135 @@
+{% extends 'equipment/base_equipment.html' %}
+
+{% load static %}
+
+{% block title %} Equipment Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} EQUIPMENT {% endblock appName %}
+{% block Type %} NEW {% endblock Type %}
+
+{% block content %}
+
+<div class="row min-vh-80">
+  <div class="col-lg-8 col-md-10 col-12 m-auto">
+
+    <div class="card">
+      <div class="card-header p-0 position-relative mt-n5 mx-3 z-index-2">
+        <div class="bg-gradient-secondary shadow-dark border-radius-lg pt-3 pb-2">
+          <h6 class="text-center text-white"> ADD NEW TANK </h6>
+        </div>
+      </div>
+      <div class="card-body pb-0">
+        <form class="" method="POST">{% csrf_token %}
+
+          <div class=" border-radius-xl bg-white" data-animation="FadeIn">
+
+            <div class="multisteps-form__content">
+              <h6 class="font-weight-bolder">General information</h6>
+              <div class="row">
+                <div class="col-6 col-sm-4" hidden>
+                  <div class="input-group input-group-outline">
+                    <label for="exampleFormControlInput1" class="form-label">Owner</label>
+                    {{ form.Owner }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-3">
+                  <div class="input-group input-group-outline">
+                    <label for="exampleFormControlInput1" class="form-label">Tank Name</label>
+                    {{ form.TankName }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-3 mt-3 mt-sm-0">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Field</label>
+                    {{ form.FieldName }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-3 mt-3 mt-sm-0">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Battery</label>
+                    {{ form.BatteryName }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-3 mt-3 mt-sm-0">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Group</label>
+                    {{ form.GroupName }}
+                  </div>
+                </div>
+              </div>
+              <br>
+              <div class="row">
+                <div class="col-6 col-sm-3">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Supervisor</label>
+                    {{ form.SupervisorUser }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-3 mt-3 mt-sm-0">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Latitude</label>
+                    {{ form.LatLocation }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-3 mt-3 mt-sm-0">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Longitude</label>
+                    {{ form.LonLocation }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-3 mt-3 mt-sm-0">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Status</label>
+                    {{ form.Status }}
+                  </div>
+                </div>
+              </div>
+              <br>
+              <h6 class="font-weight-bolder">Operation data</h6>
+              <div class="row">
+                <div class="col-12 col-sm-4">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Wells Assigned</label>
+                    {{ form.WellsAssigned }}
+                  </div>
+                  <p class="text-sm">Presiona CTRL para seleccionar varios</p>
+                </div>
+                <div class="col-12 col-sm-4 mt-3 mt-sm-0">
+                  <div class="input-group input-group-outline">
+                    <label for="exampleFormControlInput1" class="form-label">Height (m)</label>
+                    {{ form.TankHeight }}
+                  </div>
+                </div>
+                <div class="col-12 col-sm-4">
+                  <div class="input-group input-group-outline">
+                    <label for="exampleFormControlInput1" class="form-label">Factor (bbl/m)</label>
+                    {{ form.TankFactor }}
+                  </div>
+                </div>
+
+              </div>
+              <div class="button-row d-flex pt-0">
+                <a class="btn bg-gradient-dark" href="{% url 'equipment_app:equipments' %}"> BACK </a>
+
+                <button class="btn bg-gradient-success ms-auto js-btn-next" type="submit" title="Next">ADD</button>
+              </div>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+<script>
+  document.getElementById("id_Owner").value = "{{user.id}}";
+</script>
+
+{% endblock JSscripts %}

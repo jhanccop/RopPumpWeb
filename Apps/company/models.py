@@ -1,7 +1,5 @@
 from django.db import models
 
-# Create your models here.
-
 from .managers import CompanyManager
 class Company(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -19,4 +17,3 @@ class Company(models.Model):
     
     def __str__(self):
         return self.CompanyName
-        #return str(self.CompanyName) 

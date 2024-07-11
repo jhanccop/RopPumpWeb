@@ -1,0 +1,52 @@
+{% extends 'equipment/base_equipment.html' %}
+
+{% load static %}
+
+{% block title %} Equipment Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} EQUIPMENT {% endblock appName %}
+{% block Type %} REMOVE {% endblock Type %}
+
+{% block content %}
+
+<div class="row min-vh-80">
+  <div class="col-lg-8 col-md-10 col-12 m-auto">
+
+    <div class="card">
+      <div class="card-header p-0 position-relative mt-n5 mx-3 z-index-2">
+        <div class="bg-gradient-secondary shadow-dark border-radius-lg pt-3 pb-2">
+          <h6 class="text-center text-white"> DELETE TANK </h6>
+        </div>
+      </div>
+      <div class="card-body">
+        <h6 class="mb-3">Are you sure to delete this tank?</h6>
+        <ul>
+          <li>Tank Name: <span class="font-weight-bold">{{object.TankName}}</span></li>
+          <li>Battery Name: <span class="font-weight-bold">{{object.BatteryName}}</span> </li>
+          <li>Status: <span class="font-weight-bold">{{object.get_Status_display}}</span></li>
+        </ul>
+        <div class="d-flex">
+          <a href="{% url 'equipment_app:equipments' %}" class="btn bg-gradient-dark mb-0 js-btn-next"> <i
+              class="fas fa-undo-alt"></i> Volver</a>
+        
+          <form class="cell medium-5 ms-auto" action="{% url 'equipment_app:remove_tank' object.id %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn bg-gradient-danger ms-auto mb-0 js-btn-next">DELETE</button>
+          </form>
+          
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+
+{% endblock JSscripts %}

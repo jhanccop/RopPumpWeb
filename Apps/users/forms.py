@@ -79,7 +79,7 @@ class UserRegisterForm(forms.ModelForm):
             'Email',
             'Name',
             'LastName',
-            'CompanyName',
+            'CompanyId',
         )
 
     def clean_password2(self):

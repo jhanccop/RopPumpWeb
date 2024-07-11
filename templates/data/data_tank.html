@@ -1,0 +1,395 @@
+{% extends 'data/base_data.html' %}
+
+{% load static %}
+
+{% block title %} Data Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} DATA OVERVIEW {% endblock appName %}
+{% block Type %} TANK {% endblock Type %}
+
+{% block content %}
+
+<!-- SEARCH ROW -->
+<div class="row">
+    <div class="col-xl-6 col-sm-6 mb-xl-0 mb-6">
+        <div class="col-xl-4 col-sm-4">
+            <p class="text-sm"> <span class="text-lg font-weight-bold text-dark">Tank Name: {{object_list.TankName}} </span>
+            </p>
+        </div>
+    </div>
+    <div class="col-xl-6 col-sm-6 mb-xl-0 mb-6">
+        <form method="GET">{% csrf_token %}
+            <div class="row">
+                
+        
+                <div class="col-xl-6 col-sm-4 mb-4">
+                    <div class="input-group input-group-outline">
+                        <input class="form-control datetimepicker text-center" value="{{object_list.intervalDate}}" type="text" placeholder="today" id="dateKword" name="dateKword" />
+                    </div>
+                    
+                </div>
+                <div class="col-xl-6 col-sm-4">
+                    <button class="btn bg-gradient-primary" type="submit"> Search </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- HEAD WIDGETS -->
+<div class="row mb-4">
+
+    <!-- PREVIOUS WIDGET -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 pt-2">
+                <div
+                    class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+                    <i class="fas fa-calendar-minus opacity-10"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Previous day record</p>
+                    <h5 class="mb-0" > {{object_list.data.1.oilBbl|floatformat:2}} bbl</h5> 
+                    <h6 class="mb-0" > {{object_list.data.1.ft}}</h6>
+                    <h6 class="mb-0 text-info">{{object_list.data.1.Temperature}} °F</h6>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-1">
+                <p class="mb-0 text-center text-secondary font-weight-bold" > {{object_list.data.1.datetime|date:'m-d-Y H:i'}} </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- VARIATION WIDGET -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 pt-2">
+                <div
+                    class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+                    <i class="fas fa-calendar-day opacity-10"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Variation</p>
+                    <h5 class="mb-0" > <span id="TodayVolumeChange"> -- </span></h5> 
+                    <h6 class="mb-0" > <span id="TodayLevelChange"> -- </span></h6>
+                    <h6 class="mb-0"><span class="text-sm font-weight-bolder" id="per">--</span> of total capacity</h6>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-1">
+                <p class="mb-0 text-center"><span class="font-weight-bolder text-uppercase" id="msg">--</span> </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- LAST RECORD WIDGET -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0">
+        <div class="card">
+            <div class="card-header p-2 pt-2">
+                <div
+                    class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+                    <i class="fas fa-database opacity-10"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Last record</p>
+                    <h5 class="mb-0" > {{object_list.data.first.oilBbl|floatformat:2}} bbl</h5> 
+                    <h6 class="mb-0" > {{object_list.data.first.ft}}</h6>
+                    <h6 class="mb-0 text-info">{{object_list.data.first.Temperature}} °F</h6>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-1">
+                <p class="mb-0 text-center text-secondary font-weight-bold" > {{object_list.data.first.datetime|date:'m-d-Y H:i'}} </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BAR CHART + DATATABLE -->
+<div class="row mb-4">
+    <div class="col-lg-7 col-md-6 mb-md-0 mb-4">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <div class="row">
+                    <div class="col-lg-6 col-7">
+                        <h6>Historical data</h6>
+                        <p class="text-sm mb-0">
+                            <i class="far fa-clipboard text-info text-lg" aria-hidden="true"></i>
+                            &nbsp; Volume of oil registered per day.
+                        </p>
+                    </div>
+                    <div class="col-lg-6 col-5 my-auto text-end">
+                    </div>
+                </div>
+            </div>
+
+            <!-- bar chart -->
+            <div class="card-body px-0 pb-2">
+                <div class="chart">
+                    <canvas id="volume-chart" class="chart-canvas" height="269" width="472" style="display: block; box-sizing: border-box; height: 450px; width: 525.4px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5 col-md-6">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <div class="row">
+                    <div class="col-lg-6 col-7">
+                        <h6>Historical table</h6>
+                        <p class="text-sm mb-0">
+                            <i class="fa fa-check text-info" aria-hidden="true"></i>
+                            <span class="font-weight-bold ms-1">Daily </span> volume.
+                        </p>
+                    </div>
+                    <div class="col-lg-6 col-5 my-auto text-end">
+                        <div class="text-end p-3">
+                            <button class="btn bg-gradient-info btn-sm mb-0 export" data-type="csv" type="button">
+                                <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                                <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                            </button> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- datatable -->
+            <div class="card-body p-3">
+
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center justify-content-center mb-0" id="datatable-rodPump">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Date</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Level (ft)</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Barrels</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tank in object_list.data %}
+                            <tr>
+                                <td class="text-sm font-weight-normal text-start">{{tank.Date|date:'m-d-Y'}}</td>
+                                <td class="text-sm font-weight-normal text-start">{{tank.ft}}</td>
+                                <!--  <td class="text-sm font-weight-normal text-start">{{tank.fluidLevel|floatformat:2}}</td> -->
+                                <td class="text-sm font-weight-normal text-start">{{tank.oilBbl|floatformat:2}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+
+<script>
+    const dataTableBasic1 = new simpleDatatables.DataTable("#datatable-rodPump", {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 5
+    });
+
+    document.querySelectorAll(".export").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "Tanks_exports" + type,
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableBasic1.export(data);
+        });
+    });
+</script>
+<script src="{% static 'assets/js/plugins/chartjs.min.js' %}"></script>
+
+<script>
+    /*=============== FLOAT TO FRACTION ================*/
+    function floatEng(num){
+        let ft = Math.floor(num);
+        let M = (num - ft) * 12;
+        let inch = Math.floor(M);
+        let inF = Math.round((M-inch)/0.125);
+
+        if(inF == 1){
+            inF = 0;
+            inc + inch + 1;
+            return ft.toString() + "ft - " + inch.toString() + "in ";
+        }else{
+            let gcd = function (a, b) {
+                return b === 0 ? a : gcd(b, a % b);
+            };
+            let div = gcd(inF, 8);
+            let num = inF/div;
+            let den = 8/div;
+            return ft.toString() + "ft - " + inch.toString() + "in " + num.toString() + "/" + den.toString();
+        }
+        
+    }
+
+    /*=============== WIDGETS ================*/
+
+    // yesterday widget
+    let YesterdayVolume = "{{object_list.data.1.oilBbl|floatformat:2}}";
+    let YesterdayLevel = Number("{{object_list.data.1.fluidLevel|floatformat:2}}");
+
+    // today widget
+    let TodayVolume = "{{object_list.data.0.oilBbl|floatformat:2}}";
+    let TodayLevel = "{{object_list.data.0.fluidLevel|floatformat:2}}";
+
+    let TodayVolumeChange = Number(TodayVolume) - Number(YesterdayVolume);
+    $("#TodayVolumeChange").html(TodayVolumeChange.toFixed(2).toString() + " bbl" );
+    let TodayLevelChange = Number(TodayLevel) - Number(YesterdayLevel);
+    $("#TodayLevelChange").html(floatEng(TodayLevelChange));
+
+    if(TodayLevelChange >= 0 ){
+        document.getElementById("TodayVolumeChange").style.color = "#4caf50";
+        document.getElementById("TodayLevelChange").style.color = "#4caf50";
+        document.getElementById("per").style.color = "#4caf50";
+        $("#msg").html("Volume increase");
+    }else{
+        document.getElementById("TodayVolumeChange").style.color = "#e91e63";
+        document.getElementById("TodayLevelChange").style.color = "#e91e63";
+        document.getElementById("per").style.color = "#e91e63";
+        $("#msg").html("Volume loss");
+    }
+
+    let percentChange = (TodayVolumeChange)*100/210;
+    $("#per").html(percentChange.toFixed(2).toString() + " % "); 
+
+    // VOLUME CHART
+    let date = [];
+    let bbl = [];
+
+    '{% for value in object_list.data %}'
+        date.push("{{value.Date|date:'m-d-y'}}");
+        bbl.push('{{value.oilBbl}}');
+    '{% endfor %}'
+
+    var ctx1 = document.getElementById("volume-chart").getContext("2d");
+
+    let labelsDate = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let dataVolume = [50, 40, 300, 220, 500, 250, 400, 230, 500];
+
+    new Chart(ctx1, {
+        data: {
+            labels: date.reverse(),
+            datasets: [{
+                type: "bar",
+                label: "Oil",
+                weight: 3,
+                tension: 0.4,
+                borderWidth: 0,
+                pointBackgroundColor: "#3A416F",
+                borderColor: "#3A416F",
+                backgroundColor: '#3A416F',
+                borderRadius: 4,
+                borderSkipped: false,
+                data: bbl.reverse(),
+                maxBarThickness: 40,
+            },
+            /*
+            {
+                type: "line",
+                label: "Trend",
+                tension: 0.4,
+                borderWidth: 0,
+                pointRadius: 0,
+                pointBackgroundColor: "#e91e63",
+                borderColor: "#e91e63",
+                borderWidth: 3,
+                backgroundColor: "transparent",
+                data: [30, 90, 40, 14, 29, 29, 34, 23, 40],
+                fill: true,
+            }*/
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+            scales: {
+                y: {
+                    grid: {
+                        drawBorder: false,
+                        display: true,
+                        drawOnChartArea: true,
+                        drawTicks: false,
+                        borderDash: [5, 5],
+                        color: '#c1c4ce5c'
+                    },
+                    ticks: {
+                        display: true,
+                        padding: 10,
+                        color: '#34495E',
+                        font: {
+                            size: 14,
+                            weight: 300,
+                            family: "Roboto",
+                            style: 'normal',
+                            lineHeight: 2
+                        },
+                    }
+                },
+                x: {
+                    grid: {
+                        drawBorder: false,
+                        display: true,
+                        drawOnChartArea: true,
+                        drawTicks: true,
+                        borderDash: [5, 5],
+                        color: '#c1c4ce5c'
+                    },
+                    ticks: {
+                        display: true,
+                        color: '#34495E',
+                        padding: 10,
+                        font: {
+                            size: 14,
+                            weight: 300,
+                            family: "Roboto",
+                            style: 'normal',
+                            lineHeight: 2
+                        },
+                    }
+                },
+            },
+        },
+    });
+
+</script>
+
+<script src="{% static 'assets/js/plugins/flatpickr.min.js' %}"></script>
+<script>
+    if (document.querySelector('.datetimepicker')) {
+        flatpickr('.datetimepicker', {
+            allowInput: true,
+            mode: "range"
+        }); // flatpickr
+    }
+</script>
+
+{% endblock JSscripts %}

@@ -1,0 +1,95 @@
+{% extends 'device/base_device.html' %}
+
+{% load static %}
+
+{% block title %} Device Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} DEVICE {% endblock appName %}
+{% block Type %} UPDATE ENVIRONMENTAL SENSOR {% endblock Type %}
+
+{% block content %}
+
+<div class="row min-vh-80">
+  <div class="col-lg-8 col-md-10 col-12 m-auto">
+
+    <div class="card">
+      <div class="card-header p-0 position-relative mt-n5 mx-3 z-index-2">
+        <div class="bg-gradient-secondary shadow-dark border-radius-lg pt-3 pb-2">
+          <h6 class="text-center text-white"> UPDATE ENVIRONMENTAL DEVICE </h6>
+        </div>
+      </div>
+      <div class="card-body pb-0">
+        <form class="" method="POST">{% csrf_token %}
+
+          <div class=" border-radius-xl bg-white" data-animation="FadeIn">
+
+            <div class="multisteps-form__content">
+              <h6 class="font-weight-bolder">General information</h6>
+              <div class="row">
+                <div class="col-6 col-sm-4" hidden>
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Owner</label>
+                    {{ form.Owner }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Device Name</label>
+                    {{ form.DeviceName }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4 mt-3 mt-sm-0">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Mac</label>
+                    {{ form.DeviceMacAddress }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4 mt-3 mt-sm-0">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Battery</label>
+                    {{ form.DeviceStatus }}
+                  </div>
+                </div>
+              </div>
+              <br>
+              <div class="row">
+                <div class="col-6 col-sm-4">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Sampling rate (S)</label>
+                    {{ form.SamplingRate }}
+                  </div>
+                </div>
+                <div class="col-6 col-sm-4 mt-3 mt-sm-0">
+                  <div class="input-group input-group-outline focused is-focused">
+                    <label for="exampleFormControlInput1" class="form-label">Env Asigned</label>
+                    {{ form.IdEnvironmental }}
+                  </div>
+                </div>
+              </div>
+              <br>
+              
+              <div class="button-row d-flex pt-0">
+                <a class="btn bg-gradient-dark" href="{% url 'device_app:devices' %}"> BACK </a>
+
+                <button class="btn bg-gradient-success ms-auto js-btn-next" type="submit" title="Next">ADD</button>
+              </div>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+<script>
+  document.getElementById("id_Owner").value = "{{user.id}}";
+</script>
+
+{% endblock JSscripts %}

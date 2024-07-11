@@ -1,0 +1,355 @@
+{% extends 'data/base_data.html' %}
+
+{% load static %}
+
+{% block title %} Data Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} DATA OVERVIEW {% endblock appName %}
+{% block Type %} ALL {% endblock Type %}
+
+{% block content %}
+
+<h4>SENSOR DATA OVERVIEW</h4>
+
+<div class="row">
+    <!-- column for rod pumps -->
+    <div class="col-lg-6 col-md-12 mb-4" hidden>
+        <div class="card">
+            <div class="card-header p-3 pt-2 pb-0">
+                <div class="row align-items-center">
+                    <div class="col-md-6 ">
+                        <h5 class="mb-0">Dynamometers</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0 text-capitalize">Estimated production</p>
+                            <h5 class="mb-0">6 bbl</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center justify-content-center mb-0" id="datatable-rodPump">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Well name</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Last<br>Report<br>Time</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Pump<br>Fillage(%)</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Diagnosis</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for well in object_list.rodpumpData %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div>
+                                            <img src="{% static 'assets/img/oil-rig.png' %}" class="avatar avatar-sm me-3 border-radius-xs" alt="user1">
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a class="nav-link mb-0 text-sm active font-weight-bolder" href="/data-rod-pump/{{well.WellName}}">
+                                                {{well.WellName}}
+                                            </a>
+                                            {% if well.AnalyzerStatus == "Normal running" %}
+                                            <span class="text-xs font-weight-bolder text-success">{{well.AnalyzerStatus}}</span>
+                                            {% elif well.AnalyzerStatus == "Stopped" %} 
+                                            <span class="text-xs font-weight-bolder text-danger">{{well.AnalyzerStatus}}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-sm font-weight-normal text-start">{{well.LastUpdate|date:'Y-m-d H:i'}}</td>
+                                <td class="text-sm font-weight-normal text-start">{{well.PumpFillage}}</td>
+                                <td class="text-sm font-weight-normal text-start">{{well.Diagnosis}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="text-end p-3 pt-0">
+                    <button class="btn bg-gradient-info btn-sm mb-0 export" data-type="csv" type="button">
+                        <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                        <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                    </button> 
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- column for tanks -->
+    <div class="col-lg-6 col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2 pb-0">
+                <div class="row align-items-center">
+                    <div class="col-md-6 ">
+                        <h5 class="mb-0">Tank level gauge data</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0 text-capitalize">Total barrels</p>
+                            <h5 class="mb-0"><span  id="totalBbl">--</span>  bbl</h5>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            <hr class="dark horizontal my-0">
+
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center justify-content-center mb-0" id="datatable-tank">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tank name</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Last<br>Report<br>Time</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Volume<br> (bbl)
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tank in object_list.tankData %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div>
+                                            <a href="{% url 'data_app:data-tank' tank.TankName %}">
+                                                <img src="{% static 'assets/img/oil-tank_2.png' %}" class="avatar avatar-sm me-3 border-radius-xs" alt="user1">
+                                            </a>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a class="nav-link mb-0 text-sm active font-weight-bolder" href="{% url 'data_app:data-tank' tank.TankName %}">
+                                                {{tank.TankName}}
+                                            </a>
+                                            {% if tank.Status == "Normal running" %}
+                                            <span class="text-xs font-weight-bolder text-success">{{tank.Status}}</span>
+                                            {% elif tank.Status == "Stopped" %} 
+                                            <span class="text-xs font-weight-bolder text-danger">{{tank.Status}}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-sm font-weight-normal text-start">{{tank.LastUpdate|date:'Y-m-d H:i'}}</td>
+                                <td class="align-center">
+                                    <div class="progress-wrapper w-100 mx-auto">
+                                        <div class="progress-info">
+                                            <div class="progress-percentage">
+                                                <span class="text-sm font-weight-normal text-start">{{tank.bblOil | floatformat:2}} bbl</span>
+                                            </div>
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-gradient-primary" role="progressbar" aria-valuenow="{{tank.TankLevelPer}}" aria-valuemin="0"
+                                                aria-valuemax="100" style="width: {{tank.TankLevelPer}}%;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="text-end p-3 pt-0">
+                    <button class="btn bg-gradient-info btn-sm mb-0 export2" data-type="csv" type="button">
+                        <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                        <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                    </button> 
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- column for enviroments sensor -->
+    <div class="col-lg-6 col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2 pb-0">
+                <div class="row align-items-center">
+                    <div class="col-md-6 ">
+                        <h5 class="mb-0">Environmental sensor data</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0 text-capitalize">Parameters</p>
+                            <h5 class="mb-0"><span> T, H and P </span> </h5>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            <hr class="dark horizontal my-0">
+
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center justify-content-center mb-0" id="datatable-env">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Sensor name</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Last<br>Report<br>Time</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Sensor 1<br></th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Sensor 2<br></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sensor in object_list.environmental %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div>
+                                            <a href="{% url 'data_app:data-sensor' sensor.EnvironmentalName %}">
+                                                <img src="{% static 'assets/img/temperature.png' %}" class="avatar avatar-sm me-3 border-radius-xs" alt="user1">
+                                            </a>
+                                            
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a class="nav-link mb-0 text-sm active font-weight-bolder" href="{% url 'data_app:data-sensor' sensor.EnvironmentalName %}">
+                                                {{sensor.EnvironmentalName}}
+                                            </a>
+                                            {% if sensor.Status == "Normal running" %}
+                                            <span class="text-xs font-weight-bolder text-success">{{sensor.Status}}</span>
+                                            {% elif sensor.Status == "Stopped" %} 
+                                            <span class="text-xs font-weight-bolder text-danger">{{sensor.Status}}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-sm font-weight-normal text-start">{{sensor.LastUpdate|date:'Y-m-d H:i'}}</td>
+                                <td class="text-sm font-weight-normal text-start">
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <p class="mb-0 text-sm active font-weight-bolder">
+                                            {{sensor.Temperature1 | floatformat:2}} °C
+                                        </p>
+                                        <p class="mb-0 text-sm active font-weight-bolder">
+                                            {{sensor.Humidity1 | floatformat:2}} %
+                                        </p>
+                                        <p class="mb-0 text-sm active font-weight-bolder">
+                                            {{sensor.AtmosphericPressure1 | floatformat:2}} hPa
+                                        </p>
+                                    </div>
+                                </td>
+                                <td class="text-sm font-weight-normal text-start">
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <p class="mb-0 text-sm active font-weight-bolder">
+                                            {{sensor.Temperature2 | floatformat:2}} °C
+                                        </p>
+                                        <p class="mb-0 text-sm active font-weight-bolder">
+                                            {{sensor.Humidity2 | floatformat:2}} %
+                                        </p>
+                                        <p class="mb-0 text-sm active font-weight-bolder">
+                                            {{sensor.AtmosphericPressure2 | floatformat:2}} hPa
+                                        </p>
+                                    </div>
+                                </td>
+
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="text-end p-3 pt-0">
+                    <button class="btn bg-gradient-info btn-sm mb-0 export3" data-type="csv" type="button">
+                        <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                        <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                    </button> 
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+<!--Table-->
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+<script>
+    
+    const dataTableRodPump = new simpleDatatables.DataTable("#datatable-rodPump", {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 5
+    });
+
+    document.querySelectorAll(".export").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "wells_export_" + type,
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableRodPump.export(data);
+        });
+    });
+    
+    const dataTableTank = new simpleDatatables.DataTable("#datatable-tank", {
+        searchable: true,
+        fixedHeight: true,
+        perPage: 5
+    });
+
+    document.querySelectorAll(".export2").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "tank_export_" + type,
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableTank.export(data);
+        });
+    });
+
+    const dataTableEnv = new simpleDatatables.DataTable("#datatable-env", {
+        searchable: true,
+        fixedHeight: true,
+        perPage: 5
+    });
+
+    document.querySelectorAll(".export3").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "data_export",
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableEnv.export(data);
+        });
+    });
+</script>
+
+<script>
+    let totalBbl = 0;
+    '{% for value in object_list.tankData %}'
+        totalBbl += Number("{{value.bblOil}}");
+    '{% endfor %}'
+    $("#totalBbl").html(totalBbl.toFixed(2));
+</script>
+
+{% endblock JSscripts %}

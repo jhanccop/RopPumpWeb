@@ -1,4 +1,3 @@
-
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth import authenticate, login, logout
@@ -37,7 +36,7 @@ class UserRegisterView(FormView):
 class LoginUser(FormView):
     template_name = 'users/login.html'
     form_class = LoginForm
-    success_url = reverse_lazy('overview_app:overview')
+    success_url = reverse_lazy('data_app:data')
 
     def form_valid(self, form):
         user = authenticate(

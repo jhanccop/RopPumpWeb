@@ -1,0 +1,379 @@
+{% extends 'data/base_data.html' %}
+
+{% load static %}
+
+{% block title %} Data Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} DATA OVERVIEW {% endblock appName %}
+{% block Type %} ENVIRONMENTAL {% endblock Type %}
+
+{% block content %}
+
+<!-- SEARCH ROW -->
+<div class="row align-items-center">
+  <div class="col-xl-6 col-sm-6 mb-xl-0 mb-6">
+    <div class="col-xl-4 col-sm-4">
+      <p class="text-sm"> <span class="text-lg font-weight-bold text-dark">Sensor name:
+          {{object_list.EnvironmentalName}} </span>
+      </p>
+    </div>
+  </div>
+  <div class="col-xl-6 col-sm-6 mb-xl-0 mb-6">
+    <form method="GET">{% csrf_token %}
+      <div class="row">
+
+
+        <div class="col-xl-6 col-sm-4 mb-4">
+          <div class="input-group input-group-outline">
+            <input class="form-control datetimepicker text-center" value="{{object_list.intervalDate}}" type="text"
+              placeholder="today" id="dateKword" name="dateKword" />
+          </div>
+
+        </div>
+        <div class="col-xl-6 col-sm-4">
+          <button class="btn bg-gradient-primary" type="submit"> Search </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- HEAD WIDGETS -->
+<div class="row mb-4">
+
+  <!-- SESNOR 1 -->
+  <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="card">
+      <div class="card-header p-2 pt-2">
+        <div
+          class="icon icon-lg icon-shape bg-gradient-success shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+          <i class="fas fa-laptop-house opacity-10"></i>
+        </div>
+        <div class="text-end pt-1">
+          <p class="text-sm mb-0 text-capitalize">SENSOR 1</p>
+          <h5 class="mb-0"> {{object_list.data.0.Temperature1|floatformat:2}} °C</h5>
+          <h6 class="mb-0"> {{object_list.data.0.Humidity1|floatformat:2}} %</h6>
+          <h6 class="mb-0 text-info">{{object_list.data.0.AtmosphericPressure1|floatformat:2}} hPa</h6>
+        </div>
+      </div>
+      <hr class="dark horizontal my-0">
+      <div class="card-footer p-1">
+        <p class="mb-0 text-center text-secondary font-weight-bold"> {{object_list.data.0.DateCreate|date:'m-d-Y H:i'}}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SESNOR 2 -->
+  <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="card">
+      <div class="card-header p-2 pt-2">
+        <div
+          class="icon icon-lg icon-shape bg-gradient-info shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+          <i class="fas fa-laptop-house opacity-10"></i>
+        </div>
+        <div class="text-end pt-1">
+          <p class="text-sm mb-0 text-capitalize">SENSOR 2</p>
+          <h5 class="mb-0"> {{object_list.data.0.Temperature2|floatformat:2}} °C</h5>
+          <h6 class="mb-0"> {{object_list.data.0.Humidity2|floatformat:2}} %</h6>
+          <h6 class="mb-0 text-info">{{object_list.data.0.AtmosphericPressure2|floatformat:2}} hPa</h6>
+        </div>
+      </div>
+      <hr class="dark horizontal my-0">
+      <div class="card-footer p-1">
+        <p class="mb-0 text-center text-secondary font-weight-bold"> {{object_list.data.0.DateCreate|date:'m-d-Y H:i'}}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header pb-0">
+      <div class="row">
+          <div class="col-lg-6 col-7">
+              <h6>Historical data</h6>
+              <p class="text-sm mb-0">
+                  <i class="far fa-clipboard text-info text-lg" aria-hidden="true"></i>
+                  &nbsp; Data for two sensors
+              </p>
+          </div>
+          <div class="col-lg-6 col-5 my-auto text-end">
+          </div>
+      </div>
+  </div>
+
+  <!-- line chart -->
+  <div class="card-body px-0 pb-2">
+      <div class="chart">
+          <canvas id="volume-chart" class="chart-canvas" style="display: block; box-sizing: border-box; height: 300px;"></canvas>
+      </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header pb-0">
+      <div class="row">
+          <div class="col-lg-6 col-7">
+              <h6>Historical table</h6>
+              <p class="text-sm mb-0">
+                  <i class="fa fa-check text-info" aria-hidden="true"></i>
+                  <span class="font-weight-bold ms-1">Daily </span> volume.
+              </p>
+          </div>
+          <div class="col-lg-6 col-5 my-auto text-end">
+              <div class="text-end p-3">
+                  <button class="btn bg-gradient-info btn-sm mb-0 export" data-type="csv" type="button">
+                      <span class="btn-inner--icon"><i class="fas fa-file-csv text-lg"></i> </span>
+                      <span class="btn-inner--text">&nbsp;&nbsp;&nbsp;Export CSV</span>
+                  </button> 
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- datatable -->
+  <div class="card-body p-0">
+
+      <div class="table-responsive p-0">
+          <table class="table align-items-center justify-content-center mb-0" id="datatable-rodPump">
+              <thead>
+                  <tr>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Date Time</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">T1 °C</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">H1 %</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">P1 hPa</th>
+
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">T2 °C</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">H2 %</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">P2 hPa</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  {% for j in object_list.data %}
+                  <tr>
+                      <td class="text-sm font-weight-normal text-start">{{j.DateCreate|date:'m-d-Y H:i'}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.Temperature1|floatformat:2}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.Humidity1|floatformat:2}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.AtmosphericPressure1|floatformat:2}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.Temperature2|floatformat:2}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.Humidity2|floatformat:2}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.AtmosphericPressure2|floatformat:2}}</td>
+                  </tr>
+                  {% endfor %}
+              </tbody>
+          </table>
+      </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+
+<script>
+    const dataTableBasic1 = new simpleDatatables.DataTable("#datatable-rodPump", {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 10
+    });
+
+    document.querySelectorAll(".export").forEach(function (el) {
+        el.addEventListener("click", function (e) {
+            var type = el.dataset.type;
+
+            var data = {
+                type: type,
+                filename: "data_exports",
+            };
+
+            if (type === "csv") {
+                data.columnDelimiter = ",";
+            }
+
+            dataTableBasic1.export(data);
+        });
+    });
+</script>
+<script src="{% static 'assets/js/plugins/chartjs.min.js' %}"></script>
+
+<script>
+
+  /*=============== WIDGETS ================*/
+
+  // VOLUME CHART
+  let date = [];
+  let T1 = [];
+  let H1 = [];
+  let P1 = [];
+
+  let T2 = [];
+  let H2 = [];
+  let P2 = [];
+
+  '{% for value in object_list.data %}'
+      T1.push({x:"{{value.DateCreate|date:'m-d-y H:i'}}",y:'{{value.Temperature1}}'});
+      H1.push({x:"{{value.DateCreate|date:'m-d-y H:i'}}",y:'{{value.Humidity1}}'});
+      P1.push({x:"{{value.DateCreate|date:'m-d-y H:i'}}",y:'{{value.AtmosphericPressure1}}'});
+      T2.push({x:"{{value.DateCreate|date:'m-d-y H:i'}}",y:'{{value.Temperature2}}'});
+      H2.push({x:"{{value.DateCreate|date:'m-d-y H:i'}}",y:'{{value.Humidity2}}'});
+      P2.push({x:"{{value.DateCreate|date:'m-d-y H:i'}}",y:'{{value.AtmosphericPressure2}}'});
+  '{% endfor %}'
+
+  var ctx1 = document.getElementById("volume-chart").getContext("2d");
+
+  new Chart(ctx1, {
+      data: {
+          //labels: date.reverse(),
+          labels:[],
+          datasets: [{
+              type: "line",
+              label: "T1",
+              cubicInterpolationMode: 'monotone',
+              tension: 0.4,
+              borderColor: "#5DADE2",
+              backgroundColor: "#5DADE2",
+              data: T1.reverse(),
+          },
+          {
+              type: "line",
+              label: "T2",
+              cubicInterpolationMode: 'monotone',
+              tension: 0.4,
+              borderColor: "#2874A6",
+              backgroundColor: "#2874A6",
+              data: T2.reverse(),
+          },
+          {
+              type: "line",
+              label: "H1",
+              cubicInterpolationMode: 'monotone',
+              tension: 0.4,
+              borderColor: "#82E0AA",
+              backgroundColor: "#82E0AA",
+              data: H1.reverse(),
+          },
+          {
+              type: "line",
+              label: "H2",
+              borderColor: "#239B56",
+              backgroundColor: "#239B56",
+              data: H2.reverse(),
+          },
+          {
+              type: "line",
+              label: "P1",
+              cubicInterpolationMode: 'monotone',
+              tension: 0.4,
+              borderColor: "#BB8FCE",
+              backgroundColor: "#BB8FCE",
+              data: P1.reverse(),
+          },
+          {
+              type: "line",
+              label: "P2",
+              cubicInterpolationMode: 'monotone',
+              tension: 0.4,
+              borderColor: "#6C3483 ",
+              backgroundColor: "#6C3483",
+              data: P2.reverse(),
+          },
+          /*
+          {
+              type: "line",
+              label: "Trend",
+              tension: 0.4,
+              borderWidth: 0,
+              pointRadius: 0,
+              pointBackgroundColor: "#e91e63",
+              borderColor: "#e91e63",
+              borderWidth: 3,
+              backgroundColor: "transparent",
+              data: [30, 90, 40, 14, 29, 29, 34, 23, 40],
+              fill: true,
+          }*/
+          ],
+      },
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index',
+      },
+      scales: {
+        y: {
+          grid: {
+            drawBorder: false,
+            display: true,
+            drawOnChartArea: true,
+            drawTicks: false,
+            borderDash: [5, 5],
+            color: '#c1c4ce5c'
+          },
+          ticks: {
+            display: true,
+            padding: 10,
+            color: '#34495E',
+            font: {
+              size: 14,
+              weight: 300,
+              family: "Roboto",
+              style: 'normal',
+              lineHeight: 2
+            },
+          }
+        },
+        x: {
+          
+          title: {
+            display: true,
+            text: 'Date'
+          },
+          grid: {
+            drawBorder: false,
+            display: true,
+            drawOnChartArea: true,
+            drawTicks: true,
+            borderDash: [5, 5],
+            color: '#c1c4ce5c'
+          },
+          ticks: {
+            display: true,
+            color: '#34495E',
+            padding: 10,
+            font: {
+              size: 14,
+              weight: 300,
+              family: "Roboto",
+              style: 'normal',
+              lineHeight: 2
+            },
+          }
+        },
+      },
+    },
+  });
+
+</script>
+
+<script src="{% static 'assets/js/plugins/flatpickr.min.js' %}"></script>
+<script>
+    if (document.querySelector('.datetimepicker')) {
+        flatpickr('.datetimepicker', {
+            allowInput: true,
+            mode: "range"
+        }); // flatpickr
+    }
+</script>
+
+{% endblock JSscripts %}

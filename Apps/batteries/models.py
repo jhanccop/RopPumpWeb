@@ -18,6 +18,4 @@ class Battery(models.Model):
         verbose_name_plural = 'Batteries'
 
     def __str__(self):
-        #return '%s (%s)' % (self.PumpName,self.Available)
         return self.BatteryName
-        #return str(self.id)

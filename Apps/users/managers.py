@@ -24,9 +24,9 @@ class UserManager(BaseUserManager, models.Manager):
     def create_superuser(self, UserName, Email, password=None, **extra_fields):
         return self._create_user(UserName, Email, password, True, True, **extra_fields)
 
-    def get_company_id(self, UserName):
+    def get_company_name(self, userName):
         result = self.filter(
-                UserName=UserName
-            ).values("CompanyName")
-        #print("*******", result)
+                UserName = userName
+            ).values("CompanyId__CompanyName")
+        #print("*******", userName, result)
         return result

@@ -9,7 +9,7 @@ class configField(admin.ModelAdmin):
 	DateCreatedFormat.admin_order_field = 'DateCreated'
 	DateCreatedFormat.short_description = 'Date Created' 
 
-	list_display = ('FieldName','Company','LocationState','LocationCounty','DateCreatedFormat')
+	list_display = ('FieldName','Company','DateCreatedFormat')
 	list_filter = ('Company', 'FieldName')
 
 admin.site.register(Field, configField)

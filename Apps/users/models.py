@@ -9,6 +9,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
 # Create your models here.
 class User(AbstractBaseUser, PermissionsMixin):
+    id = models.BigAutoField(primary_key=True)
     Name = models.CharField(max_length=30, blank=True)
     LastName = models.CharField(max_length=30,blank=True)
     UserName = models.CharField(max_length=20, unique=True)

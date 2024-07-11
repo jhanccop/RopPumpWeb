@@ -35,21 +35,22 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # local apps
-    'Apps.wells',
-    'Apps.users',
-    'Apps.company',
-    'Apps.groups',
     'Apps.batteries',
+    'Apps.company',
+    'Apps.data',
+    'Apps.device',
+    'Apps.equipment',
     'Apps.field',
-    'Apps.settings',
-
-    #'applications',
+    'Apps.groups',
     'Apps.home',
-    'Apps.input',
-    'Apps.overview',
-    'Apps.tests',
-    'Apps.wellServices',
-    'Apps.production',
+    #'Apps.input',
+    #'Apps.overview',
+    #'Apps.production',
+    #'Apps.settings',
+    #'Apps.tests',
+    'Apps.users',
+    #'Apps.wells',
+    #'Apps.wellServices',
     
     # third apps
     'multiselectfield'
