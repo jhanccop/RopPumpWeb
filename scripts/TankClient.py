@@ -14,6 +14,7 @@ client_id = 'sodhfo3643435455644'
 username = 'jhanccop'
 password = 'jhanccop1'
 topic_sub = "jhpOandG/data"
+topic_pub = "jhpOandG/settings"
 
 def db_get(exec):
   conexion = psycopg2.connect(
@@ -96,7 +97,31 @@ def on_message(client, userdata, message):
       sql_query = """INSERT INTO data_environmentaldata("DateCreate","IdDevice_id","Humidity1","Temperature1","AtmosphericPressure1","Humidity2","Temperature2","AtmosphericPressure2","Status") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},'{8}')""".format(dt,_id,hum1,temp1,pa1,hum2,temp2,pa2,"Normal running")
       
       db_local(sql_query)
-    else:
+
+    elif type == "camVidSet":
+      name = m_mqtt.get("name","NULL")
+      payload = {"name":name,"timesleep":30}
+      payload = json.dumps(payload)
+      client.publish(topic_pub,payload)
+      print("pub",payload)
+      pass
+  
+    elif type == "camVid":
+      dt = datetime.now()
+      mac = m_mqtt.get("id","NULL")
+      hum = m_mqtt.get("H","NULL")
+      temp = m_mqtt.get("T","NULL")
+      bat = m_mqtt.get("B","NULL")
+
+      sql_query_id = """SELECT id FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+      
+      raws_id = db_get(sql_query_id)
+      _id = raws_id[0][0]
+      
+      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status") VALUES('{0}',{1},{2},{3},{4},'{5}')""".format(dt,_id,hum,temp,bat,"Normal running")
+      
+      db_local(sql_query)
+
       pass
           
   except Exception as e:

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import TankDevice, WellAnalyzerDevice, EnvironmentalDevice
+from .models import TankDevice, WellAnalyzerDevice, EnvironmentalDevice,CamVidDevice
 
 class confAnalyzerData(admin.ModelAdmin):
 	def DateCreatedFormat(self, obj):
@@ -28,4 +28,13 @@ class confTankDevice(admin.ModelAdmin):
 	list_display = ('id','DeviceName','DateCreatedFormat', 'DeviceMacAddress','DeviceStatus','SamplingRate','IdTank')
 	list_filter = ('DeviceStatus','IdTank')
 admin.site.register(TankDevice, confTankDevice)
+
+class confCamVidDevice(admin.ModelAdmin):
+	def DateCreatedFormat(self, obj):
+		return obj.DateCreate.strftime("%Y-%m-%d %H:%M:%S")
+	DateCreatedFormat.admin_order_field = 'DateCreated'
+	DateCreatedFormat.short_description = 'Date Created' 
+	list_display = ('id','DeviceName','DateCreatedFormat', 'DeviceMacAddress','DeviceStatus','SamplingRate','IdEnvironmental')
+	list_filter = ('DeviceStatus','IdEnvironmental')
+admin.site.register(CamVidDevice, confCamVidDevice)
 

@@ -1,9 +1,9 @@
 from django.db import models
 
-from Apps.device.models import TankDevice, WellAnalyzerDevice, EnvironmentalDevice
+from Apps.device.models import TankDevice, WellAnalyzerDevice, EnvironmentalDevice, CamVidDevice
 from multiselectfield import MultiSelectField
 
-from .managers import RPDataManager, TankDataManager, EnvironmentalDataManager
+from .managers import RPDataManager, TankDataManager, EnvironmentalDataManager, CamVidDataManager
 
 # Create your models here.
 class RodPumpData(models.Model):
@@ -116,6 +116,32 @@ class EnvironmentalData(models.Model):
     class Meta:
         verbose_name = 'Environmental Data'
         verbose_name_plural = 'All Environmental Data'
+
+    def __str__(self):
+        return str(self.IdDevice)
+    
+class CamVidData(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    IdDevice = models.ForeignKey(CamVidDevice, on_delete=models.CASCADE, null=True, blank=True)
+    DateCreate = models.DateTimeField(auto_now_add = True)
+    Humidity = models.FloatField('Humidity', null=True, blank =True)
+    Temperature = models.FloatField('Temperature', null=True, blank =True)
+    VoltageBattery = models.FloatField('Voltage Battery', null=True, blank =True)
+
+    img = models.ImageField(upload_to="media/",null=True,blank=True)
+
+    STATUS_CHOICES = (
+        ('Normal running', 'Normal running'),
+        ('Stopped', 'Stopped'),
+    )
+    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=100,blank =True,null=True)
+     
+    objects = CamVidDataManager()
+
+    class Meta:
+        verbose_name = 'Camera Data'
+        verbose_name_plural = 'All Camera Data'
 
     def __str__(self):
         return str(self.IdDevice)

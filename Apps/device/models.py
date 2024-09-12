@@ -67,6 +67,38 @@ class EnvironmentalDevice(models.Model):
 
     def __str__(self):
         return self.DeviceName
+    
+class CamVidDevice(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    # General information
+    Owner = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL)
+    DateCreate = models.DateTimeField(auto_now_add= True )
+    DeviceName = models.CharField('Device Name', max_length=50, unique=True)
+    DeviceMacAddress = models.CharField('Device Mac Address', max_length=50, unique=True)
+
+    # Monitoring data
+    Status_CHOICES = (
+        ("Normal running", "Normal running"),
+        ("Low battery", "Low battery"),
+        ("No signal", "No signal"),
+    )
+    DeviceStatus = models.CharField('Status', max_length=50, choices=Status_CHOICES, default="normal running")
+    Refresh_CHOICES = (
+        (30,"0.5h"),
+        (60,"1h"),
+        (120,"2h"),
+    )
+    SamplingRate = models.IntegerField('Sampling Rate', choices=Refresh_CHOICES,null=True, blank =True,default=60)
+    IdEnvironmental  = models.ForeignKey(Environmental, on_delete=models.CASCADE, unique=False,blank=True,null=True)
+
+    objects = EnvironmentalDeviceManager()
+    class Meta:
+        verbose_name = 'Cam video device'
+        verbose_name_plural = 'Cam video devices'
+
+    def __str__(self):
+        return self.DeviceName
 
 class WellAnalyzerDevice(models.Model):
     id = models.BigAutoField(primary_key=True)

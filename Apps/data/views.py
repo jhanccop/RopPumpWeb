@@ -10,7 +10,7 @@ from django.views.generic import (
 
 from Apps.equipment.models import RodPumpWell, Tank, Environmental
 from Apps.groups.models import Group
-from .models import RodPumpData, TankData, EnvironmentalData
+from .models import RodPumpData, TankData, EnvironmentalData, CamVidData
 
 from Apps.users.models import User
 from Apps.company.models import Company
@@ -117,12 +117,37 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
                 else:
                     tempPayloadenvironmental['CurrentTankContidition'] = "No data today"
 
-            environmental_data.append(tempPayloadenvironmental) 
+            environmental_data.append(tempPayloadenvironmental)
+
+        # ================= get cameras data by company =================
+        list_environmental = Environmental.objects.search_environmental_by_company(CompanyName)
+        camera_data = []
+        for environmental_i in list_environmental:
+            tempPayloadenvironmental = {
+                'EnvironmentalName': environmental_i["EnvironmentalName"],
+                'GroupName': environmental_i["GroupName__GroupName"],
+                'Status': environmental_i["Status"],
+            }
+
+            dataCam= CamVidData.objects.search_last_day_environmentalData(environmental_i["EnvironmentalName"])
+            if dataCam != None:
+                tempPayloadenvironmental['LastUpdate'] = dataCam["DateCreate"]
+                tempPayloadenvironmental['Humidity'] = dataCam["Humidity"]
+                tempPayloadenvironmental['Temperature'] = dataCam["Temperature"]
+                tempPayloadenvironmental['AtmosphericPressure'] = dataCam["VoltageBattery"]
+
+                if datetime.now().date() == dataCam["DateCreate"].date():
+                    tempPayloadenvironmental['CurrentTankContidition'] = dataCam["Status"]
+                else:
+                    tempPayloadenvironmental['CurrentTankContidition'] = "No data today"
+
+            camera_data.append(tempPayloadenvironmental) 
 
         allData = {
             "rodpumpData": wells_data,
             "tankData":tanks_data,
-            "environmental":environmental_data
+            "environmental":environmental_data,
+            "camera":camera_data
         }
 
         return allData

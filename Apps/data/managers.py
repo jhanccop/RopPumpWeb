@@ -175,3 +175,40 @@ class EnvironmentalDataManager(models.Manager):
                 "Status"
             ).order_by('DateCreate').last()
         return result
+    
+class CamVidDataManager(models.Manager):
+    # MAIN SEARCH DATA
+    def search_environmentalData_interval(self,Name, interval):
+
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        result = self.filter(
+            DateCreate__range = rangeDate,
+            IdDevice__IdEnvironmental__EnvironmentalName = Name
+        ).order_by('-DateCreate')
+
+        return result
+    
+        # SEARCH LAST DAY
+    def search_last_day_environmentalData(self,Name):
+
+        result = self.filter(
+                IdDevice__IdEnvironmental__EnvironmentalName = Name
+            ).values(
+                "DateCreate",
+                "Humidity",
+                "Temperature",
+                "VoltageBattery",
+                "Status"
+            ).order_by('DateCreate').last()
+        return result
+    
+
