@@ -19,9 +19,12 @@ topic_pub = "jhpOandG/settings"
 def db_get(exec):
   conexion = psycopg2.connect(
     host="localhost",
-    user="userapp",
-    password="userApp24",
-    database="databaseapp",
+    #user="userapp",
+    #password="userApp24",
+    #database="databaseapp",
+    user="webappuser",
+    password="c0l053n5353:20",
+    database="datadb",
   )
   try:
     cursor = conexion.cursor()
