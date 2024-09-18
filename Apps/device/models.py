@@ -170,7 +170,8 @@ def send_update_setting(sender, instance,**kwargs):
             else:
                 print("Failed to connect, return code %d\n", rc)
 
-        client = mqtt_client.Client(client_id=client_id, callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2)
+        #client = mqtt_client.Client(client_id=client_id, callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2)
+        client = mqtt_client.Client(client_id, userdata="glertps")
         # client.username_pw_set(username, password)
         client.on_connect = on_connect
         client.connect(broker, port)
