@@ -178,7 +178,7 @@ class EnvironmentalDataManager(models.Manager):
     
 class CamVidDataManager(models.Manager):
     # MAIN SEARCH DATA
-    def search_environmentalData_interval(self,Name, interval):
+    def search_camVidDataData_interval(self,Name, interval):
 
         Intervals = interval.split(' to ')
         intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
@@ -192,16 +192,18 @@ class CamVidDataManager(models.Manager):
 
         result = self.filter(
             DateCreate__range = rangeDate,
-            IdDevice__IdEnvironmental__EnvironmentalName = Name
+            IdDevice__IdVisualSamplingPoint__VisualSamplingPointName = Name
+        ).annotate(
+            vol = F("VoltageBattery") * 0.01
         ).order_by('-DateCreate')
 
         return result
     
         # SEARCH LAST DAY
-    def search_last_day_environmentalData(self,Name):
+    def search_last_day_camVidDataData(self,Name):
 
         result = self.filter(
-                IdDevice__IdEnvironmental__EnvironmentalName = Name
+                IdDevice__IdVisualSamplingPoint__VisualSamplingPointName = Name
             ).values(
                 "DateCreate",
                 "Humidity",

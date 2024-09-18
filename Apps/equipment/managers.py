@@ -89,3 +89,15 @@ class EnvironmentalManager(models.Manager):
             "Status",
         )
         return result
+    
+class VisualSamplingPointManager(models.Manager):
+    def search_visual_sampling_by_company(self, CompanyName):
+        result = self.filter(
+            Owner__CompanyId__CompanyName = CompanyName
+        ).values(
+            "id",
+            "VisualSamplingPointName",
+            "GroupName__GroupName",
+            "Status",
+        )
+        return result

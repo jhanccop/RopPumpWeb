@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from Apps.device.models import TankDevice, WellAnalyzerDevice, EnvironmentalDevice, CamVidDevice
@@ -121,6 +122,8 @@ class EnvironmentalData(models.Model):
         return str(self.IdDevice)
     
 class CamVidData(models.Model):
+
+    
     id = models.BigAutoField(primary_key=True)
 
     IdDevice = models.ForeignKey(CamVidDevice, on_delete=models.CASCADE, null=True, blank=True)
@@ -129,7 +132,18 @@ class CamVidData(models.Model):
     Temperature = models.FloatField('Temperature', null=True, blank =True)
     VoltageBattery = models.FloatField('Voltage Battery', null=True, blank =True)
 
+    CLASS_CHOICES = (
+        (0, "Mariposa 1"),
+        (1, "Mariposa 2"),
+        (2, "Mariposa 3"),
+        (3, "Mariposa 4"),
+    )
+
+    Classes = ArrayField(models.CharField("Class",choices=CLASS_CHOICES, max_length=3,null=True, blank =True),null=True, blank =True)
+    Quantity = ArrayField(models.IntegerField(),null=True, blank =True)
+
     img = models.ImageField(upload_to="media/",null=True,blank=True)
+    img_file_name = models.CharField("Path",max_length=50,blank =True,null=True)
 
     STATUS_CHOICES = (
         ('Normal running', 'Normal running'),

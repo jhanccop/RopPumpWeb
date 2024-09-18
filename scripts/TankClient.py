@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import psycopg2
 #import pymysql
@@ -10,21 +10,27 @@ import paho.mqtt.client as mqtt
 broker_address = 'broker.hivemq.com'
 broker_port = 1883
 
-client_id = 'sodhfo3643435455644'
+client_id = f'publish-{random.randint(0, 1000)}'
 username = 'jhanccop'
 password = 'jhanccop1'
 topic_sub = "jhpOandG/data"
 topic_pub = "jhpOandG/settings"
 
+with open("../secret.json") as f:
+  secret = json.loads(f.read())
+
+def get_secret(secret_name, secrets = secret):
+  try:
+    return secrets[secret_name]
+  except Exception as e:
+    print('Arrival msg error..... ', e)
+
 def db_get(exec):
   conexion = psycopg2.connect(
     host="localhost",
-    #user="userapp",
-    #password="userApp24",
-    #database="databaseapp",
-    user="webappuser",
-    password="c0l053n5353:20",
-    database="datadb",
+    user=get_secret("USER"),
+    password=get_secret("PASSWORD"),
+    database=get_secret("DB_NAME"),
   )
   try:
     cursor = conexion.cursor()
@@ -38,12 +44,9 @@ def db_get(exec):
 def db_local(exec):
   conexion = psycopg2.connect(
     host="localhost",
-    #user="userapp",
-    #password="userApp24",
-    #database="databaseapp",
-    user="webappuser",
-    password="c0l053n5353:20",
-    database="datadb",
+    user=get_secret("USER"),
+    password=get_secret("PASSWORD"),
+    database=get_secret("DB_NAME"),
   )
   try:
     cursor = conexion.cursor()
@@ -66,7 +69,8 @@ def on_message(client, userdata, message):
   try:
     topic_in = str(message.topic)
     data_in = str(message.payload.decode("utf-8"))
-    print(datetime.now(),data_in)
+    #print(datetime.now(),data_in)
+    print(datetime.now())
 
     m_mqtt = json.loads(data_in)
     type = m_mqtt.get("type","NULL")
@@ -106,7 +110,29 @@ def on_message(client, userdata, message):
 
     elif type == "camVidSet":
       name = m_mqtt.get("name","NULL")
-      payload = {"name":name,"timesleep":30}
+      mac = m_mqtt.get("mac","NULL")
+      sql_query = """SELECT * FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+      payloadRaw = db_get(sql_query)
+      payloadRaw = payloadRaw[0]
+
+      #print(payloadRaw)
+
+      dtNow = datetime.now()
+      timeNow = dtNow.time()
+      timeStart = payloadRaw[8]
+      timeEnd = payloadRaw[7]
+
+      status = False
+      if timeNow >= timeStart and timeNow <= timeEnd:
+        status = True
+
+      payload = {
+        "name":payloadRaw[2],
+        "status":status,
+        "timesleep":payloadRaw[6],
+        "continuous":payloadRaw[9],
+        "refresh":payloadRaw[10],
+        }
       payload = json.dumps(payload)
       client.publish(topic_pub,payload)
       print("pub",payload)
@@ -114,17 +140,18 @@ def on_message(client, userdata, message):
   
     elif type == "camVid":
       dt = datetime.now()
-      mac = m_mqtt.get("id","NULL")
+      mac = m_mqtt.get("mac","NULL")
       hum = m_mqtt.get("H","NULL")
       temp = m_mqtt.get("T","NULL")
       bat = m_mqtt.get("B","NULL")
+      img_file = m_mqtt.get("img","NULL")
 
       sql_query_id = """SELECT id FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
       
       raws_id = db_get(sql_query_id)
       _id = raws_id[0][0]
       
-      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status") VALUES('{0}',{1},{2},{3},{4},'{5}')""".format(dt,_id,hum,temp,bat,"Normal running")
+      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status","img_file_name") VALUES('{0}',{1},{2},{3},{4},'{5}','{6}')""".format(dt,_id,hum,temp,bat,"Normal running",img_file)
       
       db_local(sql_query)
 

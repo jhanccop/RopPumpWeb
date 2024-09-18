@@ -8,7 +8,7 @@ from django.views.generic import (
     ListView
 )
 
-from Apps.equipment.models import RodPumpWell, Tank, Environmental
+from Apps.equipment.models import RodPumpWell, Tank, Environmental, VisualSamplingPoint
 from Apps.groups.models import Group
 from .models import RodPumpData, TankData, EnvironmentalData, CamVidData
 
@@ -120,34 +120,34 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
             environmental_data.append(tempPayloadenvironmental)
 
         # ================= get cameras data by company =================
-        list_environmental = Environmental.objects.search_environmental_by_company(CompanyName)
+        list_VisualSampling = VisualSamplingPoint.objects.search_visual_sampling_by_company(CompanyName)
         camera_data = []
-        for environmental_i in list_environmental:
-            tempPayloadenvironmental = {
-                'EnvironmentalName': environmental_i["EnvironmentalName"],
-                'GroupName': environmental_i["GroupName__GroupName"],
-                'Status': environmental_i["Status"],
+        for VisualSampling_i in list_VisualSampling:
+            tempPayloadVisualSamplingPoint = {
+                'VisualSamplingPointName': VisualSampling_i["VisualSamplingPointName"],
+                'GroupName': VisualSampling_i["GroupName__GroupName"],
+                'Status': VisualSampling_i["Status"],
             }
 
-            dataCam= CamVidData.objects.search_last_day_environmentalData(environmental_i["EnvironmentalName"])
+            dataCam= CamVidData.objects.search_last_day_camVidDataData(VisualSampling_i["VisualSamplingPointName"])
             if dataCam != None:
-                tempPayloadenvironmental['LastUpdate'] = dataCam["DateCreate"]
-                tempPayloadenvironmental['Humidity'] = dataCam["Humidity"]
-                tempPayloadenvironmental['Temperature'] = dataCam["Temperature"]
-                tempPayloadenvironmental['AtmosphericPressure'] = dataCam["VoltageBattery"]
+                tempPayloadVisualSamplingPoint['LastUpdate'] = dataCam["DateCreate"]
+                tempPayloadVisualSamplingPoint['Humidity'] = dataCam["Humidity"]
+                tempPayloadVisualSamplingPoint['Temperature'] = dataCam["Temperature"]
+                tempPayloadVisualSamplingPoint['VoltageBattery'] = dataCam["VoltageBattery"]
 
                 if datetime.now().date() == dataCam["DateCreate"].date():
-                    tempPayloadenvironmental['CurrentTankContidition'] = dataCam["Status"]
+                    tempPayloadVisualSamplingPoint['CurrentTankContidition'] = dataCam["Status"]
                 else:
-                    tempPayloadenvironmental['CurrentTankContidition'] = "No data today"
+                    tempPayloadVisualSamplingPoint['CurrentTankContidition'] = "No data today"
 
-            camera_data.append(tempPayloadenvironmental) 
+            camera_data.append(tempPayloadVisualSamplingPoint) 
 
         allData = {
             "rodpumpData": wells_data,
             "tankData":tanks_data,
             "environmental":environmental_data,
-            "camera":camera_data
+            "visualSamplingPoint":camera_data
         }
 
         return allData
@@ -201,7 +201,7 @@ class ListTank(LoginRequiredMixin, CompanyMixin, ListView):
 
         return payload
 
-# SENSOR HISTORICAL VIEW (SECONDARY SCREEN FOR TANK)
+# SENSOR HISTORICAL VIEW (SECONDARY SCREEN FOR ENVIRONMENSTAL)
 class ListSensor(LoginRequiredMixin, CompanyMixin, ListView):
     login_url = reverse_lazy('user_app:user-login')
     template_name = "data/data_sensor.html"
@@ -217,6 +217,47 @@ class ListSensor(LoginRequiredMixin, CompanyMixin, ListView):
             "intervalDate": intervalDate,
             "EnvironmentalName": EnvironmentalName,
             "data":EnvironmentalData.objects.search_environmentalData_interval(EnvironmentalName,intervalDate),
+            #"last_day_Tankdata": last_day_Tankdata,
+        }
+        
+        """
+        if intervalDate == "today" or intervalDate == "":
+            last_15_day_Tankdata = TankData.objects.search_last_15_day_Tankdata(TankName, TankFactor, TankHeight)
+            
+            last_day_Tankdata = TankData.objects.search_last_day_Tankdata(TankName, TankFactor, TankHeight)
+            #allData.append(last_15_day_Tankdata)
+            #allData.append(last_day_Tankdata)
+        else:
+            #interval_Tankdata = TankData.objects.search_interval_Tankdata(intervalDate, TankName, TankFactor,TankHeight)  # .order_by('-DateCreate')
+            last_15_day_Tankdata = TankData.objects.search_last_15_day_Tankdata_interval(intervalDate, TankName, TankFactor, TankHeight)
+            last_day_Tankdata = TankData.objects.search_last_day_Tankdata_interval(intervalDate, TankName, TankFactor, TankHeight)
+
+        payload = {
+            "intervalDate": intervalDate,
+            "TankName": TankName,
+            "last_15_day_Tankdata":last_15_day_Tankdata,
+            "last_day_Tankdata": last_day_Tankdata,
+        }
+        """
+
+        return payload
+
+# SENSOR HISTORICAL VIEW (SECONDARY SCREEN FOR CAMERAS)
+class ListCamera(LoginRequiredMixin, CompanyMixin, ListView):
+    login_url = reverse_lazy('user_app:user-login')
+    template_name = "data/data-camera.html"
+
+    def get_queryset(self):
+        VisualSamplingPointName = self.kwargs['VisualSamplingPointName']
+        intervalDate = self.request.GET.get("dateKword", '')
+
+        if intervalDate == "today" or intervalDate =="":
+            intervalDate = str(date.today() - timedelta(days = 7)) + " to " + str(date.today())
+
+        payload = {
+            "intervalDate": intervalDate,
+            "VisualSamplingPointName": VisualSamplingPointName,
+            "data":CamVidData.objects.search_camVidDataData_interval(VisualSamplingPointName,intervalDate),
             #"last_day_Tankdata": last_day_Tankdata,
         }
         

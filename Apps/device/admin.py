@@ -34,7 +34,7 @@ class confCamVidDevice(admin.ModelAdmin):
 		return obj.DateCreate.strftime("%Y-%m-%d %H:%M:%S")
 	DateCreatedFormat.admin_order_field = 'DateCreated'
 	DateCreatedFormat.short_description = 'Date Created' 
-	list_display = ('id','DeviceName','DateCreatedFormat', 'DeviceMacAddress','DeviceStatus','SamplingRate','IdEnvironmental')
-	list_filter = ('DeviceStatus','IdEnvironmental')
+	list_display = ('id','DeviceName','IdVisualSamplingPoint', 'DeviceMacAddress','TimeStart','TimeEnd','SleepTime','is_continous','refresh')
+	list_filter = ('IdVisualSamplingPoint',)
 admin.site.register(CamVidDevice, confCamVidDevice)
 

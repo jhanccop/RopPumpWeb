@@ -7,7 +7,7 @@ from Apps.field.models import Field
 from Apps.batteries.models import Battery
 from Apps.groups.models import Group
 
-from .managers import TankManager, WellManager, EnvironmentalManager
+from .managers import TankManager, WellManager, EnvironmentalManager, VisualSamplingPointManager
 
 class RodPumpWell(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -140,6 +140,37 @@ class Environmental(models.Model):
 
     def __str__(self):
         return self.EnvironmentalName
+    
+class VisualSamplingPoint(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    # General information
+    Owner = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL,related_name="Cam_owner")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    VisualSamplingPointName = models.CharField('Visual Sanple Point Name', max_length=100, unique=True)
+    GroupName = models.ForeignKey(Group, on_delete=models.CASCADE, unique=False,blank=True,null=True)
+    LatLocation = models.FloatField('Latitude', null=True, blank =True)
+    LonLocation = models.FloatField('Longitude', null=True, blank =True)
+    SupervisorUser = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL)  
+   
+    # Monitoring data
+    Status_CHOICES = (
+        ("Out of service", "Out of service"),
+        ("Maintenance", "Maintenance"),
+        ("Normal running", "Normal running"),
+        ("Testing", "Testing"),
+        ("Not assigned", "Not assigned"),
+    )
+    Status = models.CharField('Status', max_length=50, choices=Status_CHOICES, default="normal running")
+       
+    objects = VisualSamplingPointManager()
+    class Meta:
+        verbose_name = 'Visual Sampling'
+        verbose_name_plural = 'Visual Sampling Points'
+
+    def __str__(self):
+        return self.VisualSamplingPointName
 
 """ 
 class WellsTanks(models.Model):
