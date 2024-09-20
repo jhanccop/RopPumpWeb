@@ -145,13 +145,13 @@ def on_message(client, userdata, message):
       temp = m_mqtt.get("T","NULL")
       bat = m_mqtt.get("B","NULL")
       img_file = m_mqtt.get("img","NULL")
-
+      img64 = m_mqtt.get("image","NULL")
       sql_query_id = """SELECT id FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
       
       raws_id = db_get(sql_query_id)
       _id = raws_id[0][0]
       
-      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status","img_file_name") VALUES('{0}',{1},{2},{3},{4},'{5}','{6}')""".format(dt,_id,hum,temp,bat,"Normal running",img_file)
+      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status","img_file_name","img64") VALUES('{0}',{1},{2},{3},{4},'{5}','{6}','{7}')""".format(dt,_id,hum,temp,bat,"Normal running",img_file,img64)
       
       db_local(sql_query)
 

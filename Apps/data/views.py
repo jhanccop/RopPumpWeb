@@ -5,7 +5,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.views.generic import (
     TemplateView,
-    ListView
+    ListView,
+    DetailView
 )
 
 from Apps.equipment.models import RodPumpWell, Tank, Environmental, VisualSamplingPoint
@@ -283,6 +284,10 @@ class ListCamera(LoginRequiredMixin, CompanyMixin, ListView):
 
         return payload
 
+class DetailCamera(LoginRequiredMixin, CompanyMixin, DetailView):
+    login_url = reverse_lazy('user_app:user-login')
+    template_name = "data/data-camera-detail.html"
+    model = CamVidData
 
 class SuccessView(TemplateView):
     template_name = "home/home.html"

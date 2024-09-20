@@ -154,6 +154,7 @@
                       <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Class</th>
                       <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Quantity</th>
                       <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Volt</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Img</th>
                   </tr>
               </thead>
               <tbody>
@@ -165,6 +166,14 @@
                       <td class="text-sm font-weight-normal text-start"> {% for i in j.Classes %} <p class="mb-0">{{i}} {{ get_i_display }} </p> {% endfor %}</td>
                       <td class="text-sm font-weight-normal text-start"> {% for i in j.Quantity %} <p class="mb-0">{{i}} </p> {% endfor %}</td>
                       <td class="text-sm font-weight-normal text-start">{{j.vol|floatformat:2}}</td>
+
+                      <td class="text-center">
+                        {% if j.img64 != "NULL" %}
+                        <a href="{% url 'data_app:data-camera-detail' j.id %}">
+                          <i class="fas fa-image text-dark text-lg"></i>
+                        </a>
+                        {% endif %}
+                      </td>
                   </tr>
                   {% endfor %}
               </tbody>
@@ -172,6 +181,7 @@
       </div>
   </div>
 </div>
+
 
 {% endblock content %}
 

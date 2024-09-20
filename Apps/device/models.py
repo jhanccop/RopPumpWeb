@@ -87,10 +87,14 @@ class CamVidDevice(models.Model):
     TimeStart = models.TimeField("On time" ,null=True, blank=True )
     TimeEnd = models.TimeField("Off time",null=True, blank=True )
     
+    M2 = 2
+    M5 = 5
     M30 = 30
     M60 = 60
     M120 = 120
     SleepTime_CHOICES = (
+        (M2,"2 m"),
+        (M5,"5 m"),
         (M30,"30 m"),
         (M60,"1 h"),
         (M120,"2 h"),
@@ -155,7 +159,7 @@ def send_update_setting(sender, instance,**kwargs):
     import paho.mqtt.client as mqtt_client
     import json
     import time
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
     broker = 'broker.hivemq.com' #'broker.emqx.io'
     port = 1883
@@ -172,14 +176,16 @@ def send_update_setting(sender, instance,**kwargs):
 
         #client = mqtt_client.Client(client_id=client_id, callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2)
         client = mqtt_client.Client(client_id, userdata="glertps")
-        # client.username_pw_set(username, password)
+
         client.on_connect = on_connect
         client.connect(broker, port)
         return client
     
     client = connect_mqtt()
 
-    dtNow = datetime.now()
+    dtNow = datetime.now() - timedelta(hours=5)
+    print(dtNow)
+    #dtNow = datetime.now()
     timeNow = dtNow.time()
     timeStart = instance.TimeStart
     timeEnd = instance.TimeEnd

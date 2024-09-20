@@ -1,0 +1,110 @@
+{% extends 'data/base_data.html' %}
+
+{% load static %}
+
+{% block title %} Data Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} DATA OVERVIEW {% endblock appName %}
+{% block Type %} SMART CAMERAS {% endblock Type %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-xl-8">
+      <div class="card h-100">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="tab-content shadow-dark border-radius-lg" id="v-pills-tabContent">
+            <img class="tab-content shadow-dark border-radius-lg w-100" alt="img" src="data:image/png;base64,{{object.img64}}" />
+            <div class="position-absolute d-flex top-0 w-100">
+              
+              <p class="text-white font-weight-normal p-3 mb-0">{{object.DateCreate|date:'d-m-Y H:i'}}</p>
+              <div class="ms-auto p-3">
+                <span class="badge badge-secondary">
+                  <i class="fas fa-map-marker-alt text-info text-lgs" aria-hidden="true"></i>
+                   {{object.IdDevice.IdVisualSamplingPoint}}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="card-body d-flex p-3 mt-2">
+          <h6 class="my-auto">{{object.IdDevice.DeviceName}} in {{object.IdDevice.IdVisualSamplingPoint}}</h6>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-4 mt-xl-0 mt-4">
+      <div class="card h-100">
+        <div class="card-header pb-0 p-3">
+          <h6 class="mb-0">Resultados</h6>
+        </div>
+        <div class="card-body p-3">
+          <ul class="list-group">
+            <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2 pt-0">
+              
+              <div class="d-flex align-items-start flex-column justify-content-center">
+                <h6 class="mb-0 text-sm">Sophie B.</h6>
+                <p class="mb-0 text-xs">Lepidoptera</p>
+              </div>
+              <h4 class="pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto text-primary">5</h4>
+              
+            </li>
+
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-3 col-sm-6 col-6">
+      <div class="card">
+        <div class="card-body text-center">
+          <h3 class="text-gradient text-primary"><span> {{object.Temperature}} </span> <span
+              class="text-lg ms-n2">&nbsp; °C</span></h3>
+          <h6 class="mb-0 font-weight-bolder">Temperatura</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-6">
+      <div class="card">
+        <div class="card-body text-center">
+          <h3 class="text-gradient text-primary"> <span>{{object.Humidity}}</span> <span
+              class="text-lg ms-n1">&nbsp; %</span></h3>
+          <h6 class="mb-0 font-weight-bolder">Humedad</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-6 mt-4 mt-md-0">
+      <div class="card">
+        <div class="card-body text-center">
+          <h3 class="text-gradient text-primary"><span id="status3" countto="87">87</span> <span
+              class="text-lg ms-n2">W/m²</span></h3>
+          <h6 class="mb-0 font-weight-bolder">Radiación solar</h6>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-6 mt-4 mt-md-0">
+      <div class="card">
+        <div class="card-body text-center">
+          <h3 class="text-gradient text-primary"><span>{{object.VoltageBattery}}</span> <span
+              class="text-lg ms-n2">&nbsp; cV</span></h3>
+          <h6 class="mb-0 font-weight-bolder">Vol Battery</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+{% endblock JSscripts %}

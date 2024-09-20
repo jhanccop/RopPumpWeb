@@ -142,6 +142,7 @@ class CamVidData(models.Model):
     Classes = ArrayField(models.CharField("Class",choices=CLASS_CHOICES, max_length=3,null=True, blank =True),null=True, blank =True)
     Quantity = ArrayField(models.IntegerField(),null=True, blank =True)
 
+    img64 = models.TextField("img64",null=True,blank=True)
     img = models.ImageField(upload_to="media/",null=True,blank=True)
     img_file_name = models.CharField("Path",max_length=50,blank =True,null=True)
 

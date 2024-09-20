@@ -11,6 +11,7 @@ urlpatterns = [
     path('success/', views.SuccessView.as_view(), name='success'),
     path('data-tank/<TankName>', views.ListTank.as_view(), name='data-tank'),
     path('data-sensor/<EnvironmentalName>', views.ListSensor.as_view(), name='data-sensor'),
+    path('data-camera/detail/<pk>', views.DetailCamera.as_view(), name='data-camera-detail'),
     path('data-camera/<VisualSamplingPointName>', views.ListCamera.as_view(), name='data-camera'),
     path('data-rod-pump/<WellName>', views.ListTank.as_view(), name='data-rod-pump'),
 ]
