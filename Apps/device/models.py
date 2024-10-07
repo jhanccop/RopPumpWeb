@@ -154,7 +154,8 @@ class WellAnalyzerDevice(models.Model):
 
     def __str__(self):
         return self.DeviceName
-    
+
+"""    
 @receiver(post_save, sender=CamVidDevice)
 def send_update_setting(sender, instance,**kwargs):
     import random
@@ -213,4 +214,6 @@ def send_update_setting(sender, instance,**kwargs):
     result,x = client.publish(topicPub, msg)
 
     client.loop_stop()
+
+"""    
     
