@@ -48,8 +48,12 @@ class confCamVidData(admin.ModelAdmin):
 								 'Humidity',
 								 'Temperature',
 								 'VoltageBattery',
+								 'VoltagePanel',
+								 'WindVelocity',
+								 'WindDirection',
+								 'RainCounter',
+								 'img_file_name',
 								 'Status',
-								 'img_file_name'
 								 )
 	list_filter = ('Status','IdDevice')
 admin.site.register(CamVidData, confCamVidData)

@@ -131,6 +131,10 @@ class CamVidData(models.Model):
     Humidity = models.FloatField('Humidity', null=True, blank =True)
     Temperature = models.FloatField('Temperature', null=True, blank =True)
     VoltageBattery = models.FloatField('Voltage Battery', null=True, blank =True)
+    VoltagePanel = models.FloatField('Voltage Panel', null=True, blank =True)
+    WindVelocity = models.FloatField('Wind Velocity', null=True, blank =True)
+    WindDirection = models.FloatField('Wind Direction', null=True, blank =True)
+    RainCounter = models.IntegerField('Rain Counter', null=True, blank =True)
 
     CLASS_CHOICES = (
         (0, "Mariposa 1"),

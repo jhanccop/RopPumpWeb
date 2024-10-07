@@ -2,7 +2,7 @@ import math
 from fractions import Fraction
 
 from datetime import date, datetime, timedelta
-from django.db.models import Sum, Max, F, Avg, Subquery, Count, DateField, Q
+from django.db.models import Sum, Max, F, Avg, Subquery, Count, DateField, Q, Variance
 import itertools
 
 from django.db.models.functions import TruncDate, ExtractDay, Upper
@@ -194,7 +194,9 @@ class CamVidDataManager(models.Manager):
             DateCreate__range = rangeDate,
             IdDevice__IdVisualSamplingPoint__VisualSamplingPointName = Name
         ).annotate(
-            vol = F("VoltageBattery") * 0.01
+            volBat = F("VoltageBattery") * 0.01,
+            volPan = F("VoltagePanel") * 0.01,
+            ppt = Variance("RainCounter") * 0.3,
         ).order_by('-DateCreate')
 
         return result
@@ -210,6 +212,10 @@ class CamVidDataManager(models.Manager):
                 "Temperature",
                 "VoltageBattery",
                 "Status"
+            ).annotate(
+                volBat = F("VoltageBattery") * 0.01,
+                volPan = F("VoltagePanel") * 0.01,
+                ppt = Variance("RainCounter") * 0.3,
             ).order_by('DateCreate').last()
         return result
     

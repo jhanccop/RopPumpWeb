@@ -253,7 +253,7 @@ class ListCamera(LoginRequiredMixin, CompanyMixin, ListView):
         intervalDate = self.request.GET.get("dateKword", '')
 
         if intervalDate == "today" or intervalDate =="":
-            intervalDate = str(date.today() - timedelta(days = 7)) + " to " + str(date.today())
+            intervalDate = str(date.today() - timedelta(days = 2)) + " to " + str(date.today())
 
         payload = {
             "intervalDate": intervalDate,

@@ -12,119 +12,213 @@
 {% block content %}
 
 <!-- SEARCH ROW -->
-<div class="row align-items-center">
-  <div class="col-xl-6 col-sm-6 mb-xl-0 mb-6">
-    
+<div class="row align-items-center mb-4">
+
+  <div class="col-6 col-sm-6">
+    <span class="badge badge-pill badge-lg bg-gradient-secondary w-100 text-md">
+      Last update: {{object_list.data.0.DateCreate|date:'d/m/Y H:i'}}
+    </span>
   </div>
-  <div class="col-xl-6 col-sm-6 mb-xl-0 mb-6">
+
+  <div class="col-xl-6 col-sm-6">
     <form method="GET">{% csrf_token %}
-      <div class="row">
+      <div class="row align-items-center">
 
-
-        <div class="col-xl-6 col-sm-4 mb-4">
+        <div class="col-lg-6 col-sm-6 ">
           <div class="input-group input-group-outline">
             <input class="form-control datetimepicker text-center" value="{{object_list.intervalDate}}" type="text"
               placeholder="today" id="dateKword" name="dateKword" />
           </div>
+        </div>
 
+        <div class="col-lg-6 col-sm-6">
+          <button class="btn btn-sm bg-gradient-primary ms-2 px-3 mb-0" type="submit">SEARCH</button>
         </div>
-        <div class="col-xl-6 col-sm-4">
-          <button class="btn bg-gradient-primary" type="submit"> Search </button>
-        </div>
+
       </div>
     </form>
   </div>
 </div>
 
-<!-- HEAD WIDGETS -->
-<div class="row">
-  
-  <!-- CAMERA DATA -->
-  <div class="col-lg-6 col-sm-6">
-    <div class="bg-gradient-secondary shadow-dark border-radius-lg py-3 pe-1">
-      <div class="container">
-        <div class="row">
-          <div class="col-8 my-auto">
-            <div class="numbers">
-              <p class="text-white text-sm mb-0 font-weight-bold">Data for:  {{object_list.data.0.DateCreate|date:'d/m/Y H:i'}}</p>
-              <h6 class="text-white font-weight-bolder mb-0">
-                {{object_list.VisualSamplingPointName}} - {{object_list.data.0.Temperature|floatformat:2}} °C 
-              </h6>
-            </div>
-          </div>
-          <div class="col-4 text-end">
-            <img class="w-25" src="{% static 'assets/img/sun.png' %}" alt="image sun">
-            <h6 class="mb-0 text-white text-end me-3">{{object_list.data.0.Humidity|floatformat:2}} %</h6>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-    
-  <div class="col-lg-3 col-sm-3">
-    <div class="card mb-4">
-      <div class="card-body p-3">
-        <div class="row">
-          <div class="col-4">
-            <div class="icon icon-lg icon-shape bg-gradient-success shadow text-center border-radius-md">
-              <i class="fas fa-bug opacity-10"></i>
-            </div>
-          </div>
-          <div class="col-8 my-auto text-end">
-            <p class="text-sm mb-0  font-weight-bold">Total identified</p>
-            <h5 class="font-weight-bolder mb-0">
-              3
-            </h5>
-          </div>
-        </div>
+<!-- HEAD WIDGETS and plot -->
+
+<div class="row mt-4">
+  <!-- PLOTS -->
+  <div class="col-lg-7">
+    <div class="card h-100 mt-4 mt-lg-0">
+      <br>
+      <div class="chart bg-gradient-white " >
+        <div ui-jp="plot" id="AllPlots" style="height: 310px;"></div>
       </div>
     </div>
   </div>
 
-  <div class="col-lg-3 col-sm-3">
-    <div class="card mb-4">
-      <div class="card-body p-3">
-        <div class="row">
-          <div class="col-4">
-            <div class="icon icon-lg icon-shape bg-gradient-primary shadow text-center border-radius-md">
-              <i class="fas fa-car-battery opacity-10"></i>
+  <div class="col-lg-5">
+    <div class="row">
+      <!-- HEAD TEMPERATURE -->
+      <div class="col-12">
+        <div class="card bg-gradient-dark mt-4 mt-lg-0">
+          <div class="card-body p-3">
+            <div class="row">
+              <div class="col-8 my-auto">
+                <div class="numbers">
+                  <p class="text-white text-sm mb-0 text-capitalize font-weight-bold opacity-7">Wheather today</p>
+                  <h5 class="text-white font-weight-bolder mb-0">
+                    {{object_list.VisualSamplingPointName}} - {{object_list.data.0.Temperature|floatformat:2}} °C
+                  </h5>
+                </div>
+              </div>
+              <div class="col-4 text-end">
+                {% if object_list.data.0.ppt > 0 %}
+                <img class="w-20" src="{% static 'assets/img/rainy.png' %}" alt="image sun">
+                <h5 class="mb-0 text-white text-end me-1">Rainy</h5>
+                {% elif object_list.data.0.volPan <= 1 %}
+                <img class="w-20" src="{% static 'assets/img/moon.png' %}" alt="image sun">
+                <h5 class="mb-0 text-white text-end me-1">Night</h5>
+                {% elif object_list.data.0.volPan > 1 and object_list.data.0.volPan <= 5 %}
+                <img class="w-20" src="{% static 'assets/img/cloudy.png' %}" alt="image sun">
+                <h5 class="mb-0 text-white text-end me-1">Cloudy</h5>
+                {% elif object_list.data.0.volPan > 5 %}
+                <img class="w-20" src="{% static 'assets/img/sunny.png' %}" alt="image sun">
+                <h5 class="mb-0 text-white text-end me-1">Sunny</h5>
+                {% endif %}
+              </div>
             </div>
-          </div>
-          <div class="col-8 my-auto text-end">
-            <p class="text-sm mb-0 font-weight-bold">Battery voltaje</p>
-            <h5 class="font-weight-bolder mb-0">
-              {{object_list.data.0.vol|floatformat:2}} V
-            </h5>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-</div>
-
-<div class="card mb-4">
-  <div class="card-header pb-0">
-      <div class="row">
-          <div class="col-lg-6 col-7">
-              <h6>Historical data</h6>
+      <!-- Humity -->
+      <div class="col-lg-6 col-md-6 col-6 mt-2">
+        <div class="card">
+          <div class="card-body p-2">
+            <div class="row">
+              <div class="col-4">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow text-center border-radius-md">
+                  <i class="fas fa-tint opacity-10"></i>
+                </div>
+              </div>
+              <div class="col-8 my-auto text-end">
+                <p class="text-sm mb-0  font-weight-bold">Humidity</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{object_list.data.0.Humidity|floatformat:2}} %
+                </h5>
+              </div>
+            </div>
           </div>
-          <div class="col-lg-6 col-5 my-auto text-end">
-          </div>
+        </div>
       </div>
-  </div>
 
-  <!-- line chart -->
-  <div class="card-body px-0 pb-2">
+      <!-- Wind direction -->
+      <div class="col-lg-6 col-md-6 col-6 mt-2 mt-lg-2">
+        <div class="card">
+          <div class="card-body p-2">
+            <div class="row">
+              <div class="col-4">
+                <div class="icon icon-lg icon-shape bg-gradient-danger shadow text-center border-radius-md">
+                  <i class="fas fa-location-arrow opacity-10"></i>
+                </div>
+              </div>
+              <div class="col-8 my-auto text-end">
+                <p class="text-sm mb-0  font-weight-bold">Wind direction</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{object_list.data.0.WindDirection}} °
+                </h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wind velocity -->
+      <div class="col-lg-6 col-md-6 col-12 mt-4 mt-lg-2">
+        <div class="card">
+          <div class="card-body p-2">
+            <div class="row">
+              <div class="col-4">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                  <i class="fas fa-wind opacity-10"></i>
+                </div>
+              </div>
+              <div class="col-8 my-auto text-end">
+                <p class="text-sm mb-0  font-weight-bold">Wind Velocity</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{object_list.data.0.WindVelocity|floatformat:2}} m/s
+                </h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- precipitation -->
+      <div class="col-lg-6 col-md-6 col-12 mt-4 mt-lg-2">
+        <div class="card">
+          <div class="card-body p-2">
+            <div class="row">
+              <div class="col-4">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow text-center border-radius-md">
+                  <i class="fas fa-cloud-showers-heavy opacity-10"></i>
+                </div>
+              </div>
+              <div class="col-8 my-auto text-end">
+                <p class="text-sm mb-0  font-weight-bold">Precipitation</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{object_list.data.0.ppt|floatformat:2}} mm
+                </h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Radiation -->
+      <div class="col-lg-6 col-md-6 col-12 mt-4 mt-lg-2">
+        <div class="card">
+          <div class="card-body p-2">
+            <div class="row">
+              <div class="col-4">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                  <i class="fas fa-sun opacity-10"></i>
+                </div>
+              </div>
+              <div class="col-8 my-auto text-end">
+                <p class="text-sm mb-0  font-weight-bold">Radiación</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{object_list.data.0.volPan|floatformat:2}} w/m²
+                </h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- battery -->
+      <div class="col-lg-6 col-md-6 col-12 mt-4 mt-lg-2">
+        <div class="card">
+          <div class="card-body p-2">
+            <div class="row">
+              <div class="col-4">
+                <div class="icon icon-lg icon-shape bg-gradient-secondary shadow text-center border-radius-md">
+                  <i class="fas fa-battery-half opacity-10"></i>
+                </div>
+              </div>
+              <div class="col-8 my-auto text-end">
+                <p class="text-sm mb-0  font-weight-bold">Battery</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{object_list.data.0.volBat|floatformat:2}} V
+                </h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       
-      <div class="chart">
-        <div ui-jp="plot"  id = "AllPlots" style="height: 300px;"></div>
-        <!-- <canvas id="chart-line" class="chart-canvas" height="300"></canvas> -->
     </div>
   </div>
 </div>
 
-<div class="card">
+<div class="card mt-4">
   <div class="card-header pb-0">
       <div class="row">
           <div class="col-lg-6 col-7">
@@ -148,32 +242,40 @@
           <table class="table align-items-center justify-content-center mb-0" id="datatable-rodPump">
               <thead>
                   <tr>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Date Time</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Temp °C</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Hum %</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Class</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Quantity</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Volt</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-0">Img</th>
+                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7">Date Time</th>
+                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Temp °C</th>
+                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Hum %</th>
+                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">W. direction °</th>
+                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">W. velocity m/s</th>
+                      <th class="text-dark text-xs font-weight-bolder opacity-7 ps-0">PPT mm</th>
+                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Rad W/m²</th>
+                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Bat V</th>
+                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Quantity</th>
+                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Objects</th>
                   </tr>
               </thead>
               <tbody>
                   {% for j in object_list.data %}
                   <tr>
-                      <td class="text-sm font-weight-normal text-start">{{j.DateCreate|date:'m-d-Y H:i'}}</td>
-                      <td class="text-sm font-weight-normal text-start">{{j.Temperature|floatformat:2}}</td>
-                      <td class="text-sm font-weight-normal text-start">{{j.Humidity|floatformat:2}}</td>
-                      <td class="text-sm font-weight-normal text-start"> {% for i in j.Classes %} <p class="mb-0">{{i}} {{ get_i_display }} </p> {% endfor %}</td>
-                      <td class="text-sm font-weight-normal text-start"> {% for i in j.Quantity %} <p class="mb-0">{{i}} </p> {% endfor %}</td>
-                      <td class="text-sm font-weight-normal text-start">{{j.vol|floatformat:2}}</td>
-
-                      <td class="text-center">
+                      <td class="text-sm font-weight-normal text-start">
+                        {{j.DateCreate|date:'m-d-Y H:i'}}
+                        &emsp;
                         {% if j.img64 != "NULL" %}
                         <a href="{% url 'data_app:data-camera-detail' j.id %}">
                           <i class="fas fa-image text-dark text-lg"></i>
                         </a>
                         {% endif %}
+
                       </td>
+                      <td class="text-sm font-weight-normal text-start">{{j.Temperature|floatformat:2}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.Humidity|floatformat:2}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.WindDirection}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.WindVelocity|floatformat:2}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.ppt}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.volPan|floatformat:2}}</td>
+                      <td class="text-sm font-weight-normal text-start">{{j.volBat|floatformat:2}}</td>
+                      <td class="text-sm font-weight-normal text-start"> {% for i in j.Classes %} <p class="mb-0">{{i}} {{ get_i_display }} </p> {% endfor %}</td>
+                      <td class="text-sm font-weight-normal text-start"> {% for i in j.Quantity %} <p class="mb-0">{{i}} </p> {% endfor %}</td>
                   </tr>
                   {% endfor %}
               </tbody>
@@ -181,7 +283,6 @@
       </div>
   </div>
 </div>
-
 
 {% endblock content %}
 
@@ -218,20 +319,28 @@
 <script>
 
   let dt = [];
-  let Te = [];
-  let Hu = [];
-  let Ba = [];
+  let te = [];
+  let hu = [];
+  let wd = [];
+  let wv = [];
+  let ppt = [];
+  let rad = [];
+  let bat = [];
 
   '{% for value in object_list.data %}'
-      Te.push("{{value.Temperature}}");
-      Hu.push("{{value.Humidity}}");
-      Ba.push("{{value.vol}}");
+      te.push("{{value.Temperature}}");
+      hu.push("{{value.Humidity}}");
+      wd.push("{{value.WindDirection}}");
+      wv.push("{{value.WindVelocity}}");
+      ppt.push("{{value.ppt}}");
+      rad.push("{{value.volPan}}");
+      bat.push("{{value.volBat}}");
       var ddt = new Date("{{value.DateCreate|date:'m-d-y H:i'}}");
       dt.push(ddt);
   '{% endfor %}'
 
   var layout = {
-    margin: {l:40,t:0,b:50,r:30},
+    margin: {l:40,t:0,b:35,r:30},
     autosize: true,
 
     xaxis: {
@@ -265,15 +374,15 @@
     type: 'linear'
     },
     legend: {
-        x: 0.5,
-        y: 1,
+        x: 1,
+        y: 0.5,
         traceorder: 'normal',
         font: {
           family: 'sans-serif',
           size: 12,
           //color: '#254'
         },
-        bgcolor: '#E2E2E2',
+        //bgcolor: '#E2E2E2',
         //bordercolor: '#FFFFFF',
         //borderwidth: 2
       }
@@ -287,32 +396,89 @@
 
   var trace0 = {
     x: dt,
-    y: Te,
+    y: te,
     type: 'scatter',
     mode: "lines+markers",
     name: 'Temp',
-    line: {shape: 'spline'},
+    line: {
+      shape: 'spline',
+      color: '#212529',
+    },
   };
 
   var trace1 = {
     x: dt,
-    y: Hu,
+    y: hu,
     type: 'scatter',
     mode: "lines+markers",
     name: 'Hum',
-    line: {shape: 'spline'},
+    line: {
+      shape: 'spline',
+      color: '#03a9f4',
+    },
   };
 
   var trace2 = {
     x: dt,
-    y: Ba,
+    y: wd,
     type: 'scatter',
     mode: "lines+markers",
-    name: 'Vol',
-    line: {shape: 'spline'},
+    name: 'W. dir',
+    line: {
+      shape: 'spline',
+      color: '#f44335',
+    },
   };
 
-  var data = [trace0, trace1, trace2];
+  var trace3 = {
+    x: dt,
+    y: wv,
+    type: 'scatter',
+    mode: "lines+markers",
+    name: 'W. vel',
+    line: {
+      shape: 'spline',
+      color: '#e91e63',
+    },
+  };
+
+  var trace4 = {
+    x: dt,
+    y: ppt,
+    type: 'scatter',
+    mode: "lines+markers",
+    name: 'Ppt',
+    line: {
+      shape: 'spline',
+      color: '#4caf50',
+    },
+  };
+
+  var trace5 = {
+    x: dt,
+    y: rad,
+    type: 'scatter',
+    mode: "lines+markers",
+    name: 'rad',
+    line: {
+      shape: 'spline',
+      color: '#fb8c00',
+    },
+  };
+
+  var trace6 = {
+    x: dt,
+    y: bat,
+    type: 'scatter',
+    mode: "lines+markers",
+    name: 'bat',
+    line: {
+      shape: 'spline',
+      color: '#7b809a',
+    },
+  };
+
+  var data = [trace0, trace1, trace2, trace3, trace4, trace5, trace6];
 
   Plotly.newPlot('AllPlots', data, layout, config);
 

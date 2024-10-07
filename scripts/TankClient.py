@@ -56,7 +56,7 @@ def db_local(exec):
   finally:
     conexion.close()
 
-def on_connect(client, userdata, flags, rc):
+def on_connect(client, userdata, flags, rc,properties):
   print("Connected with result code " + str(rc))
   print("UserData= " + str(userdata))
   print("flags= " + str(flags))
@@ -132,6 +132,7 @@ def on_message(client, userdata, message):
         "timesleep":payloadRaw[6],
         "continuous":payloadRaw[9],
         "refresh":payloadRaw[10],
+        "saveImage":payloadRaw[11],
         }
       payload = json.dumps(payload)
       client.publish(topic_pub,payload)
@@ -144,14 +145,18 @@ def on_message(client, userdata, message):
       hum = m_mqtt.get("H","NULL")
       temp = m_mqtt.get("T","NULL")
       bat = m_mqtt.get("B","NULL")
+      pan = m_mqtt.get("P","NULL")
+      rain = m_mqtt.get("R","NULL")
+      velocity = m_mqtt.get("V","NULL")
+      direction = m_mqtt.get("D","NULL")
       img_file = m_mqtt.get("img","NULL")
       img64 = m_mqtt.get("image","NULL")
+
       sql_query_id = """SELECT id FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
-      
       raws_id = db_get(sql_query_id)
       _id = raws_id[0][0]
       
-      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status","img_file_name","img64") VALUES('{0}',{1},{2},{3},{4},'{5}','{6}','{7}')""".format(dt,_id,hum,temp,bat,"Normal running",img_file,img64)
+      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","VoltagePanel","RainCounter","WindVelocity","WindDirection","Status","img_file_name","img64") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}','{10}','{11}')""".format(dt,_id,hum,temp,bat,pan,rain,velocity,direction,"Normal running",img_file,img64)
       
       db_local(sql_query)
 
@@ -161,8 +166,9 @@ def on_message(client, userdata, message):
     print('Arrival message error..... ', e)
 
 #client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id,userdata="glertps")
+client = mqtt.Client(client_id=client_id, callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
 
-client = mqtt.Client(client_id, userdata="glertps")
+#client = mqtt.Client(client_id, userdata="glertps")
 client.connect(broker_address, broker_port, 15)
 client.on_connect = on_connect
 client.on_message = on_message
