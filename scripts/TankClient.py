@@ -165,9 +165,9 @@ def on_message(client, userdata, message):
   except Exception as e:
     print('Arrival message error..... ', e)
 
-#client = mqtt.Client(client_id=client_id, callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
+client = mqtt.Client(client_id=client_id, callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
 
-client = mqtt.Client(client_id, userdata="glertps")
+#client = mqtt.Client(client_id, userdata="glertps")
 client.connect(broker_address, broker_port, 15)
 client.on_connect = on_connect
 client.on_message = on_message
