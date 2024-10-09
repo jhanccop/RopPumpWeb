@@ -14,7 +14,7 @@
 <!-- SEARCH ROW -->
 <div class="row align-items-center mb-4">
 
-  <div class="col-6 col-sm-6">
+  <div class="col-12 col-md-6">
     <span class="badge badge-pill badge-lg bg-gradient-secondary w-100 text-md">
       Last update: {{object_list.data.0.DateCreate|date:'d/m/Y H:i'}}
     </span>
@@ -62,7 +62,7 @@
             <div class="row">
               <div class="col-8 my-auto">
                 <div class="numbers">
-                  <p class="text-white text-sm mb-0 text-capitalize font-weight-bold opacity-7">Wheather today</p>
+                  <p class="text-white text-sm mb-0 text-capitalize font-weight-bold opacity-7">Wheather Now</p>
                   <h5 class="text-white font-weight-bolder mb-0">
                     {{object_list.VisualSamplingPointName}} - {{object_list.data.0.Temperature|floatformat:2}} °C
                   </h5>
@@ -89,7 +89,7 @@
       </div>
 
       <!-- Humity -->
-      <div class="col-lg-6 col-md-6 col-6 mt-2">
+      <div class="col-lg-6 col-md-6 col-12 mt-2">
         <div class="card">
           <div class="card-body p-2">
             <div class="row">
@@ -110,7 +110,7 @@
       </div>
 
       <!-- Wind direction -->
-      <div class="col-lg-6 col-md-6 col-6 mt-2 mt-lg-2">
+      <div class="col-lg-6 col-md-6 col-12 mt-2 mt-lg-2">
         <div class="card">
           <div class="card-body p-2">
             <div class="row">
@@ -250,8 +250,6 @@
                       <th class="text-dark text-xs font-weight-bolder opacity-7 ps-0">PPT mm</th>
                       <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Rad W/m²</th>
                       <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Bat V</th>
-                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Quantity</th>
-                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Objects</th>
                   </tr>
               </thead>
               <tbody>
@@ -274,8 +272,6 @@
                       <td class="text-sm font-weight-normal text-start">{{j.ppt}}</td>
                       <td class="text-sm font-weight-normal text-start">{{j.volPan|floatformat:2}}</td>
                       <td class="text-sm font-weight-normal text-start">{{j.volBat|floatformat:2}}</td>
-                      <td class="text-sm font-weight-normal text-start"> {% for i in j.Classes %} <p class="mb-0">{{i}} {{ get_i_display }} </p> {% endfor %}</td>
-                      <td class="text-sm font-weight-normal text-start"> {% for i in j.Quantity %} <p class="mb-0">{{i}} </p> {% endfor %}</td>
                   </tr>
                   {% endfor %}
               </tbody>

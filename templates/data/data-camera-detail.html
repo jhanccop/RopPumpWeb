@@ -37,68 +37,212 @@
       </div>
     </div>
 
-    <div class="col-12 col-xl-4 mt-xl-0 mt-4">
-      <div class="card h-100">
-        <div class="card-header pb-0 p-3">
-          <h6 class="mb-0">Resultados</h6>
-        </div>
-        <div class="card-body p-3">
-          <ul class="list-group">
-            <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2 pt-0">
-              
-              <div class="d-flex align-items-start flex-column justify-content-center">
-                <h6 class="mb-0 text-sm">Sophie B.</h6>
-                <p class="mb-0 text-xs">Lepidoptera</p>
+    <div class="col-lg-4">
+      <div class="row">
+        <!-- Place -->
+        <div class="col-12">
+          <div class="card bg-gradient-secondary mt-4 mt-lg-0">
+            <div class="card-body p-3">
+              <div class="row">
+                <div class="col-7 my-auto">
+                  <div class="numbers">
+                    <p class="text-white text-sm mb-0 text-capitalize font-weight-bold opacity-7">Date Time</p>
+                    <h5 class="text-white font-weight-bolder mb-0">
+                      {{object.DateCreate|date:'d/m/Y H:i'}}
+                    </h5>
+                  </div>
+                </div>
+                <div class="col-5 text-end">
+                  {% if object.ppt > 0 %}
+                  <img class="w-20" src="{% static 'assets/img/rainy.png' %}" alt="image sun">
+                  {% elif object.volPan <= 1 %}
+                  <img class="w-20" src="{% static 'assets/img/moon.png' %}" alt="image sun">
+                  {% elif object.volPan > 1 and object.volPan <= 5 %}
+                  <img class="w-20" src="{% static 'assets/img/cloudy.png' %}" alt="image sun">
+                  {% elif object.volPan > 5 %}
+                  <img class="w-20" src="{% static 'assets/img/sunny.png' %}" alt="image sun">
+                  {% endif %}
+                  <h5 class="mb-0 text-white text-end me-1">{{object.IdDevice.IdVisualSamplingPoint}}</h5>
+                  
+                </div>
               </div>
-              <h4 class="pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto text-primary">5</h4>
-              
-            </li>
-
-          </ul>
+            </div>
+          </div>
         </div>
+
+        <!-- N butterfly -->
+        <div class="col-lg-6 col-md-6 col-12 mt-2">
+          <div class="card">
+            <div class="card-body p-2">
+              <div class="row">
+                <div class="col-4">
+                  <div class="icon icon-lg icon-shape bg-gradient-dark shadow text-center border-radius-md">
+                    <i class="fas fa-bug opacity-10"></i>
+                  </div>
+                </div>
+                <div class="col-8 my-auto text-end">
+                  <p class="text-sm mb-0  font-weight-bold">Identified</p>
+                  <h5 class="font-weight-bolder mb-0">
+                    2
+                  </h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Temperature -->
+        <div class="col-lg-6 col-md-6 col-12 mt-2 mt-lg-2">
+          <div class="card">
+            <div class="card-body p-2">
+              <div class="row">
+                <div class="col-4">
+                  <div class="icon icon-lg icon-shape bg-gradient-dark shadow text-center border-radius-md">
+                    <i class="fas fa-thermometer-three-quarters opacity-10"></i>
+                  </div>
+                </div>
+                <div class="col-8 my-auto text-end">
+                  <p class="text-sm mb-0  font-weight-bold">Temperature</p>
+                  <h5 class="font-weight-bolder mb-0">
+                    {{object.Temperature}} °C
+                  </h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Humity -->
+        <div class="col-lg-6 col-md-6 col-12 mt-2">
+          <div class="card">
+            <div class="card-body p-2">
+              <div class="row">
+                <div class="col-4">
+                  <div class="icon icon-lg icon-shape bg-gradient-info shadow text-center border-radius-md">
+                    <i class="fas fa-tint opacity-10"></i>
+                  </div>
+                </div>
+                <div class="col-8 my-auto text-end">
+                  <p class="text-sm mb-0  font-weight-bold">Humidity</p>
+                  <h5 class="font-weight-bolder mb-0">
+                    {{object.Humidity|floatformat:2}} %
+                  </h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Wind direction -->
+        <div class="col-lg-6 col-md-6 col-12 mt-2 mt-lg-2">
+          <div class="card">
+            <div class="card-body p-2">
+              <div class="row">
+                <div class="col-4">
+                  <div class="icon icon-lg icon-shape bg-gradient-danger shadow text-center border-radius-md">
+                    <i class="fas fa-location-arrow opacity-10"></i>
+                  </div>
+                </div>
+                <div class="col-8 my-auto text-end">
+                  <p class="text-sm mb-0  font-weight-bold">Wind direction</p>
+                  <h5 class="font-weight-bolder mb-0">
+                    {{object.WindDirection}} °
+                  </h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Wind velocity -->
+        <div class="col-lg-6 col-md-6 col-12 mt-4 mt-lg-2">
+          <div class="card">
+            <div class="card-body p-2">
+              <div class="row">
+                <div class="col-4">
+                  <div class="icon icon-lg icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                    <i class="fas fa-wind opacity-10"></i>
+                  </div>
+                </div>
+                <div class="col-8 my-auto text-end">
+                  <p class="text-sm mb-0  font-weight-bold">Wind Velocity</p>
+                  <h5 class="font-weight-bolder mb-0">
+                    {{object.WindVelocity|floatformat:2}} m/s
+                  </h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- precipitation -->
+        <div class="col-lg-6 col-md-6 col-12 mt-4 mt-lg-2">
+          <div class="card">
+            <div class="card-body p-2">
+              <div class="row">
+                <div class="col-4">
+                  <div class="icon icon-lg icon-shape bg-gradient-success shadow text-center border-radius-md">
+                    <i class="fas fa-cloud-showers-heavy opacity-10"></i>
+                  </div>
+                </div>
+                <div class="col-8 my-auto text-end">
+                  <p class="text-sm mb-0  font-weight-bold">Precipitation</p>
+                  <h5 class="font-weight-bolder mb-0">
+                    {{object.ppt|floatformat:2}} mm
+                  </h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Radiation -->
+        <div class="col-lg-6 col-md-6 col-12 mt-4 mt-lg-2">
+          <div class="card">
+            <div class="card-body p-2">
+              <div class="row">
+                <div class="col-4">
+                  <div class="icon icon-lg icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                    <i class="fas fa-sun opacity-10"></i>
+                  </div>
+                </div>
+                <div class="col-8 my-auto text-end">
+                  <p class="text-sm mb-0  font-weight-bold">Radiación</p>
+                  <h5 class="font-weight-bolder mb-0">
+                    {{object.volPan|floatformat:2}} w/m²
+                  </h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- battery -->
+        <div class="col-lg-6 col-md-6 col-12 mt-4 mt-lg-2">
+          <div class="card">
+            <div class="card-body p-2">
+              <div class="row">
+                <div class="col-4">
+                  <div class="icon icon-lg icon-shape bg-gradient-secondary shadow text-center border-radius-md">
+                    <i class="fas fa-battery-half opacity-10"></i>
+                  </div>
+                </div>
+                <div class="col-8 my-auto text-end">
+                  <p class="text-sm mb-0  font-weight-bold">Battery</p>
+                  <h5 class="font-weight-bolder mb-0">
+                    {{object.volBat|floatformat:2}} V
+                  </h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
       </div>
     </div>
 
   </div>
 
-  <div class="row mt-4">
-    <div class="col-md-3 col-sm-6 col-6">
-      <div class="card">
-        <div class="card-body text-center">
-          <h3 class="text-gradient text-primary"><span> {{object.Temperature}} </span> <span
-              class="text-lg ms-n2">&nbsp; °C</span></h3>
-          <h6 class="mb-0 font-weight-bolder">Temperatura</h6>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3 col-sm-6 col-6">
-      <div class="card">
-        <div class="card-body text-center">
-          <h3 class="text-gradient text-primary"> <span>{{object.Humidity}}</span> <span
-              class="text-lg ms-n1">&nbsp; %</span></h3>
-          <h6 class="mb-0 font-weight-bolder">Humedad</h6>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3 col-sm-6 col-6 mt-4 mt-md-0">
-      <div class="card">
-        <div class="card-body text-center">
-          <h3 class="text-gradient text-primary"><span id="status3" countto="87">87</span> <span
-              class="text-lg ms-n2">W/m²</span></h3>
-          <h6 class="mb-0 font-weight-bolder">Radiación solar</h6>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3 col-sm-6 col-6 mt-4 mt-md-0">
-      <div class="card">
-        <div class="card-body text-center">
-          <h3 class="text-gradient text-primary"><span>{{object.VoltageBattery}}</span> <span
-              class="text-lg ms-n2">&nbsp; cV</span></h3>
-          <h6 class="mb-0 font-weight-bolder">Vol Battery</h6>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
 

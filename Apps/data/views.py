@@ -9,6 +9,9 @@ from django.views.generic import (
     DetailView
 )
 
+from django.db.models import F, Window
+from django.db.models.functions import Lag
+
 from Apps.equipment.models import RodPumpWell, Tank, Environmental, VisualSamplingPoint
 from Apps.groups.models import Group
 from .models import RodPumpData, TankData, EnvironmentalData, CamVidData
@@ -135,7 +138,7 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
                 tempPayloadVisualSamplingPoint['LastUpdate'] = dataCam["DateCreate"]
                 tempPayloadVisualSamplingPoint['Humidity'] = dataCam["Humidity"]
                 tempPayloadVisualSamplingPoint['Temperature'] = dataCam["Temperature"]
-                tempPayloadVisualSamplingPoint['VoltageBattery'] = dataCam["VoltageBattery"]
+                tempPayloadVisualSamplingPoint['volBat'] = dataCam["volBat"]
 
                 if datetime.now().date() == dataCam["DateCreate"].date():
                     tempPayloadVisualSamplingPoint['CurrentTankContidition'] = dataCam["Status"]
@@ -261,26 +264,7 @@ class ListCamera(LoginRequiredMixin, CompanyMixin, ListView):
             "data":CamVidData.objects.search_camVidDataData_interval(VisualSamplingPointName,intervalDate),
             #"last_day_Tankdata": last_day_Tankdata,
         }
-        
-        """
-        if intervalDate == "today" or intervalDate == "":
-            last_15_day_Tankdata = TankData.objects.search_last_15_day_Tankdata(TankName, TankFactor, TankHeight)
-            
-            last_day_Tankdata = TankData.objects.search_last_day_Tankdata(TankName, TankFactor, TankHeight)
-            #allData.append(last_15_day_Tankdata)
-            #allData.append(last_day_Tankdata)
-        else:
-            #interval_Tankdata = TankData.objects.search_interval_Tankdata(intervalDate, TankName, TankFactor,TankHeight)  # .order_by('-DateCreate')
-            last_15_day_Tankdata = TankData.objects.search_last_15_day_Tankdata_interval(intervalDate, TankName, TankFactor, TankHeight)
-            last_day_Tankdata = TankData.objects.search_last_day_Tankdata_interval(intervalDate, TankName, TankFactor, TankHeight)
 
-        payload = {
-            "intervalDate": intervalDate,
-            "TankName": TankName,
-            "last_15_day_Tankdata":last_15_day_Tankdata,
-            "last_day_Tankdata": last_day_Tankdata,
-        }
-        """
 
         return payload
 
@@ -288,6 +272,19 @@ class DetailCamera(LoginRequiredMixin, CompanyMixin, DetailView):
     login_url = reverse_lazy('user_app:user-login')
     template_name = "data/data-camera-detail.html"
     model = CamVidData
+
+    def get_queryset(self):
+        return super().get_queryset().annotate(
+            volBat = F("VoltageBattery") * 0.01,
+            volPan = F("VoltagePanel") * 0.01,
+            rainCounter = F("RainCounter"),
+            lastRainCounter=Window(
+                expression=Lag('rainCounter'),
+                order_by=F('DateCreate').asc()
+            ),
+            ppt = (F("rainCounter") - F("lastRainCounter")) * 0.3,
+            # Add more annotations as needed
+        )
 
 class SuccessView(TemplateView):
     template_name = "home/home.html"
