@@ -2,7 +2,7 @@ import math
 from fractions import Fraction
 
 from datetime import date, datetime, timedelta
-from django.db.models import Sum, Max, F, Avg, Window, Count, DateField, Q, Variance
+from django.db.models import Sum, Max, F, Avg, Window, Count, DateField, Q
 from django.db.models.functions import Lag
 import itertools
 
