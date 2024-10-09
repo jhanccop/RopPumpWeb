@@ -133,6 +133,7 @@ def on_message(client, userdata, message):
         "continuous":payloadRaw[9],
         "refresh":payloadRaw[10],
         "saveImage":payloadRaw[11],
+        "runningNN":payloadRaw[12],
         }
       payload = json.dumps(payload)
       client.publish(topic_pub,payload)

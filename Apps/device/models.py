@@ -114,6 +114,7 @@ class CamVidDevice(models.Model):
     )
     refresh = models.IntegerField('Sampling Rate', choices=refresh_CHOICES,null = True, blank =True,default = 10)
     saveImage = models.BooleanField("save Image?", default = False)
+    runningNN = models.BooleanField("running NN?", default = False)
 
     objects = EnvironmentalDeviceManager()
     class Meta:
