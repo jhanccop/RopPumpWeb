@@ -9,6 +9,7 @@ import numpy as np
 from ultralytics import YOLO
 model = YOLO('best.pt')
 import pybase64
+import base64
 # ==========================
 
 import paho.mqtt.client as mqtt
@@ -161,11 +162,17 @@ def on_message(client, userdata, message):
 
       # fileImage change b64 to jpg
       decoded_data=pybase64.b64decode((img64))
-      img_file = open('image.jpg', 'wb')
-      img_file.write(decoded_data)
-      img_file.close()
+      Img_file = open('image.jpg', 'wb')
+      Img_file.write(decoded_data)
+      Img_file.close()
       results = model(["image.jpg"])
       nDetected = results[0].boxes.shape[0]
+
+      if nDetected > 0:
+        with open("image.jpg", "rb") as f:
+          img64 = base64.b64encode(f.read())
+
+      print(nDetected)
       sql_query_id = """SELECT id FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
       raws_id = db_get(sql_query_id)
       _id = raws_id[0][0]
