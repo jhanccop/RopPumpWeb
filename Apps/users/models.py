@@ -19,12 +19,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     #is_superuser = models.BooleanField(default=False)
 
-    ROLE_CHOICES = (
+    ROLE_CHOICES = [
         ("Manager", "Manager"),
         ("Supervisor", "Supervisor"),
         ("Worker", "Worker"),
-    )
-    Role = models.CharField('Role', max_length=10, choices=ROLE_CHOICES, default="Worker")
+    ]
+    Role = models.CharField('Role',max_length=10, choices = ROLE_CHOICES, default="Worker")
     
     USERNAME_FIELD = "UserName"
 

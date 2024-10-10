@@ -5,6 +5,12 @@ import psycopg2
 import random
 import numpy as np
 
+# --- only YOLO PREDICT ----
+from ultralytics import YOLO
+model = YOLO('best.pt')
+import pybase64
+# ==========================
+
 import paho.mqtt.client as mqtt
 #broker_address = "broker.emqx.io"
 broker_address = 'broker.hivemq.com'
@@ -153,18 +159,25 @@ def on_message(client, userdata, message):
       img_file = m_mqtt.get("img","NULL")
       img64 = m_mqtt.get("image","NULL")
 
+      # fileImage change b64 to jpg
+      decoded_data=pybase64.b64decode((img64))
+      img_file = open('image.jpg', 'wb')
+      img_file.write(decoded_data)
+      img_file.close()
+      results = model(["image.jpg"])
+      nDetected = results[0].boxes.shape[0]
       sql_query_id = """SELECT id FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
       raws_id = db_get(sql_query_id)
       _id = raws_id[0][0]
       
-      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","VoltagePanel","RainCounter","WindVelocity","WindDirection","Status","img_file_name","img64") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}','{10}','{11}')""".format(dt,_id,hum,temp,bat,pan,rain,velocity,direction,"Normal running",img_file,img64)
+      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","VoltagePanel","RainCounter","WindVelocity","WindDirection","Status","img_file_name","img64","nDetected") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}','{10}','{11}',{12})""".format(dt,_id,hum,temp,bat,pan,rain,velocity,direction,"Normal running",img_file,img64,nDetected)
       
       db_local(sql_query)
 
       pass
           
   except Exception as e:
-    print('Arrival message error..... ', e)
+    print('Arrival error..... ', e)
 
 client = mqtt.Client(client_id=client_id, callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
 

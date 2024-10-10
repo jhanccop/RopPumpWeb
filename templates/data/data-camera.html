@@ -243,6 +243,7 @@
               <thead>
                   <tr>
                       <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7">Date Time</th>
+                      <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7">N</th>
                       <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Temp °C</th>
                       <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">Hum %</th>
                       <th class="text-uppercase text-dark text-xs font-weight-bolder opacity-7 ps-0">W. direction °</th>
@@ -263,8 +264,15 @@
                           <i class="fas fa-image text-dark text-lg"></i>
                         </a>
                         {% endif %}
+                        &emsp;
+                        {% if j.nDetected > 0 %}
+                        <a href="{% url 'data_app:data-camera-detail' j.id %}">
+                          <i class="fas fa-bug text-success text-lg"></i>
+                        </a>
+                        {% endif %}
 
                       </td>
+                      <td class="text-sm font-weight-normal text-start">{{j.nDetected}}</td>
                       <td class="text-sm font-weight-normal text-start">{{j.Temperature|floatformat:2}}</td>
                       <td class="text-sm font-weight-normal text-start">{{j.Humidity|floatformat:2}}</td>
                       <td class="text-sm font-weight-normal text-start">{{j.WindDirection}}</td>

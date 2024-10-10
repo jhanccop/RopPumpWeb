@@ -123,7 +123,6 @@ class EnvironmentalData(models.Model):
     
 class CamVidData(models.Model):
 
-    
     id = models.BigAutoField(primary_key=True)
 
     IdDevice = models.ForeignKey(CamVidDevice, on_delete=models.CASCADE, null=True, blank=True)
@@ -145,6 +144,7 @@ class CamVidData(models.Model):
 
     Classes = ArrayField(models.CharField("Class",choices=CLASS_CHOICES, max_length=3,null=True, blank =True),null=True, blank =True)
     Quantity = ArrayField(models.IntegerField(),null=True, blank =True)
+    nDetected = models.IntegerField('N Detected', null=True, blank =True)
 
     img64 = models.TextField("img64",null=True,blank=True)
     img = models.ImageField(upload_to="media/",null=True,blank=True)
