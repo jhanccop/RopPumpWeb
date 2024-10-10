@@ -169,15 +169,17 @@ def on_message(client, userdata, message):
       nDetected = results[0].boxes.shape[0]
 
       if nDetected > 0:
+        print("detected butterfly")
         with open("image.jpg", "rb") as f:
           img64 = base64.b64encode(f.read())
+          img64 = img64.decode('utf-8')
 
       print(nDetected)
       sql_query_id = """SELECT id FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
       raws_id = db_get(sql_query_id)
       _id = raws_id[0][0]
       
-      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","VoltagePanel","RainCounter","WindVelocity","WindDirection","Status","img_file_name","img64","nDetected") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}','{10}','{11}',{12})""".format(dt,_id,hum,temp,bat,pan,rain,velocity,direction,"Normal running",img_file,str(img64),nDetected)
+      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","VoltagePanel","RainCounter","WindVelocity","WindDirection","Status","img_file_name","img64","nDetected") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}','{10}','{11}',{12})""".format(dt,_id,hum,temp,bat,pan,rain,velocity,direction,"Normal running",img_file,img64,nDetected)
       
       db_local(sql_query)
 
