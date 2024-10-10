@@ -160,10 +160,10 @@ def on_message(client, userdata, message):
       img_file = m_mqtt.get("img","NULL")
       img64 = m_mqtt.get("image","NULL")
 
-      if hum = "nan":
+      if hum == "nan":
         hum = 0
 
-      if temp = "nan":
+      if temp == "nan":
         temp = 0
 
       # fileImage change b64 to jpg
