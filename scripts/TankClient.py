@@ -14,7 +14,8 @@ import base64
 
 import paho.mqtt.client as mqtt
 #broker_address = "broker.emqx.io"
-broker_address = 'broker.hivemq.com'
+#broker_address = 'broker.hivemq.com'
+broker_address = "24.199.125.52"
 broker_port = 1883
 
 client_id = f'publish-{random.randint(0, 1000)}'
