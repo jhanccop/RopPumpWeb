@@ -166,20 +166,25 @@ def on_message(client, userdata, message):
       if temp == "nan":
         temp = 0
 
-      # fileImage change b64 to jpg
-      decoded_data=pybase64.b64decode((img64))
-      Img_file = open('image.jpg', 'wb')
-      Img_file.write(decoded_data)
-      Img_file.close()
-      results = model(["image.jpg"])
-      results[0].save(filename="result.jpg")
-      nDetected = results[0].boxes.shape[0]
+      nDetected = 0
 
-      if nDetected > 0:
-        print("detected butterfly")
-        with open("result.jpg", "rb") as f:
-          img64 = base64.b64encode(f.read())
-          img64 = img64.decode('utf-8')
+      if img64 == "NULL" or img64 == "":
+        pass
+      else:
+        # fileImage change b64 to jpg
+        decoded_data=pybase64.b64decode((img64))
+        Img_file = open('image.jpg', 'wb')
+        Img_file.write(decoded_data)
+        Img_file.close()
+        results = model(["image.jpg"])
+        results[0].save(filename="result.jpg")
+        nDetected = results[0].boxes.shape[0]
+
+        if nDetected > 0:
+          print("detected butterfly")
+          with open("result.jpg", "rb") as f:
+            img64 = base64.b64encode(f.read())
+            img64 = img64.decode('utf-8')
 
       print(nDetected)
       sql_query_id = """SELECT id FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
