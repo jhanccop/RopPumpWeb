@@ -228,4 +228,62 @@ class CamVidDataManager(models.Manager):
                 ).order_by('DateCreate').last()
         return result
     
+class TrapViewDataManager(models.Manager):
+    # MAIN SEARCH DATA
+    def search_TrapViewData_interval(self,Name, interval):
 
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        result = self.filter(
+            DateCreate__range = rangeDate,
+            IdDevice__DeviceName = Name
+        ).annotate(
+            volBat = F("VoltageBattery") * 0.01,
+            volPan = F("VoltagePanel") * 0.01,
+            lastRainCounter=Window(
+                expression=Lag('RainCounter'),
+                order_by=F('DateCreate').asc()
+            ),
+            ppt = (F("RainCounter") - F("lastRainCounter")) * 0.3,
+        ).order_by('-DateCreate')
+
+        return result
+    
+        # SEARCH LAST DAY
+    def search_last_day_TrapViewData(self,Name):
+
+        result = self.filter(
+                IdDevice__IdGateway__IdInsectMonitoring__name = Name
+            ).values(
+                "DateCreate",
+                "IdDevice",
+                "Humidity",
+                "Temperature",
+                "VoltageBattery",
+                "Status"
+            ).annotate(
+                volBat = F("VoltageBattery") * 0.01,
+                volPan = F("VoltagePanel") * 0.01,
+                ).order_by('DateCreate').last()
+        return result
+    
+    def get_last_data_insect_by_company(self,company):
+        idresult = self.filter(
+                IdDevice__IdGateway__IdInsectMonitoring__Owner__CompanyId__CompanyName = company
+                #IdDevice__IdGateway__IdInsectMonitoring__name = Name
+            ).values('IdDevice').annotate(
+                max_id=Max('id')
+            ).values('max_id')
+        
+        result =  self.filter(id__in=idresult).annotate(
+                volBat = F("VoltageBattery") * 0.01,
+                )
+        return result

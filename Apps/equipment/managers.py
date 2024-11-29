@@ -101,3 +101,15 @@ class VisualSamplingPointManager(models.Manager):
             "Status",
         )
         return result
+    
+class InsectMonitoringtManager(models.Manager):
+    def search_insect_monitor_by_company(self, CompanyName):
+        result = self.filter(
+            Owner__CompanyId__CompanyName = CompanyName
+        ).values(
+            "id",
+            "name",
+            "GroupName__GroupName",
+            "Status",
+        )
+        return result

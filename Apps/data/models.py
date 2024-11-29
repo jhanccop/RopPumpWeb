@@ -1,11 +1,23 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
-from Apps.device.models import TankDevice, WellAnalyzerDevice, EnvironmentalDevice, CamVidDevice
+from Apps.device.models import (
+    TankDevice,
+    WellAnalyzerDevice,
+    EnvironmentalDevice,
+    CamVidDevice,
+    TrapView,
+    Gateway)
+
 from multiselectfield import MultiSelectField
 
-from .managers import RPDataManager, TankDataManager, EnvironmentalDataManager, CamVidDataManager
-
+from .managers import (
+    RPDataManager,
+    TankDataManager,
+    EnvironmentalDataManager,
+    CamVidDataManager,
+    TrapViewDataManager
+)
 # Create your models here.
 class RodPumpData(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -161,6 +173,73 @@ class CamVidData(models.Model):
     class Meta:
         verbose_name = 'Camera Data'
         verbose_name_plural = 'All Camera Data'
+
+    def __str__(self):
+        return str(self.IdDevice)
+    
+class TrapViewData(models.Model):
+
+    id = models.BigAutoField(primary_key=True)
+
+    IdDevice = models.ForeignKey(TrapView, on_delete=models.CASCADE, null=True, blank=True)
+    DateCreate = models.DateTimeField(auto_now_add = True)
+    Humidity = models.FloatField('Humidity', null=True, blank =True)
+    Temperature = models.FloatField('Temperature', null=True, blank =True)
+    VoltageBattery = models.FloatField('Voltage Battery', null=True, blank =True)
+    VoltagePanel = models.FloatField('Voltage Panel', null=True, blank =True)
+    WindVelocity = models.FloatField('Wind Velocity', null=True, blank =True)
+    WindDirection = models.FloatField('Wind Direction', null=True, blank =True)
+    RainCounter = models.IntegerField('Rain Counter', null=True, blank =True)
+
+    CLASS_CHOICES = (
+        (0, "Mariposa 1"),
+        (1, "Mariposa 2"),
+        (2, "Mariposa 3"),
+        (3, "Mariposa 4"),
+    )
+
+    Classes = ArrayField(models.CharField("Class",choices=CLASS_CHOICES, max_length=3,null=True, blank =True),null=True, blank =True)
+    Quantity = ArrayField(models.IntegerField(),null=True, blank =True)
+    nDetected = models.IntegerField('N Detected', null=True, blank =True)
+
+    img64 = models.TextField("img64",null=True,blank=True)
+    img_bool = models.BooleanField("image?",default=False)
+
+    STATUS_CHOICES = (
+        ('Normal running', 'Normal running'),
+        ('Stopped', 'Stopped'),
+    )
+    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=100,blank =True,null=True)
+     
+    objects = TrapViewDataManager()
+
+    class Meta:
+        verbose_name = 'Trap View Data'
+        verbose_name_plural = 'All Trap View Data'
+
+    def __str__(self):
+        return str(self.IdDevice)
+
+class GatewayData(models.Model):
+
+    id = models.BigAutoField(primary_key=True)
+
+    IdDevice = models.ForeignKey(Gateway, on_delete=models.CASCADE, null=True, blank=True)
+    DateCreate = models.DateTimeField(auto_now_add = True)
+    VoltageBattery = models.FloatField('Voltage Battery', null=True, blank =True)
+    VoltagePanel = models.FloatField('Voltage Panel', null=True, blank =True)
+   
+    STATUS_CHOICES = (
+        ('Normal running', 'Normal running'),
+        ('Stopped', 'Stopped'),
+    )
+    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=100,blank =True,null=True)
+     
+    #objects = GatewayDataManager()
+
+    class Meta:
+        verbose_name = 'Gateway Data'
+        verbose_name_plural = 'All Gateway Data'
 
     def __str__(self):
         return str(self.IdDevice)

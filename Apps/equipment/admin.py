@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import RodPumpWell, Tank, Environmental, VisualSamplingPoint #, WellsTanks
+from .models import RodPumpWell, Tank, Environmental, VisualSamplingPoint, InsectMonitoring #, WellsTanks
 
 """class WellsTanksInLine(admin.TabularInline):
 	model = WellsTanks
@@ -58,7 +58,21 @@ class confVisualSamplingPoint(admin.ModelAdmin):
 	
 	list_filter = ('GroupName','SupervisorUser','Status')
 
+class confInsectMonitoring(admin.ModelAdmin):
+	#inlines = [WellsTanksInLine,]
+	list_display = (
+		'name',
+		'GroupName',
+		'SupervisorUser',
+		'Status'
+	)
+	def full_name(self, obj):
+		return obj.VisualSamplingPointName
+	
+	list_filter = ('GroupName','SupervisorUser','Status')
+
 #admin.site.register(WellsTanks)
 admin.site.register(Tank, confTank)
 admin.site.register(Environmental, confEnvironmental)
 admin.site.register(VisualSamplingPoint, confVisualSamplingPoint)
+admin.site.register(InsectMonitoring, confInsectMonitoring)

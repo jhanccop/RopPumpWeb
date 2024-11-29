@@ -12,9 +12,21 @@ from django.views.generic import (
 from django.db.models import F, Window
 from django.db.models.functions import Lag
 
-from Apps.equipment.models import RodPumpWell, Tank, Environmental, VisualSamplingPoint
+from Apps.equipment.models import (
+    RodPumpWell, 
+    Tank,
+    Environmental,
+    VisualSamplingPoint,
+    InsectMonitoring
+)
 from Apps.groups.models import Group
-from .models import RodPumpData, TankData, EnvironmentalData, CamVidData
+from .models import (
+    RodPumpData,
+    TankData,
+    EnvironmentalData,
+    CamVidData,
+    TrapViewData
+)
 
 from Apps.users.models import User
 from Apps.company.models import Company
@@ -147,11 +159,16 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
 
             camera_data.append(tempPayloadVisualSamplingPoint) 
 
+        # ================= get insect monitoring by company =================
+
+        listTrapView = TrapViewData.objects.get_last_data_insect_by_company(CompanyName)
+
         allData = {
             "rodpumpData": wells_data,
             "tankData":tanks_data,
             "environmental":environmental_data,
-            "visualSamplingPoint":camera_data
+            "visualSamplingPoint":camera_data,
+            "insects":listTrapView
         }
 
         return allData
@@ -268,6 +285,27 @@ class ListCamera(LoginRequiredMixin, CompanyMixin, ListView):
 
         return payload
 
+class ListTrapView(LoginRequiredMixin, CompanyMixin, ListView):
+    login_url = reverse_lazy('user_app:user-login')
+    template_name = "data/data-trapView.html"
+
+    def get_queryset(self):
+        name = self.kwargs['name']
+        intervalDate = self.request.GET.get("dateKword", '')
+
+        if intervalDate == "today" or intervalDate =="":
+            intervalDate = str(date.today() - timedelta(days = 2)) + " to " + str(date.today())
+
+        payload = {
+            "intervalDate": intervalDate,
+            "name": name,
+            "data":TrapViewData.objects.search_TrapViewData_interval(name,intervalDate),
+            #"last_day_Tankdata": last_day_Tankdata,
+        }
+
+
+        return payload
+
 class DetailCamera(LoginRequiredMixin, CompanyMixin, DetailView):
     login_url = reverse_lazy('user_app:user-login')
     template_name = "data/data-camera-detail.html"
@@ -285,6 +323,25 @@ class DetailCamera(LoginRequiredMixin, CompanyMixin, DetailView):
             ppt = (F("rainCounter") - F("lastRainCounter")) * 0.3,
             # Add more annotations as needed
         )
+
+class DetailTrapView(LoginRequiredMixin, CompanyMixin, DetailView):
+    login_url = reverse_lazy('user_app:user-login')
+    template_name = "data/data-trapView-detail.html"
+    model = TrapViewData
+
+    def get_queryset(self):
+        return super().get_queryset().annotate(
+            volBat = F("VoltageBattery") * 0.01,
+            volPan = F("VoltagePanel") * 0.01,
+            rainCounter = F("RainCounter"),
+            lastRainCounter=Window(
+                expression=Lag('rainCounter'),
+                order_by=F('DateCreate').asc()
+            ),
+            ppt = (F("rainCounter") - F("lastRainCounter")) * 0.3,
+            # Add more annotations as needed
+        )
+
 
 class SuccessView(TemplateView):
     template_name = "home/home.html"

@@ -13,5 +13,7 @@ urlpatterns = [
     path('data-sensor/<EnvironmentalName>', views.ListSensor.as_view(), name='data-sensor'),
     path('data-camera/detail/<pk>', views.DetailCamera.as_view(), name='data-camera-detail'),
     path('data-camera/<VisualSamplingPointName>', views.ListCamera.as_view(), name='data-camera'),
+    path('data-trapView/detail/<pk>', views.DetailTrapView.as_view(), name='data-trapView-detail'),
+    path('data-trapView/<name>', views.ListTrapView.as_view(), name='data-trapView'),
     path('data-rod-pump/<WellName>', views.ListTank.as_view(), name='data-rod-pump'),
 ]
