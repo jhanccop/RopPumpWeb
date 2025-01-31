@@ -2,7 +2,7 @@ import math
 from fractions import Fraction
 
 from datetime import date, datetime, timedelta
-from django.db.models import Sum, Max, F, Avg, Window, Count, DateField, Q
+from django.db.models import Sum, Max, F, Avg, Window, Count, DateField, Q, OuterRef, Subquery
 from django.db.models.functions import Lag
 import itertools
 
@@ -277,8 +277,8 @@ class TrapViewDataManager(models.Manager):
     
     def get_last_data_insect_by_company(self,company):
         idresult = self.filter(
-                IdDevice__IdGateway__IdInsectMonitoring__Owner__CompanyId__CompanyName = company
-                #IdDevice__IdGateway__IdInsectMonitoring__name = Name
+                #IdDevice__IdGateway__IdInsectMonitoring__Owner__CompanyId__CompanyName = company
+                IdDevice__IdLocation__Field__Company__CompanyName = company
             ).values('IdDevice').annotate(
                 max_id=Max('id')
             ).values('max_id')
@@ -287,3 +287,57 @@ class TrapViewDataManager(models.Manager):
                 volBat = F("VoltageBattery") * 0.01,
                 )
         return result
+    
+    def get_last_TrapViewData_by_locations(self,location, interval):
+
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+            
+        data = self.filter(
+            IdDevice__IdLocation = location,
+            DateCreate__range = rangeDate,
+            )
+        
+        subquery = self.filter(
+            IdDevice = OuterRef('IdDevice')
+            ).order_by('-DateCreate').values('id')[:1]
+
+        last_records = data.filter(
+            id = Subquery(subquery)).order_by('-IdDevice')
+
+        return last_records
+    
+    def get_all_TrapViewData_by_locations(self,location, interval):
+
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+            
+        data = self.filter(
+            IdDevice__IdLocation = location,
+            DateCreate__range = rangeDate,
+            )
+        
+        idDevicesDif = data.values('IdDevice').distinct()
+
+        payload = []
+
+        for value in idDevicesDif:
+            val = value["IdDevice"]
+            #payload[str(val)] = data.filter(IdDevice__id = val).order_by('-DateCreate')
+            payload.append(data.filter(IdDevice__id = val).order_by('DateCreate'))
+
+        return payload

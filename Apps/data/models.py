@@ -7,6 +7,7 @@ from Apps.device.models import (
     EnvironmentalDevice,
     CamVidDevice,
     TrapView,
+    WeatherStation,
     Gateway)
 
 from multiselectfield import MultiSelectField
@@ -183,31 +184,25 @@ class TrapViewData(models.Model):
 
     IdDevice = models.ForeignKey(TrapView, on_delete=models.CASCADE, null=True, blank=True)
     DateCreate = models.DateTimeField(auto_now_add = True)
+
     Humidity = models.FloatField('Humidity', null=True, blank =True)
     Temperature = models.FloatField('Temperature', null=True, blank =True)
     VoltageBattery = models.FloatField('Voltage Battery', null=True, blank =True)
-    VoltagePanel = models.FloatField('Voltage Panel', null=True, blank =True)
-    WindVelocity = models.FloatField('Wind Velocity', null=True, blank =True)
-    WindDirection = models.FloatField('Wind Direction', null=True, blank =True)
-    RainCounter = models.IntegerField('Rain Counter', null=True, blank =True)
 
-    CLASS_CHOICES = (
-        (0, "Mariposa 1"),
-        (1, "Mariposa 2"),
-        (2, "Mariposa 3"),
-        (3, "Mariposa 4"),
-    )
-
-    Classes = ArrayField(models.CharField("Class",choices=CLASS_CHOICES, max_length=3,null=True, blank =True),null=True, blank =True)
-    Quantity = ArrayField(models.IntegerField(),null=True, blank =True)
-    nDetected = models.IntegerField('N Detected', null=True, blank =True)
+    Objective = models.CharField("Plaga",null=True, blank =True)
+    nDetected = models.IntegerField("Cantidad",null=True, blank =True, default=0)
 
     img64 = models.TextField("img64",null=True,blank=True)
     img_bool = models.BooleanField("image?",default=False)
 
+    NORMAL = '0'
+    LOW = '1'
+    ERROR = '2'
+
     STATUS_CHOICES = (
-        ('Normal running', 'Normal running'),
-        ('Stopped', 'Stopped'),
+        (NORMAL, 'Normal running'),
+        (LOW, 'Low battery'),
+        (ERROR, 'Stopped'),
     )
     Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=100,blank =True,null=True)
      
@@ -216,6 +211,31 @@ class TrapViewData(models.Model):
     class Meta:
         verbose_name = 'Trap View Data'
         verbose_name_plural = 'All Trap View Data'
+
+    def __str__(self):
+        return str(self.IdDevice)
+
+class WeatherStationData(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    IdDevice = models.ForeignKey(WeatherStation, on_delete=models.CASCADE, null=True, blank=True)
+    DateCreate = models.DateTimeField(auto_now_add = True)
+    Humidity = models.FloatField('Humidity', null=True, blank =True)
+    Temperature = models.FloatField('Temperature', null=True, blank =True)
+    VoltageBattery = models.FloatField('Voltage Battery', null=True, blank =True)
+    WindVelocity = models.FloatField('Wind Velocity', null=True, blank =True)
+    WindDirection = models.FloatField('Wind Direction', null=True, blank =True)
+    RainCounter = models.IntegerField('Rain Counter', null=True, blank =True)
+    Radiation = models.IntegerField('Solar Radiation', null=True, blank =True)
+
+    STATUS_CHOICES = (
+        ('Normal running', 'Normal running'),
+        ('Stopped', 'Stopped'),
+    )
+    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=100,blank =True,null=True)
+
+    class Meta:
+        verbose_name = 'Weather Station Data'
+        verbose_name_plural = 'All Weather Station Data'
 
     def __str__(self):
         return str(self.IdDevice)

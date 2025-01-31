@@ -1,0 +1,35 @@
+from datetime import datetime, timedelta, timezone
+
+from rest_framework import serializers
+from .models import TrapView
+
+class TrapViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrapView
+        fields = [
+            'id',
+            'IdGateway',
+            'DeviceName',
+            'DeviceMacAddress',
+
+            'A_TH',
+            'SleepTime',
+            'runningNN'
+        ]
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        dtNow = datetime.now(timezone.utc)
+        timeNow = dtNow.time()
+
+        print("UTC TIME: ",dtNow)
+
+        timeStart = instance.TimeStart
+        timeEnd = instance.TimeEnd
+        
+        status = False
+        if timeNow >= timeStart and timeNow <= timeEnd:
+            status = True
+        representation["status"] = status
+        return representation

@@ -61,14 +61,13 @@ class confGateway(admin.ModelAdmin):
 	DateCreatedFormat.short_description = 'Date Created' 
 	list_display = (
 		'id',
-		'Owner',
+		'IdLocation',
 		'DeviceName',
 		'DeviceMacAddress',
 		'TimeStart',
 		'TimeEnd',
-		'SleepTime',
-		'refresh')
-	list_filter = ('Owner',)
+		'SleepTime',)
+	list_filter = ('IdLocation',)
 admin.site.register(Gateway, confGateway)
 
 class confTrapView(admin.ModelAdmin):
@@ -79,11 +78,10 @@ class confTrapView(admin.ModelAdmin):
 	list_display = (
 		'id',
 		'IdGateway',
-		'Owner',
 		'DeviceName',
 		'DeviceMacAddress',
+		'IdLocation',
 		'A_TH',
-		'A_WS',
 		)
-	list_filter = ('Owner',)
+	list_filter = ('IdLocation',)
 admin.site.register(TrapView, confTrapView)

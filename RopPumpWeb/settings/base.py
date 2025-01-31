@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'Apps.field',
     'Apps.groups',
     'Apps.home',
+    'Apps.location',
     #'Apps.input',
     #'Apps.overview',
     #'Apps.production',
@@ -53,7 +54,9 @@ INSTALLED_APPS = [
     #'Apps.wellServices',
     
     # third apps
-    'multiselectfield'
+    'multiselectfield',
+    'rest_framework',
+    'import_export'
 ]
 
 MIDDLEWARE = [

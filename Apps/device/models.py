@@ -6,7 +6,16 @@ from django.db.models.signals import (
 )
 from django.dispatch import receiver
 
-from Apps.equipment.models import Tank, RodPumpWell, Environmental, VisualSamplingPoint, InsectMonitoring
+from Apps.equipment.models import (
+    Tank,
+    RodPumpWell,
+    Environmental,
+    VisualSamplingPoint,
+    InsectMonitoring
+)
+
+from Apps.location.models import Location
+
 from .managers import TankDeviceManager, EnvironmentalDeviceManager, AnalyzerDeviceManager
 
 class TankDevice(models.Model):
@@ -157,18 +166,7 @@ class WellAnalyzerDevice(models.Model):
         return self.DeviceName
 
 class Gateway(models.Model):
-    id = models.BigAutoField(primary_key=True)
-
-    IdInsectMonitoring = models.ForeignKey(InsectMonitoring, on_delete=models.CASCADE, unique=False,blank=True,null=True)
-
-    Owner = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL)
-    DateCreate = models.DateTimeField(auto_now_add= True )
-    DeviceName = models.CharField('Gateway Name', max_length=50, unique=True)
-    DeviceMacAddress = models.CharField('Gateway Mac Address', max_length=50, unique=True)
-
-    TimeStart = models.TimeField("On time" ,null=True, blank=True )
-    TimeEnd = models.TimeField("Off time",null=True, blank=True )
-    
+    # SLEEP TIME 
     M2 = 2
     M5 = 5
     M30 = 30
@@ -182,17 +180,29 @@ class Gateway(models.Model):
         (M60,"1 h"),
         (M120,"2 h"),
     )
+
+    id = models.BigAutoField(primary_key=True)
+
+    IdLocation = models.ForeignKey(Location, on_delete=models.CASCADE, unique=False,blank=True,null=True)
+    
+    DateCreate = models.DateTimeField(auto_now_add= True )
+    DeviceName = models.CharField('Gateway Name', max_length=50, unique=True)
+    DeviceMacAddress = models.CharField('Gateway Mac Address', max_length=50, unique=True)
+
+    TimeStart = models.TimeField("On time" ,null=True, blank=True )
+    TimeEnd = models.TimeField("Off time",null=True, blank=True )
+
     SleepTime = models.IntegerField('Sleep Time', choices=SleepTime_CHOICES,null=True, blank =True,default=60)
 
-    S10 = 10
-    S20 = 20
-    S60 = 60
-    refresh_CHOICES = (
-        (S10,"10 s"),
-        (S20,"20 s"),
-        (S60,"60 s"),
-    )
-    refresh = models.IntegerField('Sampling Rate', choices=refresh_CHOICES,null = True, blank =True,default = 10)
+    #S10 = 10
+    #S20 = 20
+    #S60 = 60
+    #refresh_CHOICES = (
+    #    (S10,"10 s"),
+    #    (S20,"20 s"),
+    #    (S60,"60 s"),
+    #)
+    #refresh = models.IntegerField('Sampling Rate', choices=refresh_CHOICES,null = True, blank =True,default = 10)
     
     #objects = EnvironmentalDeviceManager()
     class Meta:
@@ -203,20 +213,104 @@ class Gateway(models.Model):
         return self.DeviceName
 
 class TrapView(models.Model):
+    # OBJECTIVES 
+    PLUTELLA = '0'
+    GORGOJO = '1'
+    POLILLA = '2'
+    PULGUILLA = '3'
+    ESCARABAJO = '4'
+    MOSCAFRUTA = '5'
+    ORUGAZEBRA = '6'
+    ORUGAROJA = '7'
+
+    OBJECT_CHOICES = [
+        (PLUTELLA, "Plutella Xylostella"),
+        (GORGOJO, "Gorgojo"),
+        (POLILLA, "Polilla"),
+        (PULGUILLA, "Pulga"),
+        (ESCARABAJO, "Escarabajo"),
+        (MOSCAFRUTA, "Mosca de la fruta"),
+        (ORUGAZEBRA, "Oruga Zebra"),
+        (ORUGAROJA, "Oruga Roja"),
+    ]
+
+    # SLEEP TIME 
+    M2 = 2
+    M5 = 5
+    M30 = 30
+    M60 = 60
+    M120 = 120
+
+    SleepTime_CHOICES = (
+        (M2,"2 m"),
+        (M5,"5 m"),
+        (M30,"30 m"),
+        (M60,"1 h"),
+        (M120,"2 h"),
+    )
+
     id = models.BigAutoField(primary_key=True)
-    IdGateway = models.ForeignKey(Gateway, on_delete=models.CASCADE, unique=False,blank=True,null=True)
-    Owner = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL)
-    
+
     DeviceName = models.CharField('Device Name', max_length=50, unique=True)
     DeviceMacAddress = models.CharField('Mac Address', max_length=50, unique=True)
+    
+    # ===== SETTINGS =====
+    IdLocation = models.ForeignKey(Location, on_delete=models.CASCADE, unique=False,blank=True,null=True)
+    IdGateway = models.ForeignKey(Gateway, on_delete=models.CASCADE, unique=False,blank=True,null=True)
 
     A_TH = models.BooleanField("Available T y H",default=False)
-    A_WS = models.BooleanField("Available Weather station",default=False)
+    
+    TimeStart = models.TimeField("On time" ,null=True, blank=True )
+    TimeEnd = models.TimeField("Off time",null=True, blank=True )
+    SleepTime = models.IntegerField('Sleep Time', choices=SleepTime_CHOICES,null=True, blank =True,default=60)
+    
+    # ===== SETTINGS NN =====
+    Objective = models.CharField('Objective', choices = OBJECT_CHOICES,max_length=2,blank =True,null=True)
     runningNN = models.BooleanField("running NN?", default = False)
 
     class Meta:
         verbose_name = 'TrapView device'
         verbose_name_plural = 'TrapView devices'
+ 
+    def __str__(self):
+        return self.DeviceName
+
+class WeatherStation(models.Model):
+    # SLEEP TIME 
+    M2 = 2
+    M5 = 5
+    M30 = 30
+    M60 = 60
+    M120 = 120
+
+    SleepTime_CHOICES = (
+        (M2,"2 m"),
+        (M5,"5 m"),
+        (M30,"30 m"),
+        (M60,"1 h"),
+        (M120,"2 h"),
+    )
+
+    id = models.BigAutoField(primary_key=True)
+    
+    DeviceName = models.CharField('Device Name', max_length=50, unique=True)
+    DeviceMacAddress = models.CharField('Mac Address', max_length=50, unique=True)
+
+    # ===== SETTINGS =====
+    IdLocation = models.ForeignKey(Location, on_delete=models.CASCADE, unique=False,blank=True,null=True)
+    IdGateway = models.ForeignKey(Gateway, on_delete=models.CASCADE, unique=False,blank=True,null=True)
+
+    A_TH = models.BooleanField("Available T and H",default=False)
+    A_WP = models.BooleanField("Available Wind and pp",default=False)
+    A_RS = models.BooleanField("Available Solar Radiation",default=False)
+
+    TimeStart = models.TimeField("On time" ,null=True, blank=True )
+    TimeEnd = models.TimeField("Off time",null=True, blank=True )
+    SleepTime = models.IntegerField('Sleep Time', choices=SleepTime_CHOICES,null=True, blank =True,default=60)
+
+    class Meta:
+        verbose_name = 'Weather station'
+        verbose_name_plural = 'All Weather station'
 
     def __str__(self):
         return self.DeviceName

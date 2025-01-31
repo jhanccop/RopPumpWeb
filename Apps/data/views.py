@@ -1,4 +1,14 @@
+import json
 from datetime import date, datetime, timedelta
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+
+from django.http import UnreadablePostError
+
+from rest_framework import generics
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -6,7 +16,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import (
     TemplateView,
     ListView,
-    DetailView
+    DetailView,
+    View
 )
 
 from django.db.models import F, Window
@@ -19,6 +30,13 @@ from Apps.equipment.models import (
     VisualSamplingPoint,
     InsectMonitoring
 )
+
+from Apps.location.models import (
+    Location
+)
+
+from Apps.device.models import TrapView
+
 from Apps.groups.models import Group
 from .models import (
     RodPumpData,
@@ -31,6 +49,8 @@ from .models import (
 from Apps.users.models import User
 from Apps.company.models import Company
 
+from .serializers import TrapViewDataSerializer
+
 class CompanyMixin(object):
     def get_context_data(self, **kwargs):
         CompanyName = User.objects.get_company_name(
@@ -38,6 +58,117 @@ class CompanyMixin(object):
         context = super(CompanyMixin, self).get_context_data(**kwargs)
         context['CompanyName'] = CompanyName
         return context
+
+# API FOR SAVE DATA
+class CsrfTokenView(APIView):
+    def get(self, request):
+        return JsonResponse({'csrfToken': get_token(request)})
+
+class ApiPost(APIView):
+
+    try:
+        queryset = TrapViewData.objects.all()
+        serializer_class = TrapViewDataSerializer
+
+        def post(self, request, *args, **kwargs):
+            data = json.loads(request.body)
+
+            print("==========================")
+
+            ID, OBJETIVE = self.IdDeviceMac(data['DeviceMacAddress'])
+            ND, IMGBOOL = self.nnProcess(data['img64'])
+
+            data['IdDevice'] = ID
+
+            data['Humidity'] = float(data['Humidity'])
+            data['Temperature'] = float(data['Temperature'])
+            data['VoltageBattery'] = float(data['VoltageBattery'])
+
+            data['Objective'] = OBJETIVE
+            data['nDetected'] = ND
+            data['img_bool'] = IMGBOOL
+            
+            data['Status'] = self.batStatus(data['VoltageBattery'])
+
+            del(data["DeviceMacAddress"])
+
+            serializer = self.serializer_class(data = data)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=201)
+            return Response(serializer.errors, status=400)
+        
+        def IdDeviceMac(self, valor):
+            result = TrapView.objects.get(DeviceMacAddress = valor)
+            return result.id, result.Objective
+        
+        def nnProcess(self, valor):
+            ND = 0
+            IB = True
+            if valor == None or valor == "":
+                IB = False
+            else:
+                ND = 4
+            return ND, IB
+        
+        def batStatus(self, valor):
+            result = '0'
+            if float(valor) < 3.6:
+                result = '1'
+            return result
+    
+    except UnreadablePostError:
+        print("error en post")
+
+# OVERVIEW by LOCATION (MAIN SCREEN)
+class OverviewAllLocation(LoginRequiredMixin, CompanyMixin, ListView):
+    template_name = "data/overview-location.html"
+    login_url = reverse_lazy('user_app:user-login')
+
+    def get_queryset(self):
+        # GET COMPANY NAME FROM USER LOGING
+        CompanyName = self.request.user.CompanyId
+
+        list_locations = Location.objects.filter(Field__Company__CompanyName = CompanyName)
+        overviewData = []
+
+        for location in list_locations:
+            TVD = TrapViewData.objects.get_last_TrapViewData_by_locations(location)
+            overviewData.append({"TVD":TVD})
+        allData = {
+            "locations": list_locations,
+            "trapView": overviewData,
+        }
+
+        return allData
+
+# OVERVIEW by LOCATION (MAIN SCREEN)
+class OverviewByLocation(LoginRequiredMixin, CompanyMixin, ListView):
+    template_name = "data/overview-location.html"
+    login_url = reverse_lazy('user_app:user-login')
+
+    def get_queryset(self):
+        location = self.kwargs['pk']
+        intervalDate = self.request.GET.get("dateKword", '')
+
+        if intervalDate == "today" or intervalDate =="":
+            intervalDate = str(date.today() - timedelta(days = 7)) + " to " + str(date.today())
+
+        TVD = TrapViewData.objects.get_last_TrapViewData_by_locations(location, intervalDate)
+        ATVD = TrapViewData.objects.get_all_TrapViewData_by_locations(location, intervalDate)
+        #WS = 
+        #GW = 
+        #CON = 
+ 
+        allData = {
+            "intervalDate": intervalDate,
+            "location": location,
+            "TVD": TVD,
+            "ATVD": ATVD,
+        }
+
+        return allData
 
 # LIST OVERVIEW DATA (MAIN SCREEN)
 class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
@@ -341,6 +472,8 @@ class DetailTrapView(LoginRequiredMixin, CompanyMixin, DetailView):
             ppt = (F("rainCounter") - F("lastRainCounter")) * 0.3,
             # Add more annotations as needed
         )
+
+
 
 
 class SuccessView(TemplateView):

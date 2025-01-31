@@ -6,6 +6,12 @@ app_name = "data_app"
 
 urlpatterns = [
     path('data', views.ListOverview.as_view(),name = "data"),
+
+    path('get-csrf/', views.CsrfTokenView.as_view(), name='get-csrf'),
+    path('data/api/post', views.ApiPost.as_view(),name = "postData"),
+
+    path('data/overview-location/<pk>', views.OverviewByLocation.as_view(),name = "overview-location"),
+    
     #path('overview/socker-rod-pump/<PumpName>', views.ListDataRodPump.as_view()),
     #path('data/socker-rod-pump/<PumpName>', views.ListDataRodPump.as_view()),
     path('success/', views.SuccessView.as_view(), name='success'),

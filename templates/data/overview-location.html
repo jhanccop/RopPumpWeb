@@ -1,0 +1,278 @@
+{% extends 'data/base-overview.html' %}
+
+{% load static %}
+
+{% block title %} TrapView Overview {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} DATA OVERVIEW {% endblock appName %}
+{% block Type %} TRAP VIEW {% endblock Type %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-xl-6 col-sm-6">
+        <h5 class="text-start">UNALM - Coles</h5>
+    </div>
+
+    <div class="col-xl-6 col-sm-6">
+        <form method="GET">{% csrf_token %}
+            <div class="row align-items-center">
+
+                <div class="col-lg-6 col-sm-6 ">
+                    <div class="input-group input-group-outline">
+                        <input class="form-control datetimepicker text-center" value="{{object_list.intervalDate}}"
+                            type="text" placeholder="today" id="dateKword" name="dateKword" />
+                    </div>
+                </div>
+
+                <div class="col-lg-6 col-sm-6">
+                    <button class="btn btn-sm bg-gradient-primary ms-2 px-3 mb-0" type="submit">SEARCH</button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<div class="row mt-4">
+
+    {% for i in object_list.TVD %}
+    <div class="col-lg-3 col-md-4 mt-lg-0 mt-4 mb-4">
+        <div class="card bg-gradient-light">
+            <div class="card-body pt-2 pb-0 pe-md-3 ps-3">
+                <p class="mb-0 text-center text-dark font-weight-bold text-uppercase">{{i.IdDevice}}</p>
+                <h5 class="text-center"><i class="fas fa-bug"></i> 23</h5>
+                <p class="mb-0 text-dark font-weight-bold"><i class="fas fa-thermometer-half"></i> {{i.Temperature}} °C</p>
+                <p class="mb-0 text-dark font-weight-bold"><i class="fas fa-tint"></i> {{i.Humidity}} %</p>
+                <p class="mb-0 text-dark"><i class="fas fa-clock"></i> <span class="font-weight-bold text-xs">{{i.DateCreate|date:"Y-m-d H:i"}}</span> </p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<div class="row">
+    <!-- PLOTS -->
+    <div class="col-lg-7">
+        <div class="card h-100 mt-4 mt-lg-0">
+            <br>
+            <div class="chart bg-gradient-white ">
+                <div ui-jp="plot" id="camPlot" style="height: 310px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mapa -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h4>Mapa de Sensores</h4>
+        <div id="map"></div>
+    </div>
+</div>
+
+<!-- Tabla de Alertas -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h4>Alertas Recientes</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Ubicación</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody id="alertTable">
+                <tr>
+                    <td>2025-01-29</td>
+                    <td>Sector A</td>
+                    <td>Alta infestación detectada</td>
+                </tr>
+                <tr>
+                    <td>2025-01-28</td>
+                    <td>Sector B</td>
+                    <td>Humedad elevada</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+
+<script src="{% static 'assets/js/plugins/leaflet.js' %}"></script> 
+
+<script>
+   
+    // Mapa de Leaflet
+    var map = L.map('map').setView([-12.08381, -76.94295], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+    }).addTo(map);
+
+    const popupContent = `
+        <div class="custom-popup">
+            <h6 class="text-sm">AMEBA1</h6>
+            <p>T: 24°C</p>
+        </div>
+    `;
+
+    // Agregar marcadores
+    L.marker([-12.08381, -76.94295],{
+        icon: L.divIcon({
+                className: 'marker-icon',
+                html: "<i class='fas fa-camera-retro opacity-10 text-info fs-3'></i>",
+                iconSize: [150, 60],
+                iconAnchor: [15, 0]
+            })
+    }).addTo(map)
+        .bindPopup(popupContent)
+        .openPopup();
+
+    L.marker([10.5, -74.2]).addTo(map)
+        .bindPopup('Sensor 2: Temperatura elevada');
+</script>
+
+<script src="{% static 'assets/js/plugins/plotly-2.12.1.min.js' %}"></script>
+<script>
+
+    var layout = {
+        margin: { l: 40, t: 0, b: 35, r: 30 },
+        autosize: true,
+
+        xaxis: {
+            autorange: true,
+            showgrid: true,
+            zeroline: true,
+            rangeselector: {
+                buttons: [
+                    {
+                        count: 1,
+                        label: '1d',
+                        step: 'day',
+                        stepmode: 'backward'
+                    },
+                    {
+                        count: 1,
+                        label: '1w',
+                        step: 'week',
+                        stepmode: 'backward'
+                    },
+                    { step: 'all' }
+                ]
+            },
+            //range: ['2020-01-01', '2020-01-31'],
+
+            type: 'date'
+        },
+        yaxis: {
+            autorange: true,
+            showgrid: true,
+            zeroline: true,
+            range: [0, 30],
+            type: 'linear'
+        },
+        legend: {
+            x: 1,
+            y: 0.5,
+            traceorder: 'normal',
+            font: {
+                family: 'sans-serif',
+                size: 12,
+                //color: '#254'
+            },
+            //bgcolor: '#E2E2E2',
+            //bordercolor: '#FFFFFF',
+            //borderwidth: 2
+        }
+    }
+
+    var config = {
+        modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d', 'zoomOut2d'],
+        responsive: true,
+        displaylogo: false
+    }
+    //console.log('{{object_list.ATVD}}');
+
+    var allData = []
+    '{% for value in object_list.ATVD %}'
+
+        console.log('{{value.0}}');
+
+        var t_te = [];
+        var t_hu = [];
+        var t_bat = [];
+        var t_dt = [];
+        '{% for val in value %}'
+        //console.log('{{val.Temperature}}');
+        t_te.push("{{val.Temperature}}");
+        t_hu.push("{{val.Humidity}}");
+        t_bat.push("{{val.VoltageBattery}}");
+        var ddt = new Date("{{val.DateCreate|date:'m-d-y H:i'}}");
+        t_dt.push(ddt);
+
+        '{% endfor %}'
+
+        var trace_te = {
+            x: t_dt,
+            y: t_te,
+            type: 'scatter',
+            mode: "lines+markers",
+            name: ' {{value.0}} - T',
+            line: {
+                shape: 'spline',
+                //color: '#212529',
+            },
+        }
+
+        var trace_hu = {
+            x: t_dt,
+            y: t_hu,
+            type: 'scatter',
+            mode: "lines+markers",
+            name: ' {{value.0}} - H',
+            line: {
+                shape: 'spline',
+                //color: '#212529',
+            },
+        }
+
+        var trace_bat = {
+            x: t_dt,
+            y: t_bat,
+            type: 'scatter',
+            mode: "lines+markers",
+            name: ' {{value.0}} - V',
+            line: {
+                shape: 'spline',
+                //color: '#212529',
+            },
+        }
+
+        allData.push(trace_te,trace_hu,trace_bat);
+
+    '{% endfor %}'
+
+    Plotly.newPlot('camPlot', allData, layout, config);
+
+</script>
+
+<script src="{% static 'assets/js/plugins/flatpickr.min.js' %}"></script>
+<script>
+    if (document.querySelector('.datetimepicker')) {
+        flatpickr('.datetimepicker', {
+            allowInput: true,
+            mode: "range"
+        }); // flatpickr
+    }
+</script>
+
+{% endblock JSscripts %}
+

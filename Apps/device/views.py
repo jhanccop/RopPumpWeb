@@ -1,4 +1,8 @@
 from django.shortcuts import render, redirect
+#from rest_framework import viewsets
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -9,6 +13,9 @@ from django.views.generic import (
     UpdateView,
     DeleteView
 )
+
+from .models import TrapView
+from .serializers import TrapViewSerializer
 
 from Apps.users.models import User
 #from Apps.company.models import Company
@@ -139,6 +146,20 @@ class AnalyzerRemoveView(LoginRequiredMixin, CompanyMixin, DeleteView):
 
     model = WellAnalyzerDevice
     success_url = reverse_lazy('device_app:devices')
+
+# =================== TRAPVIEW API ===========================
+#class TrapViewSet(viewsets.ModelViewSet):
+#    queryset = TrapView.objects.all()
+#    serializer_class = TrapViewSerializer
+
+class TrapViewSet(APIView):
+    def get(self, request):
+        mac = request.query_params.get('mac', '')
+
+        queryset = TrapView.objects.get(DeviceMacAddress = mac)
+
+        serializer = TrapViewSerializer(queryset, many=False)
+        return Response(serializer.data)
 
 # =================== SUCCESS ===========================
 class SuccessView(TemplateView):
