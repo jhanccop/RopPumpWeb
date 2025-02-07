@@ -14,7 +14,8 @@ class TrapViewSerializer(serializers.ModelSerializer):
 
             'A_TH',
             'SleepTime',
-            'runningNN'
+            'runningNN',
+            'Resolution'
         ]
     
     def to_representation(self, instance):

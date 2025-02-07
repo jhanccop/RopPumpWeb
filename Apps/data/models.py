@@ -204,7 +204,7 @@ class TrapViewData(models.Model):
         (LOW, 'Low battery'),
         (ERROR, 'Stopped'),
     )
-    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=100,blank =True,null=True)
+    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=2,blank =True,null=True)
      
     objects = TrapViewDataManager()
 
@@ -227,11 +227,16 @@ class WeatherStationData(models.Model):
     RainCounter = models.IntegerField('Rain Counter', null=True, blank =True)
     Radiation = models.IntegerField('Solar Radiation', null=True, blank =True)
 
+    NORMAL = '0'
+    LOW = '1'
+    ERROR = '2'
+
     STATUS_CHOICES = (
-        ('Normal running', 'Normal running'),
-        ('Stopped', 'Stopped'),
+        (NORMAL, 'Normal running'),
+        (LOW, 'Low battery'),
+        (ERROR, 'Stopped'),
     )
-    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=100,blank =True,null=True)
+    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=20,blank =True,null=True)
 
     class Meta:
         verbose_name = 'Weather Station Data'
@@ -243,17 +248,20 @@ class WeatherStationData(models.Model):
 class GatewayData(models.Model):
 
     id = models.BigAutoField(primary_key=True)
-
     IdDevice = models.ForeignKey(Gateway, on_delete=models.CASCADE, null=True, blank=True)
     DateCreate = models.DateTimeField(auto_now_add = True)
     VoltageBattery = models.FloatField('Voltage Battery', null=True, blank =True)
-    VoltagePanel = models.FloatField('Voltage Panel', null=True, blank =True)
    
+    NORMAL = '0'
+    LOW = '1'
+    ERROR = '2'
+
     STATUS_CHOICES = (
-        ('Normal running', 'Normal running'),
-        ('Stopped', 'Stopped'),
+        (NORMAL, 'Normal running'),
+        (LOW, 'Low battery'),
+        (ERROR, 'Stopped'),
     )
-    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=100,blank =True,null=True)
+    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=20,blank =True,null=True)
      
     #objects = GatewayDataManager()
 

@@ -117,7 +117,6 @@ class confGatewayData(admin.ModelAdmin):
 	list_display = ('IdDevice',
 					'DateCreatedFormat',
 					'VoltageBattery',
-					'VoltagePanel',
 					'Status',
 					)
 	list_filter = ('Status','IdDevice')

@@ -249,6 +249,15 @@ class TrapView(models.Model):
         (M120,"2 h"),
     )
 
+    # RESOLUTION CAMERA 
+    HD = "0"
+    FHD = "1"
+
+    Resolution_CHOICES = (
+        (HD,"HD"),
+        (FHD,"FHD"),
+    )
+
     id = models.BigAutoField(primary_key=True)
 
     DeviceName = models.CharField('Device Name', max_length=50, unique=True)
@@ -257,13 +266,16 @@ class TrapView(models.Model):
     # ===== SETTINGS =====
     IdLocation = models.ForeignKey(Location, on_delete=models.CASCADE, unique=False,blank=True,null=True)
     IdGateway = models.ForeignKey(Gateway, on_delete=models.CASCADE, unique=False,blank=True,null=True)
+    Lat = models.FloatField("Latitud" ,null=True, blank=True)
+    Long = models.FloatField("Longitud" ,null=True, blank=True)
 
     A_TH = models.BooleanField("Available T y H",default=False)
     
     TimeStart = models.TimeField("On time" ,null=True, blank=True )
     TimeEnd = models.TimeField("Off time",null=True, blank=True )
     SleepTime = models.IntegerField('Sleep Time', choices=SleepTime_CHOICES,null=True, blank =True,default=60)
-    
+    Resolution = models.CharField('Resolution', choices=Resolution_CHOICES,max_length=2,null=True, blank =True,default="0")
+
     # ===== SETTINGS NN =====
     Objective = models.CharField('Objective', choices = OBJECT_CHOICES,max_length=2,blank =True,null=True)
     runningNN = models.BooleanField("running NN?", default = False)

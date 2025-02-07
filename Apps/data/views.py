@@ -65,7 +65,6 @@ class CsrfTokenView(APIView):
         return JsonResponse({'csrfToken': get_token(request)})
 
 class ApiPost(APIView):
-
     try:
         queryset = TrapViewData.objects.all()
         serializer_class = TrapViewDataSerializer

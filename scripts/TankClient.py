@@ -24,8 +24,10 @@ broker_port = 1883
 client_id = f'publish-{random.randint(0, 1000)}'
 username = 'jhanccop'
 password = 'jhanccop1'
-topic_sub = "jhpOandG/data"
+topic_sub = "jhpOandG/data/#"
 topic_pub = "jhpOandG/settings"
+
+payloadImage = json.loads("{}")
 
 with open("../secret.json") as f:
   secret = json.loads(f.read())
@@ -105,278 +107,294 @@ def on_message(client, userdata, message):
     #print(datetime.now(),data_in)
     print(datetime.now())
 
-    m_mqtt = json.loads(data_in)
-    type = m_mqtt.get("type","NULL")
-    print(type)
-    if type == "tank":
-      dt = datetime.now()
-      mac = m_mqtt.get("mac","NULL")
-      value = m_mqtt.get("value","NULL")
-      temp = m_mqtt.get("temp","NULL")
+    #print(topic_in)
+    topicSplit = topic_in.split("/")
+    
+    # FILTER FOR TOPIC
+    if topicSplit[2] == "trapViewImage":
+      I_mac = str(topicSplit[3])
+      I_Nparts = int(topicSplit[4])
+      I_i = int(topicSplit[5])
 
-      #sql_query_id = "select id from device_tankdevice where device_tankdevice.DeviceMacAddress='{0}'".format(mac)
-      sql_query_id = """SELECT id FROM device_tankdevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+      pay = payloadImage.get(I_mac,[])
 
-      raws_id = db_get(sql_query_id)
-      _id = raws_id[0][0]
+      pay.append(data_in)
 
-      sql_query = """INSERT INTO data_tankdata("DateCreate","IdDevice_id","Level","Temperature","Status") VALUES('{0}',{1},{2},{3},'{4}')""".format(dt,_id,value,temp,"Normal running")
-      db_local(sql_query)
-
-    elif type == "env":
-      dt = datetime.now()
-      mac = m_mqtt.get("mac","NULL")
-      hum1 = m_mqtt.get("hum1","NULL")
-      temp1 = m_mqtt.get("temp1","NULL")
-      pa1 = m_mqtt.get("pa1","NULL")
-      hum2 = m_mqtt.get("hum2","NULL")
-      temp2 = m_mqtt.get("temp2","NULL")
-      pa2 = m_mqtt.get("pa2","NULL")
+      payloadImage[I_mac] = pay
       
-      sql_query_id = """SELECT id FROM device_environmentaldevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+      if I_Nparts == len(payloadImage[I_mac]):
+        imsg = "".join(payloadImage[I_mac])
+        imsg = json.loads(imsg)
 
-      raws_id = db_get(sql_query_id)
-      _id = raws_id[0][0]
-      
-      sql_query = """INSERT INTO data_environmentaldata("DateCreate","IdDevice_id","Humidity1","Temperature1","AtmosphericPressure1","Humidity2","Temperature2","AtmosphericPressure2","Status") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},'{8}')""".format(dt,_id,hum1,temp1,pa1,hum2,temp2,pa2,"Normal running")
-      
-      db_local(sql_query)
+        dt = datetime.now()
+        mac = imsg.get("DeviceMacAddress","NULL")
+        hum = imsg.get("Humidity","NULL")
+        temp = imsg.get("Temperature","NULL")
+        bat = imsg.get("VoltageBattery","NULL")
+        
+        img64 = imsg.get("img64","NULL")
 
-    elif type == "camVidSet":
-      name = m_mqtt.get("name","NULL")
-      mac = m_mqtt.get("mac","NULL")
-      sql_query = """SELECT * FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
-      payloadRaw = db_get(sql_query)
-      payloadRaw = payloadRaw[0]
+        if hum == "nan":
+          hum = 0
 
-      #print(payloadRaw)
+        if temp == "nan":
+          temp = 0
 
-      dtNow = datetime.now()
-      timeNow = dtNow.time()
-      timeStart = payloadRaw[8]
-      timeEnd = payloadRaw[7]
+        nDetected = 0
+        Objective = 0
 
-      status = False
-      if timeNow >= timeStart and timeNow <= timeEnd:
-        status = True
+        sql_query_id = """SELECT * FROM device_trapview WHERE "DeviceMacAddress" = '{0}';""".format(mac)
+        raws_id = db_get(sql_query_id)
 
-      payload = {
-        "name":payloadRaw[2],
-        "status":status,
-        "timesleep":payloadRaw[6],
-        "continuous":payloadRaw[9],
-        "refresh":payloadRaw[10],
-        "saveImage":payloadRaw[11],
-        "runningNN":payloadRaw[12],
-        }
-      payload = json.dumps(payload)
-      client.publish(topic_pub,payload)
-      print("pub ",payload)
-      pass
-  
-    elif type == "camVid":
-      dt = datetime.now()
-      mac = m_mqtt.get("mac","NULL")
-      hum = m_mqtt.get("H","NULL")
-      temp = m_mqtt.get("T","NULL")
-      bat = m_mqtt.get("B","NULL")
-      pan = m_mqtt.get("P","NULL")
-      rain = m_mqtt.get("R","NULL")
-      velocity = m_mqtt.get("V","NULL")
-      direction = m_mqtt.get("D","NULL")
-      img_file = m_mqtt.get("img","NULL")
-      img64 = m_mqtt.get("image","NULL")
+        _id = raws_id[0][0]
 
-      if hum == "nan":
-        hum = 0
+        img_bool = True
+        if img64 == "NULL" or img64 == "":
+          img_bool = False
 
-      if temp == "nan":
-        temp = 0
+        else:
+          nDetected = 2
+          Objective = 1
 
-      nDetected = 0
+        sql_query = """INSERT INTO data_trapviewdata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status","img64","nDetected","img_bool","Objective") VALUES('{0}',{1},{2},{3},{4},'{5}','{6}',{7},{8},{9})""".format(dt,_id,hum,temp,bat,"0",img64,nDetected,img_bool,Objective)
+        
+        db_local(sql_query)
 
-      if img64 == "NULL" or img64 == "":
-        pass
-      else:
-        # fileImage change b64 to jpg
-        model = YOLO('best.pt',task="detect")
-        decoded_data=pybase64.b64decode((img64))
-        Img_file = open('image.jpg', 'wb')
-        Img_file.write(decoded_data)
-        Img_file.close()
+        print("EXITOOO")
 
-        results = model(["image.jpg"])
-        results[0].save(filename="result.jpg")
+        del payloadImage[I_mac]
+    else: 
+      m_mqtt = json.loads(data_in)
+      typeM = m_mqtt.get("type","NULL")
+      print(typeM)
 
-        nDetected = results[0].boxes.shape[0]
+      if typeM == "tank":
+        dt = datetime.now()
+        mac = m_mqtt.get("mac","NULL")
+        value = m_mqtt.get("value","NULL")
+        temp = m_mqtt.get("temp","NULL")
 
-        if nDetected > 0:
-          with open("result.jpg", "rb") as f:
-            img64 = base64.b64encode(f.read())
-            img64 = img64.decode('utf-8')
+        #sql_query_id = "select id from device_tankdevice where device_tankdevice.DeviceMacAddress='{0}'".format(mac)
+        sql_query_id = """SELECT id FROM device_tankdevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
 
-      print(nDetected)
-      sql_query_id = """SELECT id FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
-      raws_id = db_get(sql_query_id)
-      _id = raws_id[0][0]
-      
-      sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","VoltagePanel","RainCounter","WindVelocity","WindDirection","Status","img_file_name","img64","nDetected") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}','{10}','{11}',{12})""".format(dt,_id,hum,temp,bat,pan,rain,velocity,direction,"Normal running",img_file,img64,nDetected)
-      
-      db_local(sql_query)
+        raws_id = db_get(sql_query_id)
+        _id = raws_id[0][0]
 
-    elif type == "gatewaySetting":
-      name = m_mqtt.get("name","NULL")
-      mac = m_mqtt.get("mac","NULL")
-      function = m_mqtt.get("function","NULL")
+        sql_query = """INSERT INTO data_tankdata("DateCreate","IdDevice_id","Level","Temperature","Status") VALUES('{0}',{1},{2},{3},'{4}')""".format(dt,_id,value,temp,"Normal running")
+        db_local(sql_query)
 
-      if function == "setting":
-        sql_query = """SELECT * FROM device_gateway WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+      elif typeM == "env":
+        dt = datetime.now()
+        mac = m_mqtt.get("mac","NULL")
+        hum1 = m_mqtt.get("hum1","NULL")
+        temp1 = m_mqtt.get("temp1","NULL")
+        pa1 = m_mqtt.get("pa1","NULL")
+        hum2 = m_mqtt.get("hum2","NULL")
+        temp2 = m_mqtt.get("temp2","NULL")
+        pa2 = m_mqtt.get("pa2","NULL")
+        
+        sql_query_id = """SELECT id FROM device_environmentaldevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+
+        raws_id = db_get(sql_query_id)
+        _id = raws_id[0][0]
+        
+        sql_query = """INSERT INTO data_environmentaldata("DateCreate","IdDevice_id","Humidity1","Temperature1","AtmosphericPressure1","Humidity2","Temperature2","AtmosphericPressure2","Status") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},'{8}')""".format(dt,_id,hum1,temp1,pa1,hum2,temp2,pa2,"Normal running")
+        
+        db_local(sql_query)
+
+      elif typeM == "camVidSet":
+        name = m_mqtt.get("name","NULL")
+        mac = m_mqtt.get("mac","NULL")
+        sql_query = """SELECT * FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
         payloadRaw = db_get(sql_query)
         payloadRaw = payloadRaw[0]
 
-        #print("gat -- Gateway",payloadRaw)
+        #print(payloadRaw)
 
         dtNow = datetime.now()
         timeNow = dtNow.time()
-        timeStart = payloadRaw[4]
-        timeEnd = payloadRaw[5]
+        timeStart = payloadRaw[8]
+        timeEnd = payloadRaw[7]
 
         status = False
         if timeNow >= timeStart and timeNow <= timeEnd:
           status = True
 
         payload = {
-          "function":function,
-          "gateway":payloadRaw[2],
+          "name":payloadRaw[2],
           "status":status,
           "timesleep":payloadRaw[6],
-          "refresh":payloadRaw[7],
+          "continuous":payloadRaw[9],
+          "refresh":payloadRaw[10],
+          "saveImage":payloadRaw[11],
+          "runningNN":payloadRaw[12],
           }
         payload = json.dumps(payload)
-        time.sleep(0.1)
-        client.publish(topic_pub + "/"+ mac ,payload)
-        print("server GATEWAY",payload)
-        
-    elif type == "trapViewSetting":
-      mac = m_mqtt.get("mac","NULL")
-      function = m_mqtt.get("function","NULL")
+        client.publish(topic_pub,payload)
+        print("pub ",payload)
+        pass
+    
+      elif typeM == "camVid":
+        dt = datetime.now()
+        mac = m_mqtt.get("mac","NULL")
+        hum = m_mqtt.get("H","NULL")
+        temp = m_mqtt.get("T","NULL")
+        bat = m_mqtt.get("B","NULL")
+        pan = m_mqtt.get("P","NULL")
+        rain = m_mqtt.get("R","NULL")
+        velocity = m_mqtt.get("V","NULL")
+        direction = m_mqtt.get("D","NULL")
+        img_file = m_mqtt.get("img","NULL")
+        img64 = m_mqtt.get("image","NULL")
 
-      if function == "setting":
-        sql_query = """SELECT * FROM device_trapview WHERE "DeviceMacAddress" = '{0}'""".format(mac)
-        payloadDev = db_get(sql_query)
-        payloadDev = payloadDev[0]
+        if hum == "nan":
+          hum = 0
 
-        #print("****---**",payloadDev)
+        if temp == "nan":
+          temp = 0
 
-        idGateway = payloadDev[5]
-        A_TH = payloadDev[3]
-        A_WS = payloadDev[4]
-        runningNN = payloadDev[7]
+        nDetected = 0
 
-        sql_query2 = """SELECT * FROM device_gateway WHERE "id" = {0}""".format(idGateway)
-        payloadGat = db_get(sql_query2)
-        payloadGat = payloadGat[0]
-
-        #print("dev -- Gateway",payloadGat)
-
-        dtNow = datetime.now()
-        timeNow = dtNow.time()
-        timeStart = payloadGat[4]
-        timeEnd = payloadGat[5]
-        Gateway = payloadGat[2]
-
-        status = False
-        if timeNow >= timeStart and timeNow <= timeEnd:
-          status = True
-
-        payload = {
-          "name":payloadDev[1],
-          "function":function,
-          "gateway":Gateway,
-          "status":status,
-          "timesleep":payloadGat[6],
-          "refresh":payloadGat[7],
-          "A_TH":A_TH,
-          "A_WS":A_WS,
-          "runningNN":runningNN
-          }
-        payload = json.dumps(payload)
-        time.sleep(0.2)
-        client.publish(topic_pub + "/" + mac ,payload)
-        print("SERVER TRAPVIEW",payload)
-
-    elif type == "trapView":
-      dt = datetime.now()
-      mac = m_mqtt.get("mac","NULL")
-      hum = m_mqtt.get("H","NULL")
-      temp = m_mqtt.get("T","NULL")
-      bat = m_mqtt.get("B","NULL")
-      pan = m_mqtt.get("P","NULL")
-      rain = m_mqtt.get("R","NULL")
-      velocity = m_mqtt.get("V","NULL")
-      direction = m_mqtt.get("D","NULL")
-      img64 = m_mqtt.get("image","NULL")
-
-      if hum == "nan":
-        hum = 0
-
-      if temp == "nan":
-        temp = 0
-
-      nDetected = 0
-      CLASSES = []
-      QUANTITY = []
-
-      sql_query_id = """SELECT * FROM device_trapview WHERE "DeviceMacAddress" = '{0}';""".format(mac)
-      raws_id = db_get(sql_query_id)
-
-      _id = raws_id[0][0]
-
-      img_bool = True
-      if img64 == "NULL" or img64 == "":
-        img_bool = False
-        CLASSES = [ str(i) for i in CLASSES]
-        CLASSES = ",".join(CLASSES)
-        CLASSES = "{" + CLASSES + "}"
-
-        QUANTITY = [ str(i) for i in QUANTITY]
-        QUANTITY = ",".join(QUANTITY)
-        QUANTITY = "{" + QUANTITY + "}"
-      else:
-
-        if raws_id[0][7]: # running CNN
+        if img64 == "NULL" or img64 == "":
+          pass
+        else:
           # fileImage change b64 to jpg
+          model = YOLO('best.pt',task="detect")
           decoded_data=pybase64.b64decode((img64))
           Img_file = open('image.jpg', 'wb')
           Img_file.write(decoded_data)
           Img_file.close()
 
-          model = YOLO('bestHP.pt',task="detect")
-          #results = model(["image.jpg"])
-          results = model.predict("image.jpg", save=False, imgsz=320, conf=0.15)
+          results = model(["image.jpg"])
           results[0].save(filename="result.jpg")
-          detections, classes, confidences = extract_yolo_predictions(results[0].boxes)
 
-          CLASSES = list(detections.keys())
-          QUANTITY = [ x['cantidad'] for x in detections.values()]
-
-          if 2 in CLASSES:
-            nDetected = QUANTITY[CLASSES.index(2)] #obtener cantidad de plutella - index 2
-
-          CLASSES = [ str(i) for i in CLASSES]
-          CLASSES = ",".join(CLASSES)
-          CLASSES = "{" + CLASSES + "}"
-
-          QUANTITY = [ str(i) for i in QUANTITY]
-          QUANTITY = ",".join(QUANTITY)
-          QUANTITY = "{" + QUANTITY + "}"
+          nDetected = results[0].boxes.shape[0]
 
           if nDetected > 0:
-            print("detected insects")
             with open("result.jpg", "rb") as f:
               img64 = base64.b64encode(f.read())
               img64 = img64.decode('utf-8')
-        else:
+
+        print(nDetected)
+        sql_query_id = """SELECT id FROM device_camviddevice WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+        raws_id = db_get(sql_query_id)
+        _id = raws_id[0][0]
+        
+        sql_query = """INSERT INTO data_camviddata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","VoltagePanel","RainCounter","WindVelocity","WindDirection","Status","img_file_name","img64","nDetected") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}','{10}','{11}',{12})""".format(dt,_id,hum,temp,bat,pan,rain,velocity,direction,"Normal running",img_file,img64,nDetected)
+        
+        db_local(sql_query)
+
+      elif typeM == "gatewaySetting":
+        name = m_mqtt.get("name","NULL")
+        mac = m_mqtt.get("mac","NULL")
+        function = m_mqtt.get("function","NULL")
+
+        if function == "setting":
+          sql_query = """SELECT * FROM device_gateway WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+          payloadRaw = db_get(sql_query)
+          payloadRaw = payloadRaw[0]
+
+          #print("gat -- Gateway",payloadRaw)
+
+          dtNow = datetime.now()
+          timeNow = dtNow.time()
+          timeStart = payloadRaw[4]
+          timeEnd = payloadRaw[5]
+
+          status = False
+          if timeNow >= timeStart and timeNow <= timeEnd:
+            status = True
+
+          payload = {
+            "function":function,
+            "gateway":payloadRaw[2],
+            "status":status,
+            "timesleep":payloadRaw[6],
+            "refresh":payloadRaw[7],
+            }
+          payload = json.dumps(payload)
+          time.sleep(0.1)
+          client.publish(topic_pub + "/"+ mac ,payload)
+          print("server GATEWAY",payload)
+          
+      elif typeM == "trapViewSetting":
+        mac = m_mqtt.get("mac","NULL")
+        function = m_mqtt.get("function","NULL")
+
+        if function == "setting":
+          sql_query = """SELECT * FROM device_trapview WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+          payloadDev = db_get(sql_query)
+          payloadDev = payloadDev[0]
+
+          #print("****---**",payloadDev)
+
+          idGateway = payloadDev[5]
+          A_TH = payloadDev[3]
+          A_WS = payloadDev[4]
+          runningNN = payloadDev[7]
+
+          sql_query2 = """SELECT * FROM device_gateway WHERE "id" = {0}""".format(idGateway)
+          payloadGat = db_get(sql_query2)
+          payloadGat = payloadGat[0]
+
+          #print("dev -- Gateway",payloadGat)
+
+          dtNow = datetime.now()
+          timeNow = dtNow.time()
+          timeStart = payloadGat[4]
+          timeEnd = payloadGat[5]
+          Gateway = payloadGat[2]
+
+          status = False
+          if timeNow >= timeStart and timeNow <= timeEnd:
+            status = True
+
+          payload = {
+            "name":payloadDev[1],
+            "function":function,
+            "gateway":Gateway,
+            "status":status,
+            "timesleep":payloadGat[6],
+            "refresh":payloadGat[7],
+            "A_TH":A_TH,
+            "A_WS":A_WS,
+            "runningNN":runningNN
+            }
+          payload = json.dumps(payload)
+          time.sleep(0.2)
+          client.publish(topic_pub + "/" + mac ,payload)
+          print("SERVER TRAPVIEW",payload)
+
+      elif typeM == "trapView":
+        dt = datetime.now()
+        mac = m_mqtt.get("mac","NULL")
+        hum = m_mqtt.get("H","NULL")
+        temp = m_mqtt.get("T","NULL")
+        bat = m_mqtt.get("B","NULL")
+        pan = m_mqtt.get("P","NULL")
+        rain = m_mqtt.get("R","NULL")
+        velocity = m_mqtt.get("V","NULL")
+        direction = m_mqtt.get("D","NULL")
+        img64 = m_mqtt.get("image","NULL")
+
+        if hum == "nan":
+          hum = 0
+
+        if temp == "nan":
+          temp = 0
+
+        nDetected = 0
+        CLASSES = []
+        QUANTITY = []
+
+        sql_query_id = """SELECT * FROM device_trapview WHERE "DeviceMacAddress" = '{0}';""".format(mac)
+        raws_id = db_get(sql_query_id)
+
+        _id = raws_id[0][0]
+
+        img_bool = True
+        if img64 == "NULL" or img64 == "":
+          img_bool = False
           CLASSES = [ str(i) for i in CLASSES]
           CLASSES = ",".join(CLASSES)
           CLASSES = "{" + CLASSES + "}"
@@ -384,25 +402,68 @@ def on_message(client, userdata, message):
           QUANTITY = [ str(i) for i in QUANTITY]
           QUANTITY = ",".join(QUANTITY)
           QUANTITY = "{" + QUANTITY + "}"
-    
-      sql_query = """INSERT INTO data_trapviewdata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","VoltagePanel","RainCounter","WindVelocity","WindDirection","Status","img64","nDetected","img_bool","Classes","Quantity") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}','{10}',{11},{12},'{13}','{14}')""".format(dt,_id,hum,temp,bat,pan,rain,velocity,direction,"Normal running",img64,nDetected,img_bool,CLASSES,QUANTITY)
-      
-      db_local(sql_query)
+        else:
 
-    elif type == "gatewayData":
-      dt = datetime.now()
-      mac = m_mqtt.get("mac","NULL")
-      bat = m_mqtt.get("B","NULL")
-      pan = m_mqtt.get("P","NULL")
+          if raws_id[0][7]: # running CNN
+            # fileImage change b64 to jpg
+            decoded_data=pybase64.b64decode((img64))
+            Img_file = open('image.jpg', 'wb')
+            Img_file.write(decoded_data)
+            Img_file.close()
 
-      sql_query_id = """SELECT id FROM device_gateway WHERE "DeviceMacAddress" = '{0}'""".format(mac)
-      raws_id = db_get(sql_query_id)
-      _id = raws_id[0][0]
-      
-      sql_query = """INSERT INTO data_gatewaydata("DateCreate","IdDevice_id","VoltageBattery","VoltagePanel","Status") VALUES('{0}',{1},{2},{3},'{4}')""".format(dt,_id,bat,pan,"Normal running")
-      
-      db_local(sql_query)
+            model = YOLO('bestHP.pt',task="detect")
+            #results = model(["image.jpg"])
+            results = model.predict("image.jpg", save=False, imgsz=320, conf=0.15)
+            results[0].save(filename="result.jpg")
+            detections, classes, confidences = extract_yolo_predictions(results[0].boxes)
 
+            CLASSES = list(detections.keys())
+            QUANTITY = [ x['cantidad'] for x in detections.values()]
+
+            if 2 in CLASSES:
+              nDetected = QUANTITY[CLASSES.index(2)] #obtener cantidad de plutella - index 2
+
+            CLASSES = [ str(i) for i in CLASSES]
+            CLASSES = ",".join(CLASSES)
+            CLASSES = "{" + CLASSES + "}"
+
+            QUANTITY = [ str(i) for i in QUANTITY]
+            QUANTITY = ",".join(QUANTITY)
+            QUANTITY = "{" + QUANTITY + "}"
+
+            if nDetected > 0:
+              print("detected insects")
+              with open("result.jpg", "rb") as f:
+                img64 = base64.b64encode(f.read())
+                img64 = img64.decode('utf-8')
+          else:
+            CLASSES = [ str(i) for i in CLASSES]
+            CLASSES = ",".join(CLASSES)
+            CLASSES = "{" + CLASSES + "}"
+
+            QUANTITY = [ str(i) for i in QUANTITY]
+            QUANTITY = ",".join(QUANTITY)
+            QUANTITY = "{" + QUANTITY + "}"
+      
+        sql_query = """INSERT INTO data_trapviewdata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","VoltagePanel","RainCounter","WindVelocity","WindDirection","Status","img64","nDetected","img_bool","Classes","Quantity") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}','{10}',{11},{12},'{13}','{14}')""".format(dt,_id,hum,temp,bat,pan,rain,velocity,direction,"Normal running",img64,nDetected,img_bool,CLASSES,QUANTITY)
+        
+        db_local(sql_query)
+
+      elif typeM == "gatewayData":
+        dt = datetime.now()
+        mac = m_mqtt.get("mac","NULL")
+        bat = m_mqtt.get("B","NULL")
+        pan = m_mqtt.get("P","NULL")
+
+        sql_query_id = """SELECT id FROM device_gateway WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+        raws_id = db_get(sql_query_id)
+        _id = raws_id[0][0]
+        
+        sql_query = """INSERT INTO data_gatewaydata("DateCreate","IdDevice_id","VoltageBattery","VoltagePanel","Status") VALUES('{0}',{1},{2},{3},'{4}')""".format(dt,_id,bat,pan,"Normal running")
+        
+        db_local(sql_query)
+
+      
 
   except Exception as e:
     print('Arrival error..... ', e)
