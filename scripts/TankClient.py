@@ -153,8 +153,6 @@ def on_message(client, userdata, message):
         payloadRaw = db_get(sql_query)
         payloadRaw = payloadRaw[0]
 
-        print(payloadRaw)
-
         dtNow = datetime.now()
         timeNow = dtNow.time()
         timeStart = payloadRaw[4]
@@ -407,7 +405,6 @@ def on_message(client, userdata, message):
         
         db_local(sql_query)
 
-      
     else:
       topicSplit = topic_in.split("/")
     
