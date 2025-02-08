@@ -107,63 +107,7 @@ def on_message(client, userdata, message):
     #print(datetime.now(),data_in)
     print(datetime.now())
 
-    #print(topic_in)
-    topicSplit = topic_in.split("/")
-    
-    # FILTER FOR TOPIC
-    if topicSplit[2] == "trapViewImage":
-      I_mac = str(topicSplit[3])
-      I_Nparts = int(topicSplit[4])
-      I_i = int(topicSplit[5])
-
-      pay = payloadImage.get(I_mac,[])
-
-      pay.append(data_in)
-
-      payloadImage[I_mac] = pay
-      
-      if I_Nparts == len(payloadImage[I_mac]):
-        imsg = "".join(payloadImage[I_mac])
-        imsg = json.loads(imsg)
-
-        dt = datetime.now()
-        mac = imsg.get("DeviceMacAddress","NULL")
-        hum = imsg.get("Humidity","NULL")
-        temp = imsg.get("Temperature","NULL")
-        bat = imsg.get("VoltageBattery","NULL")
-        
-        img64 = imsg.get("img64","NULL")
-
-        if hum == "nan":
-          hum = 0
-
-        if temp == "nan":
-          temp = 0
-
-        nDetected = 0
-        Objective = 0
-
-        sql_query_id = """SELECT * FROM device_trapview WHERE "DeviceMacAddress" = '{0}';""".format(mac)
-        raws_id = db_get(sql_query_id)
-
-        _id = raws_id[0][0]
-
-        img_bool = True
-        if img64 == "NULL" or img64 == "":
-          img_bool = False
-
-        else:
-          nDetected = 2
-          Objective = 1
-
-        sql_query = """INSERT INTO data_trapviewdata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status","img64","nDetected","img_bool","Objective") VALUES('{0}',{1},{2},{3},{4},'{5}','{6}',{7},{8},{9})""".format(dt,_id,hum,temp,bat,"0",img64,nDetected,img_bool,Objective)
-        
-        db_local(sql_query)
-
-        print("EXITOOO")
-
-        del payloadImage[I_mac]
-    else: 
+    if topic_in == "jhpOandG/data":
       m_mqtt = json.loads(data_in)
       typeM = m_mqtt.get("type","NULL")
       print(typeM)
@@ -209,12 +153,12 @@ def on_message(client, userdata, message):
         payloadRaw = db_get(sql_query)
         payloadRaw = payloadRaw[0]
 
-        #print(payloadRaw)
+        print(payloadRaw)
 
         dtNow = datetime.now()
         timeNow = dtNow.time()
-        timeStart = payloadRaw[8]
-        timeEnd = payloadRaw[7]
+        timeStart = payloadRaw[4]
+        timeEnd = payloadRaw[5]
 
         status = False
         if timeNow >= timeStart and timeNow <= timeEnd:
@@ -464,7 +408,60 @@ def on_message(client, userdata, message):
         db_local(sql_query)
 
       
+    else:
+      topicSplit = topic_in.split("/")
+    
+      # FILTER FOR TOPIC
+      I_mac = str(topicSplit[3])
+      I_Nparts = int(topicSplit[4])
+      I_i = int(topicSplit[5])
 
+      pay = payloadImage.get(I_mac,[])
+
+      pay.append(data_in)
+
+      payloadImage[I_mac] = pay
+      
+      if I_Nparts == len(payloadImage[I_mac]):
+        imsg = "".join(payloadImage[I_mac])
+        imsg = json.loads(imsg)
+
+        dt = datetime.now()
+        mac = imsg.get("DeviceMacAddress","NULL")
+        hum = imsg.get("Humidity","NULL")
+        temp = imsg.get("Temperature","NULL")
+        bat = imsg.get("VoltageBattery","NULL")
+        
+        img64 = imsg.get("img64","NULL")
+
+        if hum == "nan":
+          hum = 0
+
+        if temp == "nan":
+          temp = 0
+
+        nDetected = 0
+        Objective = 0
+
+        sql_query_id = """SELECT * FROM device_trapview WHERE "DeviceMacAddress" = '{0}';""".format(mac)
+        raws_id = db_get(sql_query_id)
+
+        _id = raws_id[0][0]
+
+        img_bool = True
+        if img64 == "NULL" or img64 == "":
+          img_bool = False
+
+        else:
+          nDetected = 2
+          Objective = 1
+
+        sql_query = """INSERT INTO data_trapviewdata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status","img64","nDetected","img_bool","Objective") VALUES('{0}',{1},{2},{3},{4},'{5}','{6}',{7},{8},{9})""".format(dt,_id,hum,temp,bat,"0",img64,nDetected,img_bool,Objective)
+
+        db_local(sql_query)
+
+        del payloadImage[I_mac]
+  
   except Exception as e:
     print('Arrival error..... ', e)
 
