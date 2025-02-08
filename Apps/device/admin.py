@@ -1,12 +1,16 @@
 from django.contrib import admin
 
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
+
 from .models import (
     TankDevice,
 	WellAnalyzerDevice,
 	EnvironmentalDevice,
 	CamVidDevice,
 	Gateway,
-	TrapView
+	TrapView,
+	WeatherStation
 )
 
 class confAnalyzerData(admin.ModelAdmin):
@@ -70,18 +74,51 @@ class confGateway(admin.ModelAdmin):
 	list_filter = ('IdLocation',)
 admin.site.register(Gateway, confGateway)
 
-class confTrapView(admin.ModelAdmin):
-	def DateCreatedFormat(self, obj):
-		return obj.DateCreate.strftime("%Y-%m-%d %H:%M:%S")
-	DateCreatedFormat.admin_order_field = 'DateCreated'
-	DateCreatedFormat.short_description = 'Date Created' 
+## ==================== Wheather station =====================
+class WeatherStationResource(resources.ModelResource):
+    class Meta:
+        model = WeatherStation
+
+@admin.register(WeatherStation)
+class WeatherStationAdmin(ImportExportModelAdmin):
+	resource_class = WeatherStationResource
+
 	list_display = (
-		'id',
-		'IdGateway',
+        'id',
 		'DeviceName',
 		'DeviceMacAddress',
 		'IdLocation',
+		'IdGateway',
 		'A_TH',
-		)
+		'A_WP',
+		'A_RS',
+		'TimeStart',
+		'TimeEnd',
+		'SleepTime',
+    )
+	search_fields = ('IdLocation',)
 	list_filter = ('IdLocation',)
-admin.site.register(TrapView, confTrapView)
+
+## ==================== TRAPVIEW =====================
+class TrapViewResource(resources.ModelResource):
+    class Meta:
+        model = TrapView
+
+@admin.register(TrapView)
+class TrapViewAdmin(ImportExportModelAdmin):
+	resource_class = TrapViewResource
+
+	list_display = (
+        'id',
+		'DeviceName',
+		'DeviceMacAddress',
+		'A_TH',
+		'TimeStart',
+		'TimeEnd',
+		'SleepTime',
+		'IdLocation',
+		'IdGateway',
+    )
+	search_fields = ('IdLocation',)
+	list_filter = ('IdLocation',)
+

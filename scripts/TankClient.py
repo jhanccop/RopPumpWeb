@@ -166,10 +166,10 @@ def on_message(client, userdata, message):
           "name":payloadRaw[2],
           "status":status,
           "timesleep":payloadRaw[6],
-          "continuous":payloadRaw[9],
-          "refresh":payloadRaw[10],
-          "saveImage":payloadRaw[11],
-          "runningNN":payloadRaw[12],
+          "continuous":payloadRaw[7],
+          "refresh":payloadRaw[8],
+          "saveImage":payloadRaw[9],
+          "runningNN":payloadRaw[10],
           }
         payload = json.dumps(payload)
         client.publish(topic_pub,payload)

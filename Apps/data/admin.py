@@ -9,7 +9,8 @@ from .models import(
 	EnvironmentalData,
 	CamVidData,
 	TrapViewData,
-	GatewayData
+	GatewayData,
+	WeatherStationData
 )
 class confRPData(admin.ModelAdmin):
 	def DateCreatedFormat(self, obj):
@@ -93,21 +94,34 @@ class TrapViewDataAdmin(ImportExportModelAdmin):
 	search_fields = ('IdDevice',)
 	list_filter = ('IdDevice',)
 
-"""class confTrapViewData(admin.ModelAdmin):
+## ==================== Wheather station Data =====================
+class WeatherStationDataResource(resources.ModelResource):
+    class Meta:
+        model = WeatherStationData
+	
+@admin.register(WeatherStationData)
+class WeatherStationDataAdmin(ImportExportModelAdmin):
+	resource_class = WeatherStationDataResource
+
 	def DateCreatedFormat(self, obj):
 		return obj.DateCreate.strftime("%Y-%m-%d %H:%M:%S")
-	DateCreatedFormat.admin_order_field = 'DateCreated'
-	DateCreatedFormat.short_description = 'Date Created' 
-	list_display = ('IdDevice',
-					'DateCreatedFormat',
-					'Humidity',
-					'Temperature',
-					'VoltageBattery',
-					'img_bool',
-					'Status',
-					)
-	list_filter = ('Status','IdDevice')
-admin.site.register(TrapViewData, confTrapViewData)"""
+	DateCreatedFormat.admin_order_field = 'DateCreate'
+	DateCreatedFormat.short_description = 'Date Create'
+
+	list_display = (
+        'IdDevice',
+		'DateCreatedFormat',
+		'Humidity',
+		'Temperature',
+		'VoltageBattery',
+		'WindVelocity',
+		'WindDirection',
+		'RainCounter',
+		'Radiation',
+		'Status',
+    )
+	search_fields = ('IdDevice',)
+	list_filter = ('IdDevice',)
 
 class confGatewayData(admin.ModelAdmin):
 	def DateCreatedFormat(self, obj):

@@ -322,7 +322,7 @@ class WeatherStation(models.Model):
 
     class Meta:
         verbose_name = 'Weather station'
-        verbose_name_plural = 'All Weather station'
+        verbose_name_plural = 'Weather station devices'
 
     def __str__(self):
         return self.DeviceName
