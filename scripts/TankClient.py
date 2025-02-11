@@ -105,9 +105,10 @@ def on_message(client, userdata, message):
     topic_in = str(message.topic)
     data_in = str(message.payload.decode("utf-8"))
     #print(datetime.now(),data_in)
-    print(datetime.now())
 
     if topic_in == "jhpOandG/data":
+
+      print(datetime.now(), topic_in)
       m_mqtt = json.loads(data_in)
       typeM = m_mqtt.get("type","NULL")
       print(typeM)
@@ -459,6 +460,8 @@ def on_message(client, userdata, message):
         db_local(sql_query)
 
         del payloadImage[I_mac]
+
+        print(dt, "Successfully")
   
   except Exception as e:
     print('Arrival error..... ', e)
