@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TrapViewData
+from .models import TrapViewData, WeatherStationData
 
 class TrapViewDataSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,5 +15,22 @@ class TrapViewDataSerializer(serializers.ModelSerializer):
             'nDetected',
             'img64',
             'img_bool',
+            'Status'
+        ]
+
+class WeatherStationDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WeatherStationData
+        fields = [
+            'IdDevice',
+
+            'Humidity',
+            'Temperature',
+            'VoltageBattery',
+
+            'WindVelocity',
+            'WindDirection',
+            'RainCounter',
+            'Radiation',
             'Status'
         ]

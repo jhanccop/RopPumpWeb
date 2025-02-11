@@ -14,8 +14,8 @@ from django.views.generic import (
     DeleteView
 )
 
-from .models import TrapView
-from .serializers import TrapViewSerializer
+from .models import TrapView, WeatherStation
+from .serializers import TrapViewSerializer, WeatherStationSerializer
 
 from Apps.users.models import User
 #from Apps.company.models import Company
@@ -159,6 +159,16 @@ class TrapViewSet(APIView):
         queryset = TrapView.objects.get(DeviceMacAddress = mac)
 
         serializer = TrapViewSerializer(queryset, many=False)
+        return Response(serializer.data)
+
+# =================== WEATHER STATION API ===========================
+class WeatherStationSet(APIView):
+    def get(self, request):
+        mac = request.query_params.get('mac', '')
+
+        queryset = WeatherStation.objects.get(DeviceMacAddress = mac)
+
+        serializer = WeatherStationSerializer(queryset, many=False)
         return Response(serializer.data)
 
 # =================== SUCCESS ===========================

@@ -92,8 +92,6 @@ class WeatherStationAdmin(ImportExportModelAdmin):
 		'A_TH',
 		'A_WP',
 		'A_RS',
-		'TimeStart',
-		'TimeEnd',
 		'SleepTime',
     )
 	search_fields = ('IdLocation',)

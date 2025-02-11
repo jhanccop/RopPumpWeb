@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from rest_framework import serializers
-from .models import TrapView
+from .models import TrapView, WeatherStation
 
 class TrapViewSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,3 +34,19 @@ class TrapViewSerializer(serializers.ModelSerializer):
             status = True
         representation["status"] = status
         return representation
+
+class WeatherStationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WeatherStation
+        fields = [
+            'id',
+            'IdGateway',
+            'DeviceName',
+            'DeviceMacAddress',
+
+            'A_TH',
+            'A_WP',
+            'A_RS',
+            'SleepTime',
+        ]
+    

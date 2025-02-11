@@ -12,6 +12,7 @@ app_name = "device_app"
 urlpatterns = [
     #path('devices/api/', include(router.urls)),
     path('devices/api/buscar/', views.TrapViewSet.as_view(), name='mac-search'),
+    path('devices/api/buscar-weather-station/', views.WeatherStationSet.as_view(), name='mac-search-ws'),
     path('devices', views.ListOverview.as_view(),name = "devices"),
 
     path('devices/add_tank/', views.TankAddView.as_view(), name ='add_tank'),

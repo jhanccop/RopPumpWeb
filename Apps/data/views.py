@@ -1,3 +1,4 @@
+import numpy as np
 import json
 from datetime import date, datetime, timedelta
 from django.http import JsonResponse
@@ -35,7 +36,7 @@ from Apps.location.models import (
     Location
 )
 
-from Apps.device.models import TrapView
+from Apps.device.models import TrapView, WeatherStation
 
 from Apps.groups.models import Group
 from .models import (
@@ -43,13 +44,14 @@ from .models import (
     TankData,
     EnvironmentalData,
     CamVidData,
-    TrapViewData
+    TrapViewData,
+    WeatherStationData
 )
 
 from Apps.users.models import User
 from Apps.company.models import Company
 
-from .serializers import TrapViewDataSerializer
+from .serializers import TrapViewDataSerializer, WeatherStationDataSerializer
 
 class CompanyMixin(object):
     def get_context_data(self, **kwargs):
@@ -119,6 +121,61 @@ class ApiPost(APIView):
     
     except UnreadablePostError:
         print("error en post")
+
+class WeatherStationApiPost(APIView):
+    try:
+        queryset = WeatherStationData.objects.all()
+        serializer_class = WeatherStationDataSerializer
+
+        def post(self, request, *args, **kwargs):
+            data = json.loads(request.body)
+
+            print("==========================")
+
+            ID = self.IdDeviceMac(data['DeviceMacAddress'])
+
+            data['IdDevice'] = ID
+
+            if data.get('Humidity',"") == "nan" or "":
+                data['Humidity'] = float(data['Humidity'])
+            if data.get('Temperature',"") == "nan" or "":
+                data['Temperature'] = float(data['Temperature'])
+            if data.get('WindVelocity',"") == "nan" or "":
+                data['WindVelocity'] = float(data['WindVelocity'])
+            if data.get('WindDirection',"") == "nan" or "":
+                data['WindDirection'] = float(data['WindDirection'])
+            if data.get('RainCounter',"") == "nan" or "":
+                data['RainCounter'] = int(data['RainCounter'])
+            if data.get('Radiation',"") == "nan" or "":
+                data['Radiation'] = float(data['Radiation'])
+
+            data['VoltageBattery'] = float(data['VoltageBattery'])
+            data['Status'] = self.batStatus(data['VoltageBattery'])
+
+            #print(data)
+
+            del(data["DeviceMacAddress"])
+
+            serializer = self.serializer_class(data = data)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=201)
+            return Response(serializer.errors, status=400)
+        
+        def IdDeviceMac(self, valor):
+            result = WeatherStation.objects.get(DeviceMacAddress = valor)
+            return result.id
+        
+        def batStatus(self, valor):
+            result = '0'
+            if float(valor) < 3.6:
+                result = '1'
+            return result
+    
+    except UnreadablePostError:
+        print("error en post")
+
 
 # OVERVIEW by LOCATION (MAIN SCREEN)
 class OverviewAllLocation(LoginRequiredMixin, CompanyMixin, ListView):

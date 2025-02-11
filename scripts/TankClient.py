@@ -414,9 +414,7 @@ def on_message(client, userdata, message):
       I_i = int(topicSplit[5])
 
       pay = payloadImage.get(I_mac,[])
-
       pay.append(data_in)
-
       payloadImage[I_mac] = pay
       
       if I_Nparts == len(payloadImage[I_mac]):
@@ -437,6 +435,10 @@ def on_message(client, userdata, message):
         if temp == "nan":
           temp = 0
 
+        StatusB = "0"
+        if float(bat) < 3.5:
+          StatusB = "1"
+
         nDetected = 0
         Objective = 0
 
@@ -448,12 +450,11 @@ def on_message(client, userdata, message):
         img_bool = True
         if img64 == "NULL" or img64 == "":
           img_bool = False
-
         else:
           nDetected = 2
           Objective = 1
 
-        sql_query = """INSERT INTO data_trapviewdata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status","img64","nDetected","img_bool","Objective") VALUES('{0}',{1},{2},{3},{4},'{5}','{6}',{7},{8},{9})""".format(dt,_id,hum,temp,bat,"0",img64,nDetected,img_bool,Objective)
+        sql_query = """INSERT INTO data_trapviewdata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status","img64","nDetected","img_bool","Objective") VALUES('{0}',{1},{2},{3},{4},'{5}','{6}',{7},{8},{9})""".format(dt,_id,hum,temp,bat,StatusB,img64,nDetected,img_bool,Objective)
 
         db_local(sql_query)
 

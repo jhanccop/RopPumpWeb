@@ -316,8 +316,6 @@ class WeatherStation(models.Model):
     A_WP = models.BooleanField("Available Wind and pp",default=False)
     A_RS = models.BooleanField("Available Solar Radiation",default=False)
 
-    TimeStart = models.TimeField("On time" ,null=True, blank=True )
-    TimeEnd = models.TimeField("Off time",null=True, blank=True )
     SleepTime = models.IntegerField('Sleep Time', choices=SleepTime_CHOICES,null=True, blank =True,default=60)
 
     class Meta:

@@ -9,6 +9,7 @@ urlpatterns = [
 
     path('get-csrf/', views.CsrfTokenView.as_view(), name='get-csrf'),
     path('data/api/post', views.ApiPost.as_view(),name = "postData"),
+    path('data/api/post-weather-station', views.WeatherStationApiPost.as_view(),name = "postDataWS"),
 
     path('data/overview-location/<pk>', views.OverviewByLocation.as_view(),name = "overview-location"),
     
