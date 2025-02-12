@@ -414,10 +414,16 @@ def on_message(client, userdata, message):
       I_Nparts = int(topicSplit[4])
       I_i = int(topicSplit[5])
 
+      if I_i == 0:
+        print("building figure", I_mac)
+        mar  = payloadImage.get(I_mac, "1")
+        if mar != "1":
+          del payloadImage[I_mac]
+
       pay = payloadImage.get(I_mac,[])
       pay.append(data_in)
       payloadImage[I_mac] = pay
-      
+
       if I_Nparts == len(payloadImage[I_mac]):
         imsg = "".join(payloadImage[I_mac])
         imsg = json.loads(imsg)
