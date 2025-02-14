@@ -96,7 +96,7 @@ def on_connect(client, userdata, flags, rc,properties):
   print("UserData= " + str(userdata))
   print("flags= " + str(flags))
   print("")
-  client.subscribe(topic_sub)
+  client.subscribe(topic_sub) #qos=2
 
 def on_message(client, userdata, message):
   # {"type":"tank","mac":"48:E7:29:97:23:A0","count":2,"value":"4.729","temp":"74.188","sampleRate":1767}
@@ -271,37 +271,30 @@ def on_message(client, userdata, message):
 
           #print("****---**",payloadDev)
 
-          idGateway = payloadDev[5]
-          A_TH = payloadDev[3]
-          A_WS = payloadDev[4]
-          runningNN = payloadDev[7]
-
-          sql_query2 = """SELECT * FROM device_gateway WHERE "id" = {0}""".format(idGateway)
-          payloadGat = db_get(sql_query2)
-          payloadGat = payloadGat[0]
+          A_TH = payloadDev[5]
+          runningNN = payloadDev[11]
 
           #print("dev -- Gateway",payloadGat)
 
           dtNow = datetime.now()
           timeNow = dtNow.time()
-          timeStart = payloadGat[4]
-          timeEnd = payloadGat[5]
-          Gateway = payloadGat[2]
+          timeStart = payloadDev[6]
+          timeEnd = payloadDev[7]
 
           status = False
           if timeNow >= timeStart and timeNow <= timeEnd:
             status = True
 
           payload = {
-            "name":payloadDev[1],
+            #"name":payloadDev[1],
             "function":function,
-            "gateway":Gateway,
             "status":status,
-            "timesleep":payloadGat[6],
-            "refresh":payloadGat[7],
+            "timesleep":payloadDev[8],
             "A_TH":A_TH,
-            "A_WS":A_WS,
-            "runningNN":runningNN
+            "runningNN":runningNN,
+            "gateway": "1",
+            "refresh":10,
+            "continuous":False,
             }
           payload = json.dumps(payload)
           time.sleep(0.2)
