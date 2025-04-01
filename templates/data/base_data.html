@@ -25,6 +25,46 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <!-- CSS Files -->
     <link id="pagestyle" href="{% static 'assets/css/material-dashboard.css' %}" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'assets/css/leaflet.css' %}" />
+    <style>
+        #map { height: 450px; }
+    </style>
+
+    <style>
+        .logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            max-width: 300px;
+        }
+
+        .logo-icon {
+            width: 150px;
+            height: 150px;
+        }
+
+        .logo-text {
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .logo-text h1 {
+            margin: 0;
+            color: #2E7D32; /* Verde oscuro */
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            margin: 0;
+            color: #4FC3F7; /* Azul tecnológico */
+            font-size: 16px;
+            font-weight: 500;
+        }
+    </style>
 
 
 </head>
@@ -47,12 +87,29 @@
         <div class="collapse navbar-collapse  w-auto " id="sidenav-collapse-main">
             <ul class="navbar-nav">
                 <li class="nav-item">
+                    {% if user.CompanyId.CompanyType ==  "0" %}
+                    <a class="nav-link text-white active bg-gradient-primary" href="{% url 'data_app:oil-overview' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="material-icons opacity-10">dashboard</i>
+                        </div>
+                        <span class="nav-link-text ms-1">Data Overview</span>
+                    </a>
+                    {% elif user.CompanyId.CompanyType ==  "1" %}
+                    <a class="nav-link text-white active bg-gradient-primary" href="{% url 'data_app:oil-overview' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="material-icons opacity-10">dashboard</i>
+                        </div>
+                        <span class="nav-link-text ms-1">Data Overview</span>
+                    </a>
+                    {% else %}
                     <a class="nav-link text-white active bg-gradient-primary" href="{% url 'data_app:data' %}">
                         <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
                             <i class="material-icons opacity-10">dashboard</i>
                         </div>
                         <span class="nav-link-text ms-1">Data Overview</span>
                     </a>
+                    {% endif %}
+                    
                 </li>
                 <li class="nav-item">
                     <a class="nav-link text-white " href="{% url 'equipment_app:equipments' %}">

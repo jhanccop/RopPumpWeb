@@ -14,12 +14,12 @@ from django.views.generic import (
     DeleteView
 )
 
-from .models import TrapView, WeatherStation
-from .serializers import TrapViewSerializer, WeatherStationSerializer
+from .models import TrapView, WeatherStation, WellAnalyzerDevice, TankDevice, EnvironmentalDevice
+from .serializers import TrapViewSerializer, WeatherStationSerializer, WellAnalyzerSerializer
 
 from Apps.users.models import User
 #from Apps.company.models import Company
-from Apps.device.models import TankDevice, WellAnalyzerDevice, EnvironmentalDevice
+#from Apps.device.models import TankDevice, WellAnalyzerDevice, EnvironmentalDevice
 
 from .forms import TankForm, AnalyzerDataForm, EnvironmentalForm
 
@@ -169,6 +169,17 @@ class WeatherStationSet(APIView):
         queryset = WeatherStation.objects.get(DeviceMacAddress = mac)
 
         serializer = WeatherStationSerializer(queryset, many=False)
+        return Response(serializer.data)
+    
+# =================== WELL ANALYZER API ===========================
+class WellAnalyzerSet(APIView):
+    def get(self, request):
+        mac = request.query_params.get('mac', '')
+        mac = mac[4:] + "0000" + mac[0:4]
+
+        queryset = WellAnalyzerDevice.objects.get(DeviceMacAddress = mac)
+
+        serializer = WellAnalyzerSerializer(queryset, many=False)
         return Response(serializer.data)
 
 # =================== SUCCESS ===========================

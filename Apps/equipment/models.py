@@ -7,12 +7,14 @@ from Apps.field.models import Field
 from Apps.batteries.models import Battery
 from Apps.groups.models import Group
 
-from .managers import (TankManager,
-                       WellManager, 
-                       EnvironmentalManager, 
-                       VisualSamplingPointManager,
-                       InsectMonitoringtManager
+from .managers import (
+    TankManager,
+    RodPumpWellManager, 
+    EnvironmentalManager, 
+    VisualSamplingPointManager,
+    InsectMonitoringtManager
 )
+
 class RodPumpWell(models.Model):
     id = models.BigAutoField(primary_key=True)
 
@@ -61,7 +63,7 @@ class RodPumpWell(models.Model):
     Status = models.CharField('Status', max_length=50, choices=Status_CHOICES, default="Normal running")
     #IdAnalyzer = models.ForeignKey(WellAnalyzerDevice, on_delete=models.CASCADE, unique=True,blank=True,null=True)
     
-    objects = WellManager()
+    objects = RodPumpWellManager()
 
     class Meta:
         verbose_name = 'Rod Pump Well'

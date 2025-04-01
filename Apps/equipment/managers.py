@@ -1,12 +1,12 @@
 from django.db import models
 from django.db.models import Sum, Max, F, Avg, Subquery, Count, DateField, Q, OuterRef, FilteredRelation
 
-class WellManager(models.Manager):
+class RodPumpWellManager(models.Manager):
 
-    def search_type_pump(self, WellName):
+    def search_pump(self, WellName):
         result = self.filter(
             PumpName=WellName
-        ).values("PumpType")
+        )
         return result[0]
 
     def search_id_pump(self, WellName):
@@ -34,10 +34,40 @@ class WellManager(models.Manager):
                  )
         return result
 
+    def search_rodpump_by_id_company(self, id):
+        result = self.filter(
+            Owner__CompanyId__id = id
+        ).values(
+                 "WellName",
+                 "FieldName__FieldName",
+                 "BatteryName__BatteryName",
+                 "GroupName__GroupName",
+                 "LatLocation",
+                 "LonLocation",
+                 "EngineType",
+                 "Status",
+                 )
+        return result
+
 class TankManager(models.Manager):
     def search_tank_by_company(self, CompanyName):
         result = self.filter(
             Owner__CompanyId__CompanyName = CompanyName
+        ).values(
+            "id",
+            "TankName",
+            "FieldName__FieldName",
+            "BatteryName__BatteryName",
+            "GroupName__GroupName",
+            "Status",
+            "TankFactor",
+            "TankHeight",
+        )
+        return result
+    
+    def search_tank_by_id_company(self, id):
+        result = self.filter(
+            Owner__CompanyId__id = id
         ).values(
             "id",
             "TankName",

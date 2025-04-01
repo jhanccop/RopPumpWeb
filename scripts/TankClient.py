@@ -69,6 +69,73 @@ def db_local(exec):
   finally:
     conexion.close()
 
+# =================== funtions for lora decode ===================
+class LoRaPacketDecoder:
+  def __init__(self):
+    self.decoded_data = {}
+  
+  def decode_base64(self, payload):
+    """Decodifica un payload en base64 a bytes."""
+    try:
+      return base64.b64decode(payload)
+    except Exception as e:
+      raise ValueError(f"Error decodificando base64: {str(e)}")
+  
+  def bytes_to_int(self, bytes_data):
+    """Convierte bytes a entero."""
+    return int.from_bytes(bytes_data, byteorder='big', signed=True)
+  
+  def decode_float10(self, bytes_data):
+    """Decodifica float (asume 2 bytes, con un decimal)."""
+    temp = self.bytes_to_int(bytes_data)
+    return temp / 10.0
+  def decode_float100(self, bytes_data):
+    """Decodifica float (asume 3 bytes, con 2 decimal)."""
+    temp = self.bytes_to_int(bytes_data)
+    return temp / 100.0
+  def decode_int(self, bytes_data):
+    """Decodifica int (asume 2 bytes, con un decimal)."""
+    temp = self.bytes_to_int(bytes_data)
+    return temp
+
+  def decode_array(self, bytes_data):
+    n = len(bytes_data)
+    arrayT = []
+    for i in range(0,int(n/2)):
+      arrayT.append(self.bytes_to_int(bytes_data[2*i:2*i+2])/100)
+    return arrayT
+
+  def decode_packet(self, payload):
+    """Decodifica un paquete LoRa completo."""
+    # Decodificar base64 si es necesario
+    if isinstance(payload, str):
+      raw_bytes = self.decode_base64(payload)
+    else:
+      raw_bytes = payload
+    
+    # Verificar longitud mínima
+    if len(raw_bytes) < 8:
+      raise ValueError("Paquete demasiado corto")
+    
+    # Decodificar los campos
+    # Asumimos un formato: 2 bytes temp, 1 byte hum, 2 bytes pressure
+
+    self.decoded_data = {
+      'spm': self.decode_float10(raw_bytes[0:2]),
+      'fillPump': self.decode_float100(raw_bytes[2:4])*100,
+      'sLength': self.decode_float100(raw_bytes[4:6]),
+      'vBat': self.decode_float100(raw_bytes[6:8]),
+      'status': self.decode_int(raw_bytes[8:9]),
+      'load' : self.decode_array(raw_bytes[9:49]),
+      'pos' : self.decode_array(raw_bytes[49:])
+    }
+    
+    return self.decoded_data
+  
+  def to_json(self):
+    """Convierte los datos decodificados a JSON."""
+    return json.dumps(self.decoded_data, indent=2)
+
 def extract_yolo_predictions(results):
     
     # Extraer las clases como enteros
@@ -104,10 +171,9 @@ def on_message(client, userdata, message):
   try:
     topic_in = str(message.topic)
     data_in = str(message.payload.decode("utf-8"))
-    #print(datetime.now(),data_in)
 
+    # ================ SENSOR DATA ================
     if topic_in == "jhpOandG/data":
-
       print(datetime.now(), topic_in)
       m_mqtt = json.loads(data_in)
       typeM = m_mqtt.get("type","NULL")
@@ -399,6 +465,73 @@ def on_message(client, userdata, message):
         
         db_local(sql_query)
 
+      elif typeM == "wellAnalizer":
+        print(m_mqtt)
+
+        dt = datetime.now()
+        loraDevEUI = m_mqtt.get("devEUI","0")
+        loraDevEUI = loraDevEUI[4:] + "0000" + loraDevEUI[0:4]
+        spm = m_mqtt.get("spm","0")
+        fillPump = m_mqtt.get("fillPump","0")
+        sLength = m_mqtt.get("sLength","0")
+        vBat = m_mqtt.get("vBat","0")
+        status = m_mqtt.get("status","-1")
+        sLoad = m_mqtt.get("load","")
+        sPos = m_mqtt.get("pos","")
+
+        print(vBat,sLength,fillPump,sLoad,sPos)
+
+        Diagnosis = 0
+
+        if status == "0" :
+          Diagnosis = 11;
+        
+        sql_query_id = """SELECT id FROM device_wellanalyzerdevice WHERE "DeviceMacAddress" = '{0}'""".format(loraDevEUI)
+
+        raws_id = db_get(sql_query_id)
+        _id = raws_id[0][0]
+
+        sql_query = """INSERT INTO data_rodpumpdata("DateCreate","IdDevice_id","RawSurfaceLoad","RawSurfacePosition","SPM","PumpFillage","Diagnosis","Status") VALUES('{0}',{1},'{2}','{3}',{4},{5},'{6}','{7}')""".format(dt,_id,sLoad,sPos,spm,fillPump,Diagnosis,"Normal running")
+        db_local(sql_query)
+    # ================ LORA DATA ================
+    elif topic_in == "jhpOandG/data/lora":
+      try:
+        loraData = json.loads(data_in)
+        loraDevEUI = loraData["devEUI"]
+        loraData = loraData["data"]
+        decoder = LoRaPacketDecoder()
+        decoded = decoder.decode_packet(loraData)
+
+        #client.publish("jhpOandG/setting/lora","77777")
+        dt = datetime.now()
+        spm = decoded.get("spm","0")
+        fillPump = decoded.get("fillPump","0")
+        sLength = decoded.get("sLength","0")
+        vBat = decoded.get("vBat","0")
+        status = decoded.get("status","-1")
+        sLoad = decoded.get("load","")
+        sPos = decoded.get("pos","")
+
+        print(vBat,sLength,fillPump,sLoad,sPos)
+
+        Diagnosis = 0
+
+        if status == 0 :
+          Diagnosis = 11;
+        
+        sql_query_id = """SELECT id FROM device_wellanalyzerdevice WHERE "DeviceMacAddress" = '{0}'""".format(loraDevEUI)
+
+        raws_id = db_get(sql_query_id)
+        _id = raws_id[0][0]
+
+        sql_query = """INSERT INTO data_rodpumpdata("DateCreate","IdDevice_id","RawSurfaceLoad","RawSurfacePosition","SPM","PumpFillage","Diagnosis","Status") VALUES('{0}',{1},'{2}','{3}',{4},{5},'{6}','{7}')""".format(dt,_id,sLoad,sPos,spm,fillPump,Diagnosis,"Normal running")
+        db_local(sql_query)
+        
+        #print(decoder.to_json())
+      except Exception as e:
+        print(f"Error decodificando: {str(e)}")
+
+    # ================ CAMERAS PAYLOAD ================
     else:
       topicSplit = topic_in.split("/")
     

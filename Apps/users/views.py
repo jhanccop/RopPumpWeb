@@ -36,7 +36,8 @@ class UserRegisterView(FormView):
 class LoginUser(FormView):
     template_name = 'users/login.html'
     form_class = LoginForm
-    success_url = reverse_lazy('data_app:data')
+
+    #success_url = reverse_lazy('data_app:data')
 
     def form_valid(self, form):
         user = authenticate(
@@ -45,6 +46,15 @@ class LoginUser(FormView):
         )
         login(self.request, user)
         return super(LoginUser, self).form_valid(form)
+    
+    def get_success_url(self):
+        CType = self.request.user.CompanyId.CompanyType
+        if CType == "0":
+            return reverse_lazy('data_app:oil-overview')
+        elif CType == "1":
+            return reverse_lazy('data_app:data')
+        else:
+            return reverse_lazy('data_app:data')
 
 class LogoutView(View):
     def get(self, request, *args, **kargs):

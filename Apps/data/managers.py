@@ -21,26 +21,29 @@ class RPDataManager(models.Manager):
                 DateCreate__year=intervals[0].year,
                 DateCreate__month=intervals[0].month,
                 DateCreate__day=intervals[0].day,
-                PumpName__PumpName=wellName
-            ).values(
-                "DateCreate",
-                "SurfaceLoad",
-                "SurfacePosition",
-                "RunTime",
-                "PumpFillage",
-                "SPM",
-                "Recomendation",
-                "Diagnosis",
-                "Status"
+                IdDevice__IdRodPumpWell__WellName=wellName
             ).order_by('-DateCreate')
             return result 
         else:
             result = self.filter(
                 DateCreate__range=(intervals[0],intervals[1]+timedelta(days=1)),
-                PumpName__PumpName=wellName
+                IdDevice__IdRodPumpWell__WellName=wellName
             ).order_by('-DateCreate')
             return result
-        
+    
+    def search_today_RPdata(self,wellName):
+        Today = date.today()
+        result = self.filter(
+                DateCreate__year=Today.year,
+                DateCreate__month=Today.month,
+                DateCreate__day=Today.day,
+                IdDevice__IdRodPumpWell__WellName=wellName
+            ).order_by('-DateCreate')
+        return result
+    
+    def search_last_RPdata(self,wellName):
+        result = self.filter(IdDevice__IdRodPumpWell__WellName = wellName).order_by("DateCreate").last()
+        return result
 class TankDataManager(models.Manager):
     # MAIN SEARCH DATA
     def search_tankdata_interval(self,TankName, TankFactor,TankHeight, interval):
@@ -137,6 +140,17 @@ class TankDataManager(models.Manager):
                 TankLevelPer = (TankHeight - F("Level")) * 100 / TankHeight,
             ).order_by('-DateCreate').last()
         result["ft"] = floatEng(result['Level'])
+        return result
+    
+    def search_last_TankData(self,tankName,TankFactor,TankHeight):
+        result = self.filter(
+                IdDevice__IdTank__TankName = tankName
+            ).annotate(
+                fluidHeigth = (TankHeight - F("Level") ) * 3.28084 ,
+                #fluid = F(floatEng('Level')),
+                bblOil = (TankHeight - F("Level")) * TankFactor,
+                TankLevelPer = (TankHeight - F("Level")) * 100 / TankHeight,
+            ).order_by("-DateCreate").last()
         return result
 
 class EnvironmentalDataManager(models.Manager):

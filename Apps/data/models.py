@@ -19,6 +19,7 @@ from .managers import (
     CamVidDataManager,
     TrapViewDataManager
 )
+
 # Create your models here.
 class RodPumpData(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -38,33 +39,45 @@ class RodPumpData(models.Model):
     SPM = models.FloatField('SPM', null=True, blank =True)
     Production = models.FloatField('Production', null=True, blank =True)
 
+    NONE = "0"
+    FULLPUMP = "1"
+    LEAKTRAVELVALVE = "2"
+    LEAKSTANDINGVALVE = "3"
+    WORNPUMPBARREL = "4"
+    LIGHTFLUIDSTROKE = "5"
+    MEDIUMFLUIDSTROKE = "6"
+    SEVERELUIDSTROKE = "7"
+    GASINTERFERENCE = "8"
+    SHOCKPUMPUP = "9"
+    SHOCKPUMPDOWN = "10"
+    RECOVERINGLEVEL = "11"
+    RODSBROKEN = "12"
+
     DIAGNOSIS_CHOICES = (
-        ('None', 'None'),
-        ('Full pump', 'Full pump'),
-        ('Leak travel valve', 'Leak travel valve'),
-        ('Leak standing valve', 'Leak standing valve'),
-        ('Worn pump barrel', 'Worn pump barrel'),
-        ('Light fluid stroke', 'Light fluid stroke'),
-        ('Medium fluid stroke', 'Medium fluid stroke'),
-        ('Severe fluid stroke', 'Severe fluid stroke'),
-        ('Gas interference', 'Gas interference'),
-        ('Shock of pump up', 'Shock of pump up'),
-        ('Shock of pump down', 'Shock of pump down'),
-        ('Recovering level', 'Recovering level'),
-        ("Rods broken","Rods broken")
+        (NONE, 'None'),
+        (FULLPUMP, 'Full pump'),
+        (LEAKTRAVELVALVE, 'Leak travel valve'),
+        (LEAKSTANDINGVALVE, 'Leak standing valve'),
+        (WORNPUMPBARREL, 'Worn pump barrel'),
+        (LIGHTFLUIDSTROKE, 'Light fluid stroke'),
+        (MEDIUMFLUIDSTROKE, 'Medium fluid stroke'),
+        (SEVERELUIDSTROKE, 'Severe fluid stroke'),
+        (GASINTERFERENCE, 'Gas interference'),
+        (SHOCKPUMPUP, 'Shock of pump up'),
+        (SHOCKPUMPDOWN, 'Shock of pump down'),
+        (RECOVERINGLEVEL, 'Recovering level'),
+        (RODSBROKEN,"Rods broken")
     )
     
-    Diagnosis = MultiSelectField("Diagnosis", choices = DIAGNOSIS_CHOICES,max_choices=3,max_length=100,blank =True,null=True)
+    Diagnosis = MultiSelectField("Diagnosis", choices = DIAGNOSIS_CHOICES,max_choices=3,max_length=20,blank =True,null=True)
     PumpFillage = models.FloatField('Pump Fillage', null=True, blank =True)
 
     STATUS_CHOICES = (
         ('Normal running', 'Normal running'),
         ('Stopped unit', 'Stopped unit'),
     )
-    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=100,blank =True,null=True)
+    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=20,blank =True,null=True)
     
-    Diagnosis = MultiSelectField("Diagnosis", choices = DIAGNOSIS_CHOICES,max_choices=3,max_length=100,blank =True,null=True)
-
     RECOMENDATION_CHOICES = (
         ('Good work area', 'Good work area'),
         ('Schedule to workover', 'Schedule to workover'),
@@ -73,7 +86,7 @@ class RodPumpData(models.Model):
         ('Stop pump unit', 'Stop pump unit'),
     )
     
-    Recomendation = MultiSelectField("Recomendation", choices = RECOMENDATION_CHOICES,max_choices=3,max_length=100,blank =True,null=True)
+    Recomendation = MultiSelectField("Recomendation", choices = RECOMENDATION_CHOICES,max_choices=3,max_length=25,blank =True,null=True)
     
     objects = RPDataManager()
     class Meta:

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from rest_framework import serializers
-from .models import TrapView, WeatherStation
+from .models import TrapView, WeatherStation, WellAnalyzerDevice
 
 class TrapViewSerializer(serializers.ModelSerializer):
     class Meta:
@@ -49,4 +49,13 @@ class WeatherStationSerializer(serializers.ModelSerializer):
             'A_RS',
             'SleepTime',
         ]
-    
+
+class WellAnalyzerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WellAnalyzerDevice
+        fields = [
+            'id',
+            'DeviceName',
+            'DeviceMacAddress',
+            'SamplingRate'
+        ]

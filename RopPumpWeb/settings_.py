@@ -52,7 +52,6 @@ INSTALLED_APPS = [
     
     # third apps
     'multiselectfield'
-
 ]
 
 MIDDLEWARE = [

@@ -74,8 +74,6 @@ class ApiPost(APIView):
         def post(self, request, *args, **kwargs):
             data = json.loads(request.body)
 
-            print("==========================")
-
             ID, OBJETIVE = self.IdDeviceMac(data['DeviceMacAddress'])
             ND, IMGBOOL = self.nnProcess(data['img64'])
 
@@ -130,8 +128,6 @@ class WeatherStationApiPost(APIView):
         def post(self, request, *args, **kwargs):
             data = json.loads(request.body)
 
-            print("==========================")
-
             ID = self.IdDeviceMac(data['DeviceMacAddress'])
 
             data['IdDevice'] = ID
@@ -151,8 +147,6 @@ class WeatherStationApiPost(APIView):
 
             data['VoltageBattery'] = float(data['VoltageBattery'])
             data['Status'] = self.batStatus(data['VoltageBattery'])
-
-            #print(data)
 
             del(data["DeviceMacAddress"])
 
@@ -175,7 +169,6 @@ class WeatherStationApiPost(APIView):
     
     except UnreadablePostError:
         print("error en post")
-
 
 # OVERVIEW by LOCATION (MAIN SCREEN)
 class OverviewAllLocation(LoginRequiredMixin, CompanyMixin, ListView):
@@ -267,7 +260,6 @@ class ListOverview(LoginRequiredMixin, CompanyMixin, ListView):
 
         # ================= get tank data by company =================
         list_tanks = Tank.objects.search_tank_by_company(CompanyName)
-        #print(list_tanks)
         tanks_data = []
         for tank_i in list_tanks:
             tempPayloadTank = {
@@ -409,7 +401,7 @@ class ListTank(LoginRequiredMixin, CompanyMixin, ListView):
 
         return payload
 
-# SENSOR HISTORICAL VIEW (SECONDARY SCREEN FOR ENVIRONMENSTAL)
+# SENSOR HISTORICAL VIEW (SECONDARY SCREEN FOR ENVIRONMENTAL)
 class ListSensor(LoginRequiredMixin, CompanyMixin, ListView):
     login_url = reverse_lazy('user_app:user-login')
     template_name = "data/data_sensor.html"
@@ -529,8 +521,115 @@ class DetailTrapView(LoginRequiredMixin, CompanyMixin, DetailView):
             # Add more annotations as needed
         )
 
+# ================== VIEW FOR OVERVIEW OIL AND GAS ==================
+class ListOilOverview(LoginRequiredMixin, CompanyMixin, ListView):
+    # LIST EQUIPMENT
+    login_url = reverse_lazy('user_app:user-login')
+    template_name = "data/list-oil-overview.html"
+    context_object_name = 'devices'
 
+    def get_queryset(self):
+        idCompany = self.request.user.CompanyId.id
+        # --  get wells by company ---
+        list_wells = RodPumpWell.objects.search_rodpump_by_id_company(idCompany)
+        wells_data = []
+        for well_i in list_wells:
+            # DATA FROM EQUIPMENT
+            tempPayload = {
+                'WellName': well_i["WellName"],
+                'Field': well_i["FieldName__FieldName"],
+                'Battery': well_i["BatteryName__BatteryName"],
+                'Lat': well_i["LatLocation"],
+                'Long': well_i["LonLocation"]
+            }
 
+            # DATA FROM DATA APP
+
+            dataWell = RodPumpData.objects.search_last_RPdata(well_i["WellName"])
+
+            if dataWell != None:
+                wells_data.append(dataWell)
+
+            #dataWell = RodPumpData.objects.filter(IdDevice__IdRodPumpWell__WellName = well_i["WellName"]).last()
+            #if dataWell != None:
+            #    tempPayload['LastUpdate'] = dataWell.DateCreate
+            #    tempPayload['SPM'] = dataWell.SPM
+            #    tempPayload['PumpFillage'] = dataWell.PumpFillage
+            #    tempPayload['Diagnosis'] = dataWell.Diagnosis
+            #    tempPayload['RunTime'] = dataWell.RunTime
+
+            #    if datetime.now().date() == dataWell.DateCreate.date():
+            #        tempPayload['CurrentAnalizerContidition'] = dataWell.Status
+            #    else:
+            #        tempPayload['CurrentAnalizerContidition'] = "No data today"
+
+            #wells_data.append(dataWell)
+
+        # ================= get tank data by company =================
+        list_tanks = Tank.objects.search_tank_by_id_company(idCompany)
+        #print(list_tanks)
+        tanks_data = []
+        for tank_i in list_tanks:
+            tempPayloadTank = {
+                'TankName': tank_i["TankName"],
+                'Field': well_i["FieldName__FieldName"],
+                'Battery': well_i["BatteryName__BatteryName"],
+                'Lat': well_i["LatLocation"],
+                'Long': well_i["LonLocation"]
+            }
+
+            TankFactor = tank_i["TankFactor"]
+            TankHeight = tank_i["TankHeight"]
+            #dataTank = TankData.objects.search_last_day_Tankdata(tank_i["TankName"],TankFactor,TankHeight)
+            dataTank = TankData.objects.search_last_TankData(tank_i["TankName"],TankFactor,TankHeight)
+
+            if dataTank != None:
+                tanks_data.append(dataTank)
+            
+            #if dataTank != None:
+            #    tempPayloadTank['LastUpdate'] = dataTank["DateCreate"]
+            #    tempPayloadTank['Level'] = dataTank["Level"]
+            #    tempPayloadTank['fluidHeigth'] = dataTank["fluidHeigth"]
+            #    tempPayloadTank['bblOil'] = dataTank["bblOil"]
+            #    tempPayloadTank['TankLevelPer'] = dataTank["TankLevelPer"]
+            #    tempPayloadTank['Temperature'] = dataTank["Temperature"]
+
+            #    if datetime.now().date() == dataTank["DateCreate"].date():
+            #        tempPayloadTank['CurrentTankContidition'] = dataTank["Status"]
+            #    else:
+            #        tempPayloadTank['CurrentTankContidition'] = "No data today"
+
+            
+
+        allData = {
+            "rodpumpData": wells_data,
+            "tankData":tanks_data,
+        }
+
+        return allData
+
+class ListDataRodPump(LoginRequiredMixin, CompanyMixin, ListView):
+    template_name = "data/socked-rod-pump.html"
+    login_url = reverse_lazy('user_app:user-login')
+    context_object_name = 'data'
+
+    def get_queryset(self):
+        wellName = self.kwargs['WellName']
+        intervalDate = self.request.GET.get("dateKword", '')
+
+        if intervalDate == "today" or intervalDate == "Today" or intervalDate == "":
+            list_data = RodPumpData.objects.search_today_RPdata(wellName)
+        else:
+            list_data = RodPumpData.objects.search_by_interval_RPdata(intervalDate,wellName) #.order_by('-DateCreate')
+        
+        payload = {
+            "name":wellName,
+            "date":intervalDate,
+            #"type":pump["PumpType"],
+            "data":list_data
+            }
+                
+        return payload
 
 class SuccessView(TemplateView):
     template_name = "home/home.html"

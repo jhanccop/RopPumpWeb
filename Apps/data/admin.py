@@ -12,14 +12,42 @@ from .models import(
 	GatewayData,
 	WeatherStationData
 )
-class confRPData(admin.ModelAdmin):
+
+## ==================== RodPumpData =====================
+class RodPumpDataResource(resources.ModelResource):
+    class Meta:
+        model = RodPumpData
+
+@admin.register(RodPumpData)
+class RodPumpDataDataAdmin(ImportExportModelAdmin):
+	resource_class = RodPumpDataResource
+
+	def DateCreatedFormat(self, obj):
+		return obj.DateCreate.strftime("%Y-%m-%d %H:%M:%S")
+	DateCreatedFormat.admin_order_field = 'DateCreate'
+	DateCreatedFormat.short_description = 'Date Create'
+
+	list_display = (
+		'id',
+        'IdDevice',
+		'DateCreatedFormat',
+		'PumpFillage',
+		'Diagnosis',
+		'Recomendation',
+		'SPM',
+		'Status',
+    )
+	search_fields = ('IdDevice',)
+	list_filter = ('IdDevice',)
+
+"""class confRPData(admin.ModelAdmin):
 	def DateCreatedFormat(self, obj):
 		return obj.DateCreate.strftime("%Y-%m-%d %H:%M:%S")
 	DateCreatedFormat.admin_order_field = 'DateCreated'
 	DateCreatedFormat.short_description = 'Date Created' 
 	list_display = ('IdDevice','DateCreatedFormat','PumpFillage', 'Diagnosis','Recomendation')
-	list_filter = ('Diagnosis','IdDevice')
-admin.site.register(RodPumpData, confRPData)
+	#list_filter = ('Diagnosis','IdDevice')
+admin.site.register(RodPumpData, confRPData)"""
 
 class confTankData(admin.ModelAdmin):
 	def DateCreatedFormat(self, obj):
@@ -123,6 +151,7 @@ class WeatherStationDataAdmin(ImportExportModelAdmin):
 	search_fields = ('IdDevice',)
 	list_filter = ('IdDevice',)
 
+## ==================== Gateway Data =====================
 class confGatewayData(admin.ModelAdmin):
 	def DateCreatedFormat(self, obj):
 		return obj.DateCreate.strftime("%Y-%m-%d %H:%M:%S")

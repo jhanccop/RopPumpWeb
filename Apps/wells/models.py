@@ -85,11 +85,11 @@ class well(models.Model):
 
 class tank(models.Model):
     id = models.BigAutoField(primary_key=True)
-    UserAuthor = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL)
+    UserAuthor = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL,related_name="well_user")
     # General information
     DateCreate = models.DateTimeField(auto_now_add= True )
     TankName = models.CharField('Tank Name', max_length=100, unique=True)
-    GroupName = models.ForeignKey(Group, on_delete=models.CASCADE, unique=False,blank=True,null=True)
+    GroupName = models.ForeignKey(Group, on_delete=models.CASCADE, unique=False,blank=True,null=True, related_name="well_tank")
 
     # tank dimensions
     TankHeight = models.FloatField('Tank Height',null=True, blank =True)

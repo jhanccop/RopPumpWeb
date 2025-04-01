@@ -26,14 +26,6 @@ class LoRaPacketDecoder:
         temp = self.bytes_to_int(bytes_data)
         return temp
     
-    def decode_humidity(self, bytes_data):
-        """Decodifica humedad (asume 1 byte, valor entero)."""
-        return self.bytes_to_int(bytes_data)
-    
-    def decode_pressure(self, bytes_data):
-        """Decodifica presión (asume 2 bytes, en hPa)."""
-        return self.bytes_to_int(bytes_data)
-    
     def decode_packet(self, payload):
         """Decodifica un paquete LoRa completo."""
         # Decodificar base64 si es necesario
@@ -55,7 +47,7 @@ class LoRaPacketDecoder:
             'fillPump': self.decode_int(raw_bytes[2:4]),
             'sLength': self.decode_float(raw_bytes[4:6]),
             'vBat': self.decode_float(raw_bytes[6:8]),
-            'status': self.decode_humidity(raw_bytes[8:9]),
+            'status': self.decode_int(raw_bytes[8:9]),
         }
         
         return self.decoded_data
@@ -67,11 +59,7 @@ class LoRaPacketDecoder:
 # Ejemplo de uso
 def main():
     # Ejemplo de payload en base64 (temperatura=25.5, humedad=60%, presión=1013)
-    # Los valores están codificados como:
-    # Temp: 255 (25.5°C) -> 0x00FF
-    # Hum: 60 (60%) -> 0x3C
-    # Presión: 1013 (hPa) -> 0x03F5
-    #example_payload = "AP88D/U="
+
     example_payload = "AGwAAAAEAC0B"
     decoder = LoRaPacketDecoder()
     

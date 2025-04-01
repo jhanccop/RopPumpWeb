@@ -1,0 +1,511 @@
+{% extends 'data/base-overview.html' %}
+
+{% load static %}
+
+{% block title %} SRP {% endblock title %}
+
+{% block company %} {{ CompanyName }} {% endblock company %}
+{% block companyMenu %} {{ CompanyName }} {% endblock companyMenu %}
+{% block appName %} Rod Pump Data {% endblock appName %}
+{% block Type %} Well Analyzer {% endblock Type %}
+
+{% block content %}
+
+<!-- Body -->
+<!-- Consult form -->
+<div class="row mt-2">
+    
+    <div class="col-xl-4 col-sm-2 mb-xl-0 mb-4">
+        <button class="btn bg-gradient-dark dropdown-toggle" type="button" id="dropdownImport"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            Today
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="dropdownImport">
+            <li><a class="dropdown-item" href="javascript:;">Yesterday</a></li>
+            <li><a class="dropdown-item" href="javascript:;">Last 7 days</a></li>
+            <li><a class="dropdown-item" href="javascript:;">Last 30 days</a></li>
+        </ul>
+    </div>
+
+    <div class="col-xl-4 col-sm-4 mb-xl-0 mb-4">
+        <div class="dropleft">
+            <form method="GET">{% csrf_token %}
+                <div class="row">
+                    <div class="col-xl-8 col-sm-8">
+                        <input class="form-control datetimepicker text-center bg-white" value="{{object_list.date}}" type="text" placeholder="today" id="dateKword" name="dateKword" />
+                    </div>
+                    <div class="col-xl-4 col-sm-4">
+                        <button class="btn bg-gradient-primary" type="submit"> Search </button>
+                    </div>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-sm-4 mb-xl-0 ">
+        <div class="numbers ">
+            <p class="font-weight-bolder float-end text-sx px-2">Last Update:&nbsp;&nbsp;<span class="text-lg"  id = "LastUpdate"> {{data.data.0.DateCreate|date:'Y-m-d H:i'}}</span> </p>
+        </div>
+        
+    </div>
+
+</div>
+
+<hr class="horizontal dark my-0">
+
+<!-- datos en cuadros -->
+<div class="row mt-4">   
+    <!-- Diagnosis -->
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card h-100 bg-gradient-light" id="card-diagnosis">
+            <div class="card-body px-3 align-items-center">
+                <div class="d-flex py-1 align-items-center">
+                    <div>
+                        <img src="{% static 'assets/img/oil-refinery.png'%}" class="avatar avatar-sm me-3 border-radius-xs" alt="user1">
+                    </div>
+                    <div class="d-flex flex-column text-start">
+                        <h6 class="text-primary font-weight-bolder mb-0" id="Diagnosis">{{data.data.0.get_Diagnosis_display}}</h6>
+                        <p class="text-dark text-sm mb-0 font-weight-bolder">Running Condition</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PumpFill -->
+    <div class="col-xl-2 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="text-gradient text-primary font-weight-bolder mb-0">
+                    <span id="PumpFill">{{data.data.0.PumpFillage}}</span>&nbsp;&nbsp;
+                    <span class="text-lg ms-n2">%</span>
+                </h5>
+                <p class="mb-0 font-weight-bolder">Pump Fill</p>            
+            </div>
+        </div>
+    </div>
+
+    <!-- SPM -->
+    <div class="col-xl-2 col-sm-4 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="text-gradient text-primary font-weight-bolder mb-0">
+                    <span id="SMP">{{data.data.0.SPM}}</span>
+                </h5>
+                <p class="mb-0 font-weight-bolder">SPM</p> 
+            </div>
+        </div>
+    </div>
+
+    <!-- HeadPressure -->
+    <div class="col-xl-2 col-sm-4 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="text-gradient text-primary font-weight-bolder mb-0">
+                    <span id="HeadPressure">--</span>&nbsp;&nbsp;
+                    <span class="text-lg ms-n2">h</span>
+                </h5>
+                <p class="mb-0 font-weight-bolder">Run Time</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- HeadTemperature -->
+    <div class="col-xl-2 col-sm-4 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="text-gradient text-primary font-weight-bolder mb-0">
+                    <span id="HeadTemperature">--</span>&nbsp;&nbsp;
+                    <span class="text-lg ms-n2">°F</span>
+                </h5>
+                <p class="mb-0 font-weight-bolder">Head</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Graficos principales -->
+<div class="row mt-4">
+
+    <!-- PLOTS-->
+    <div class="col-lg-7 col-md-12">
+        <div class="card h-100">
+            <div class="card-header pb-0 p-3">
+                <h6 class="mb-0">Historical plots</h6>
+            </div>
+            <div class="card-body pt-0">
+                <div class="chart">
+                    <div ui-jp="plot"  id = "AllPlots" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DYNACHART-->
+    <div class="col-lg-5 col-md-12 mt-4 mt-lg-0">
+        <div class="card h-100">
+            <div class="card-header pb-0 p-3">
+                <h6 class="mb-0">Dynachart  </h6>
+
+            </div>
+            <div class="card-body pt-0">
+                <div class="chart">
+                    
+                    <div ui-jp="plot"  id = "dynachart" style="height: 300px;"></div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Tablas historicos -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            
+            <div class="table-responsive">
+                <table class="table table-flush" id="datatable-basic2">
+                    <thead class="thead-light">
+                        <tr>
+                            <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Diagnosis</th>
+                            <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Pump Fill (%)</th>
+                            <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">SPM</th>
+                            <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Run time (h)</th>
+                            <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Recomendation</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for well in data.data %}
+                        <tr>
+                            <td class="text-sm font-weight-normal text-left">
+                                <div class="d-flex px-3 py-1">
+                                    
+                                    {% if "11" in well.Diagnosis %}
+                                    <div class="avatar me-3" style="display: inline-block; width: 40px; height: 40px; vertical-align: center;">--</div>
+                                    
+                                    {% else %}
+                                    <a data-bs-toggle="modal" data-bs-target="#exampleModal{{well.id}}">
+                                        <div class="avatar me-3" id = "dynachart_{{well.id}}" style="display: inline-block; width: 40px; height: 40px; vertical-align: center;"></div>
+                                    </a>
+
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="exampleModal{{well.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                            <h5 class="modal-title font-weight-normal" id="exampleModalLabel">{{well.DateCreate|date:'Y-m-d H:i'}} {{well.id}}</h5>
+                                            <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="avatar me-3" id = "dynachart_view_{{well.id}}" style="display: inline-block; width: 480px;height: 300px;vertical-align: center;"></div>
+                                            </div>
+                                            <div class="modal-footer">
+                                            <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                      
+                                    
+
+                                    <div class="d-flex flex-column text-left">
+                                        <h5 class="mb-0 text-sm">{{well.get_Diagnosis_display}}</h5>
+                                        <p class="text-sm font-weight-bold text-secondary mb-0"><span class="text-secondary">{{well.DateCreate|date:'Y-m-d H:i'}}</span></p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-sm font-weight-normal text-center">{{well.PumpFillage}}</td>
+                            <td class="text-sm font-weight-normal text-center">{{well.SPM}}</td>
+                            <td class="text-sm font-weight-normal text-center">{{well.HeadPressure}}</td>                            
+                            <td class="text-sm font-weight-normal text-left">{{well.Recomendation}}</td>
+                        </tr>
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- end Body -->
+{% block JSscripts %}
+<script src="{% static 'assets/js/plugins/chartjs.min.js'%}"></script>
+<script src="{% static 'assets/js/plugins/plotly-2.12.1.min.js' %}"></script>
+<script>
+    function dtFormat(dateTime) {
+        var dd = dateTime.getDate();
+        var yyyy = dateTime.getFullYear();
+        var mm = dateTime.getMonth() + 1;
+
+        mm = (mm < 10 ? '0' : '') + mm;
+        dd = (dd < 10 ? '0' : '') + dd;
+
+        // Now setting up Time Format (hh:mm:ss)
+        var hr = dateTime.getHours();
+        var min = dateTime.getMinutes();
+        var sec = dateTime.getSeconds();
+
+        hr = (hr < 10 ? '0' : '') + hr;
+        min = (min < 10 ? '0' : '') + min;
+        sec = (sec < 10 ? '0' : '') + sec;
+        var dt = yyyy + "-" + mm + "-" + dd + " " + hr + ":" + min + ":" + sec;
+        return dt;
+    }
+
+    var layout = {
+		margin: {l:45,t:10,b:20,r:30},
+		autosize: true,
+
+		xaxis: {
+	  		autorange: true,
+            showgrid: false,
+            zeroline: false
+	    },
+	    yaxis: {
+	    	autorange: true,
+            showgrid: false,
+            zeroline: false,
+	    	//range: [0, 30],
+	    type: 'linear'
+		},
+		legend: {
+		    x: 0,
+		    y: 1,
+		    traceorder: 'normal',
+		    font: {
+		      family: 'sans-serif',
+		      size: 2,
+		      color: '#000'
+		    },
+		    //bgcolor: '#E2E2E2',
+		    //bordercolor: '#FFFFFF',
+		    //borderwidth: 2
+		  }
+	}
+
+    var layout_small = {
+		margin: {l:0,t:0,b:0,r:0},
+		autosize: true,
+
+		xaxis: {
+	  		autorange: true,
+            showgrid: false,
+            zeroline: false
+	    //range: ['2020-01-01', '2020-01-31'],
+	    	
+	    	//type: 'date'
+	    },
+	    yaxis: {
+	    	autorange: true,
+            showgrid: false,
+            zeroline: false,
+	    	//range: [0, 30],
+	    type: 'linear'
+		},
+		
+	}
+
+    var config = {
+        modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d', 'zoomOut2d'],
+        responsive: true,
+        displaylogo: false
+    }
+
+    var data_PumpFill = [];
+    var data_SPM = [];
+    var dateTime = [];
+
+    var counter = 0;
+
+    '{% for well in data.data %}'
+
+    '{% if "11" in well.Diagnosis %}'
+    
+
+    '{% else %}'
+
+    var chart_id = "dynachart_" + '{{well.id}}';
+    var chartView_id = "dynachart_view_" + '{{well.id}}';
+
+    if(counter == 0){
+        //$("#PumpFill").html("{{well.PumpFillage}}");
+
+        var tempL = "{{well.RawSurfaceLoad}}";
+        var tempP = "{{well.RawSurfacePosition}}";
+
+        //============= main dynachars =============
+        var trace1 = {
+            type: 'scatter',
+            x: tempP.split(',').map(Number),
+            y: tempL.split(',').map(Number),
+            line: {
+                color: '#465EAB',
+                width: 4,
+                shape: 'spline'
+            }
+        };
+        var data = [trace1];
+        Plotly.newPlot('dynachart', data, layout, { responsive: true, staticPlot: true});
+
+        //============= main dynachars small =============
+        var trace2 = {
+            type: 'scatter',
+            x: tempP.split(',').map(Number),
+            y: tempL.split(',').map(Number),
+            line: {
+                color: '#465EAB',
+                width: 2
+            }
+        };
+        var data = [trace2];
+        Plotly.newPlot(chart_id, data, layout_small, { responsive: true,  staticPlot: true});
+        Plotly.newPlot(chartView_id, data, layout, { responsive: true,  staticPlot: true});
+    }else{
+        //============= dynachars small =============
+
+        var tempL = "{{well.RawSurfaceLoad}}";
+        var tempP = "{{well.RawSurfacePosition}}";
+
+        console.log("{{well.id}}",tempL.split(',').map(Number),tempP.split(',').map(Number));
+
+        var trace1 = {
+            type: 'scatter',
+            x: tempP.split(',').map(Number),
+            y: tempL.split(',').map(Number),
+            line: {
+                color: '#465EAB',
+                width: 2,
+                shape: 'spline'
+            }
+
+        };
+        var data = [trace1];
+        Plotly.newPlot(chart_id, data, layout_small, { responsive: true,  staticPlot: true});
+        Plotly.newPlot(chartView_id, data, layout, { responsive: true,  staticPlot: true});
+    }
+
+    '{% endif %}'
+    counter += 1;
+    
+    data_PumpFill.push('{{well.PumpFillage}}');
+    data_SPM.push('{{well.SPM}}');
+    var ddt = new Date("{{well.DateCreate|date:'Y-m-d H:i'}}");
+    dateTime.push(ddt);
+
+    '{% endfor %}'
+
+    var trace0 = {
+        type: "scatter",
+        mode: "'lines+markers'",
+        name: 'Pump Fill',
+        x: dateTime,
+        y: data_PumpFill,
+        line: {color: '#7F7F7F'},
+        line: {shape: 'spline'},
+    }
+
+    var trace1 = {
+        type: "scatter",
+        mode: "'lines+markers'",
+        name: 'SPM',
+        x: dateTime,
+        y: data_SPM,
+        line: {shape: 'spline'},
+    };
+
+    var data = [trace0, trace1];
+    
+    var layout = {
+        //background : gradientStroke1,
+        showlegend: true,
+        legend: {
+            "orientation": "h",
+            x: 0.2,
+            xanchor: 'left',
+            y: 1
+        },
+
+        margin: {l:40,t:10,b:10,r:30},
+		autosize: true,
+
+        yaxis2: {
+            domain: [0.6, 0.95],
+            anchor: 'x2'
+        },
+        xaxis2: {
+            domain: [0.6, 0.95],
+            anchor: 'y2'
+        },
+        xaxis: {
+            autorange: true,
+            range: ['2015-02-17', '2017-02-16'],
+            rangeselector: {buttons: [
+                {
+                count: 1,
+                label: '1h',
+                step: 'hour',
+                stepmode: 'backward'
+                },
+                {
+                count: 12,
+                label: '12h',
+                step: 'hour',
+                stepmode: 'backward'
+                },
+                {step: 'all'}
+            ]},
+            rangeslider: {range: ['2022-08-13', '2022-08-13']},
+            //rangeslider: {range: autorange},
+            type: 'date'
+        },
+        yaxis: {
+            autorange: true,
+            //range: [0, 200],
+            type: 'linear'
+        }
+    };
+
+    Plotly.newPlot('AllPlots', data, layout, config);
+    
+</script>
+
+
+<!--Table-->
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+<script>
+    const dataTableBasic2 = new simpleDatatables.DataTable("#datatable-basic2", {
+        searchable: true,
+        fixedHeight: true
+    });
+/*
+    const dataTableSearch2 = new simpleDatatables.DataTable("#datatable-search2", {
+        searchable: true,
+        fixedHeight: true
+    });*/
+</script>
+
+<!--Calendar-->
+<script src="{% static 'assets/js/plugins/flatpickr.min.js' %}"></script>
+<script>
+    if (document.querySelector('.datetimepicker')) {
+        flatpickr('.datetimepicker', {
+            allowInput: true,
+            mode: "range"
+        }); // flatpickr
+    }
+</script>
+{% endblock JSscripts %}
+
+
+

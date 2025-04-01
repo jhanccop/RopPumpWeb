@@ -150,12 +150,16 @@ class WellAnalyzerDevice(models.Model):
     )
     DeviceStatus = models.CharField('Status', max_length=50, choices=Status_CHOICES, default="normal running")
     Refresh_CHOICES = (
+        (120,"2m"),
+        (300,"5m"),
+        (600,"10m"),
+        (900,"15m"),
         (1800,"0.5h"),
         (3600,"1h"),
         (7200,"2h"),
     )
     SamplingRate = models.IntegerField('Sampling Rate', choices=Refresh_CHOICES,null=True, blank =True,default=120)
-    IdRodPumpWell = models.ForeignKey(RodPumpWell, on_delete=models.CASCADE, unique=False,blank=True,null=True)
+    IdRodPumpWell = models.ForeignKey(RodPumpWell, on_delete=models.CASCADE,blank=True,null=True)
     
     objects = AnalyzerDeviceManager()
     class Meta:

@@ -15,12 +15,14 @@ urlpatterns = [
     
     #path('overview/socker-rod-pump/<PumpName>', views.ListDataRodPump.as_view()),
     #path('data/socker-rod-pump/<PumpName>', views.ListDataRodPump.as_view()),
-    path('success/', views.SuccessView.as_view(), name='success'),
     path('data-tank/<TankName>', views.ListTank.as_view(), name='data-tank'),
     path('data-sensor/<EnvironmentalName>', views.ListSensor.as_view(), name='data-sensor'),
     path('data-camera/detail/<pk>', views.DetailCamera.as_view(), name='data-camera-detail'),
     path('data-camera/<VisualSamplingPointName>', views.ListCamera.as_view(), name='data-camera'),
     path('data-trapView/detail/<pk>', views.DetailTrapView.as_view(), name='data-trapView-detail'),
     path('data-trapView/<name>', views.ListTrapView.as_view(), name='data-trapView'),
-    path('data-rod-pump/<WellName>', views.ListTank.as_view(), name='data-rod-pump'),
+    path('success/', views.SuccessView.as_view(), name='success'),
+
+    path('data/oil-overview', views.ListOilOverview.as_view(), name='oil-overview'),
+    path('data/oil-overview/<WellName>', views.ListDataRodPump.as_view(), name='data-rod-pump'),
 ]
