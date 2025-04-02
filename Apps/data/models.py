@@ -71,6 +71,8 @@ class RodPumpData(models.Model):
     
     Diagnosis = MultiSelectField("Diagnosis", choices = DIAGNOSIS_CHOICES,max_choices=3,max_length=20,blank =True,null=True)
     PumpFillage = models.FloatField('Pump Fillage', null=True, blank =True)
+    StrokeLengh = models.FloatField('Stroke Length', null=True, blank =True)
+    VoltageBattery = models.FloatField('Voltage Battery', null=True, blank =True)
 
     STATUS_CHOICES = (
         ('Normal running', 'Normal running'),

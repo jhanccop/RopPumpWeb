@@ -27,6 +27,8 @@ password = 'jhanccop1'
 topic_sub = "jhpOandG/data/#"
 topic_pub = "jhpOandG/settings"
 
+threshold = 0.4
+
 payloadImage = json.loads("{}")
 
 with open("../secret.json") as f:
@@ -114,21 +116,36 @@ class LoRaPacketDecoder:
       raw_bytes = payload
     
     # Verificar longitud mínima
-    if len(raw_bytes) < 8:
-      raise ValueError("Paquete demasiado corto")
-    
-    # Decodificar los campos
-    # Asumimos un formato: 2 bytes temp, 1 byte hum, 2 bytes pressure
-
-    self.decoded_data = {
-      'spm': self.decode_float10(raw_bytes[0:2]),
-      'fillPump': self.decode_float100(raw_bytes[2:4])*100,
-      'sLength': self.decode_float100(raw_bytes[4:6]),
-      'vBat': self.decode_float100(raw_bytes[6:8]),
-      'status': self.decode_int(raw_bytes[8:9]),
-      'load' : self.decode_array(raw_bytes[9:49]),
-      'pos' : self.decode_array(raw_bytes[49:])
-    }
+    if len(raw_bytes) < 4:
+      # ROD PUMP STTOPED OR DYNACHRT NO COMPLETE
+      #raise ValueError("Paquete demasiado corto")
+      self.decoded_data = {
+        'vBat': self.decode_float100(raw_bytes[0:2]),
+        'status': self.decode_int(raw_bytes[2:3]),
+      }
+    else:
+      # ROD PUMP running
+      self.decoded_data = {
+        'vBat': self.decode_float100(raw_bytes[0:2]),
+        'status': self.decode_int(raw_bytes[2:3]),
+        'spm': self.decode_float10(raw_bytes[3:5]),
+        'sLength': self.decode_float100(raw_bytes[5:7]),
+        'fillPump': self.decode_float100(raw_bytes[7:9])*100,
+        'diagnosis': [
+          self.decode_float100(raw_bytes[9:9])*100,
+          self.decode_float100(raw_bytes[11:13])*100,
+          self.decode_float100(raw_bytes[13:15])*100,
+          self.decode_float100(raw_bytes[15:17])*100,
+          self.decode_float100(raw_bytes[17:19])*100,
+          self.decode_float100(raw_bytes[19:21])*100,
+          self.decode_float100(raw_bytes[21:23])*100,
+          self.decode_float100(raw_bytes[23:25])*100,
+          self.decode_float100(raw_bytes[25:27])*100,
+          self.decode_float100(raw_bytes[27:29])*100,
+          ],
+        'load' : self.decode_array(raw_bytes[29:69]),
+        'pos' : self.decode_array(raw_bytes[69:])
+      }
     
     return self.decoded_data
   
@@ -469,8 +486,10 @@ def on_message(client, userdata, message):
         print(m_mqtt)
 
         dt = datetime.now()
+        
         loraDevEUI = m_mqtt.get("devEUI","0")
-        loraDevEUI = loraDevEUI[4:] + "0000" + loraDevEUI[0:4]
+        loraDevEUI = loraDevEUI[4:] + "0000" + loraDevEUI[0:4] # REEDIT MAC
+
         spm = m_mqtt.get("spm","0")
         fillPump = m_mqtt.get("fillPump","0")
         sLength = m_mqtt.get("sLength","0")
@@ -478,14 +497,21 @@ def on_message(client, userdata, message):
         status = m_mqtt.get("status","-1")
         sLoad = m_mqtt.get("load","")
         sPos = m_mqtt.get("pos","")
+        sDiagnosis = m_mqtt.get("diagnosis","")
 
-        print(vBat,sLength,fillPump,sLoad,sPos)
+        #print(vBat,sLength,fillPump,sLoad,sPos)
 
         Diagnosis = 0
 
         if status == "0" :
-          Diagnosis = 11;
-        
+          Diagnosis = 11
+        else:
+          sDiagnosis = sDiagnosis.split(",")
+          Diagnosis = np.array([ 1 if float(i) > threshold else 0 for i in sDiagnosis])
+          Diagnosis = np.where(Diagnosis == 1)[0]
+          Diagnosis = Diagnosis + 1 # because model start in 1
+          Diagnosis = ",".join([str(i) for i in Diagnosis])
+
         sql_query_id = """SELECT id FROM device_wellanalyzerdevice WHERE "DeviceMacAddress" = '{0}'""".format(loraDevEUI)
 
         raws_id = db_get(sql_query_id)
@@ -493,6 +519,7 @@ def on_message(client, userdata, message):
 
         sql_query = """INSERT INTO data_rodpumpdata("DateCreate","IdDevice_id","RawSurfaceLoad","RawSurfacePosition","SPM","PumpFillage","Diagnosis","Status") VALUES('{0}',{1},'{2}','{3}',{4},{5},'{6}','{7}')""".format(dt,_id,sLoad,sPos,spm,fillPump,Diagnosis,"Normal running")
         db_local(sql_query)
+    
     # ================ LORA DATA ================
     elif topic_in == "jhpOandG/data/lora":
       try:
@@ -504,20 +531,26 @@ def on_message(client, userdata, message):
 
         #client.publish("jhpOandG/setting/lora","77777")
         dt = datetime.now()
-        spm = decoded.get("spm","0")
-        fillPump = decoded.get("fillPump","0")
-        sLength = decoded.get("sLength","0")
         vBat = decoded.get("vBat","0")
         status = decoded.get("status","-1")
+        spm = decoded.get("spm","0")
+        sLength = decoded.get("sLength","0")
+        fillPump = decoded.get("fillPump","0")
+        sDiagnosis = decoded.get("diagnosis","")
         sLoad = decoded.get("load","")
         sPos = decoded.get("pos","")
 
-        print(vBat,sLength,fillPump,sLoad,sPos)
+        #print(vBat,sLength,fillPump,sLoad,sPos)
 
         Diagnosis = 0
 
         if status == 0 :
-          Diagnosis = 11;
+          Diagnosis = 11
+        else:
+          Diagnosis = np.array([ 1 if float(i) > threshold else 0 for i in sDiagnosis])
+          Diagnosis = np.where(Diagnosis == 1)[0]
+          Diagnosis = Diagnosis + 1 # because model start in 1
+          Diagnosis = ",".join([str(i) for i in Diagnosis])
         
         sql_query_id = """SELECT id FROM device_wellanalyzerdevice WHERE "DeviceMacAddress" = '{0}'""".format(loraDevEUI)
 

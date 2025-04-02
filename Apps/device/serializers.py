@@ -57,5 +57,6 @@ class WellAnalyzerSerializer(serializers.ModelSerializer):
             'id',
             'DeviceName',
             'DeviceMacAddress',
-            'SamplingRate'
+            'SamplingRate',
+            'RunNNdevice'
         ]

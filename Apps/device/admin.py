@@ -13,14 +13,27 @@ from .models import (
 	WeatherStation
 )
 
-class confAnalyzerData(admin.ModelAdmin):
-	def DateCreatedFormat(self, obj):
-		return obj.DateCreate.strftime("%Y-%m-%d %H:%M:%S")
-	DateCreatedFormat.admin_order_field = 'DateCreated'
-	DateCreatedFormat.short_description = 'Date Created' 
-	list_display = ('id','DeviceName','DateCreatedFormat','DeviceMacAddress', 'DeviceStatus','SamplingRate','IdRodPumpWell')
-	list_filter = ('DeviceStatus','IdRodPumpWell')
-admin.site.register(WellAnalyzerDevice, confAnalyzerData)
+## ==================== well analyzer =====================
+class WellAnalyzerResource(resources.ModelResource):
+    class Meta:
+        model = WellAnalyzerDevice
+
+@admin.register(WellAnalyzerDevice)
+class WellAnalyzerDeviceAdmin(ImportExportModelAdmin):
+	resource_class = WellAnalyzerResource
+
+	list_display = (
+        'id',
+		'DeviceName',
+		'DeviceMacAddress',
+		'RunNNdevice',
+		'RunNNserver',
+		'IdRodPumpWell',
+		'SamplingRate',
+    )
+	search_fields = ('DeviceName',)
+	list_filter = ('DeviceName',)
+
 
 class confEnvironmentalDevice(admin.ModelAdmin):
 	def DateCreatedFormat(self, obj):

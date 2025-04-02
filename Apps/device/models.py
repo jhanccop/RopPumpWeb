@@ -141,6 +141,8 @@ class WellAnalyzerDevice(models.Model):
     DateCreate = models.DateTimeField(auto_now_add= True )
     DeviceName = models.CharField('Device Name', max_length=50, unique=True)
     DeviceMacAddress = models.CharField('Device Mac Address', max_length=50, unique=True)
+    RunNNdevice = models.BooleanField("NN on devive", default = True)
+    RunNNserver = models.BooleanField("NN on server", default = False)
 
     # Monitoring data
     Status_CHOICES = (
