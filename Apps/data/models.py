@@ -81,7 +81,7 @@ class RodPumpData(models.Model):
         (NORMALRUNNING, 'Normal running'),
         (STOPPED, 'Stopped unit'),
     )
-    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=2,default="1",blank =True,null=True)
+    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=20,default="1",blank =True,null=True)
     
     RECOMENDATION_CHOICES = (
         ('Good work area', 'Good work area'),
