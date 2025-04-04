@@ -35,7 +35,7 @@ class RodPumpData(models.Model):
     DownPosition = models.TextField('Down Position', null=True, blank =True)
     RawAcceleration = models.TextField('RawAcceleration', null=True, blank =True)
 
-    RunTime =  models.FloatField('Run Time', null=True, blank =True)
+    Refresh =  models.FloatField('Refresh Time', null=True, blank =True)
     SPM = models.FloatField('SPM', null=True, blank =True)
     Production = models.FloatField('Production', null=True, blank =True)
 
@@ -74,11 +74,14 @@ class RodPumpData(models.Model):
     StrokeLength = models.FloatField('Stroke Length', null=True, blank =True)
     VoltageBattery = models.FloatField('Voltage Battery', null=True, blank =True)
 
+    STOPPED = "0"
+    NORMALRUNNING = "1"
+    
     STATUS_CHOICES = (
-        ('Normal running', 'Normal running'),
-        ('Stopped unit', 'Stopped unit'),
+        (NORMALRUNNING, 'Normal running'),
+        (STOPPED, 'Stopped unit'),
     )
-    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=25,blank =True,null=True)
+    Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=2,default="1",blank =True,null=True)
     
     RECOMENDATION_CHOICES = (
         ('Good work area', 'Good work area'),

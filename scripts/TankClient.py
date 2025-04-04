@@ -87,68 +87,105 @@ class LoRaPacketDecoder:
     """Convierte bytes a entero."""
     return int.from_bytes(bytes_data, byteorder='big', signed=True)
   
-  def decode_float10(self, bytes_data):
-    """Decodifica float (asume 2 bytes, con un decimal)."""
-    temp = self.bytes_to_int(bytes_data)
-    return temp / 10.0
-  def decode_float100(self, bytes_data):
-    """Decodifica float (asume 3 bytes, con 2 decimal)."""
-    temp = self.bytes_to_int(bytes_data)
-    return temp / 100.0
+  def decode_float(self, bytes_data, divisor=1.0):
+    """Decodifica float con divisor personalizable."""
+    if not bytes_data:
+        return 0.0
+    return self.bytes_to_int(bytes_data) / divisor
+
   def decode_int(self, bytes_data):
     """Decodifica int (asume 2 bytes, con un decimal)."""
     temp = self.bytes_to_int(bytes_data)
     return temp
 
-  def decode_array(self, bytes_data):
+  def decode_array(self, bytes_data, chunk_size=2, divisor=1.0):
+    """Decodifica array genérico."""
+    if not bytes_data or len(bytes_data) % chunk_size != 0:
+      return []
+    return [
+      self.bytes_to_int(bytes_data[i:i+chunk_size]) / divisor
+      for i in range(0, len(bytes_data), chunk_size)
+    ]
+
+  def decode_array100(self, bytes_data):
     n = len(bytes_data)
     arrayT = []
     for i in range(0,int(n/2)):
       arrayT.append(self.bytes_to_int(bytes_data[2*i:2*i+2])/100)
     return arrayT
 
+  def decode_array1000(self, bytes_data):
+    n = len(bytes_data)
+    arrayT = []
+    for i in range(0,int(n/2)):
+      arrayT.append(self.bytes_to_int(bytes_data[2*i:2*i+2])/1000)
+    return arrayT
+
   def decode_packet(self, payload):
     """Decodifica un paquete LoRa completo."""
-    # Decodificar base64 si es necesario
-    if isinstance(payload, str):
-      raw_bytes = self.decode_base64(payload)
-    else:
-      raw_bytes = payload
-    
-    # Verificar longitud mínima
-    if len(raw_bytes) < 4:
-      # ROD PUMP STTOPED OR DYNACHRT NO COMPLETE
-      #raise ValueError("Paquete demasiado corto")
+    try:
+      # Decodificar base64 si es necesario
+      if isinstance(payload, str):
+        raw_bytes = self.decode_base64(payload)
+      else:
+        raw_bytes = payload
+      
+      # Resetear datos
       self.decoded_data = {
-        'vBat': self.decode_float100(raw_bytes[0:2]),
-        'status': self.decode_int(raw_bytes[2:3]),
+          'vBat': 0.0,
+          'status': 0,
+          #'spm': 0.0,
+          #'sLength': 0.0,
+          #'fillPump': 0.0,
+          #'diagnosis': [],
+          #'load': [],
+          #'pos': []
       }
-    else:
-      # ROD PUMP running
-      self.decoded_data = {
-        'vBat': self.decode_float100(raw_bytes[0:2]),
-        'status': self.decode_int(raw_bytes[2:3]),
-        'spm': self.decode_float10(raw_bytes[3:5]),
-        'sLength': self.decode_float100(raw_bytes[5:7]),
-        'fillPump': self.decode_float100(raw_bytes[7:9])*100,
-        'diagnosis': [
-          self.decode_float100(raw_bytes[9:9])*100,
-          self.decode_float100(raw_bytes[11:13])*100,
-          self.decode_float100(raw_bytes[13:15])*100,
-          self.decode_float100(raw_bytes[15:17])*100,
-          self.decode_float100(raw_bytes[17:19])*100,
-          self.decode_float100(raw_bytes[19:21])*100,
-          self.decode_float100(raw_bytes[21:23])*100,
-          self.decode_float100(raw_bytes[23:25])*100,
-          self.decode_float100(raw_bytes[25:27])*100,
-          self.decode_float100(raw_bytes[27:29])*100,
+
+      # Validación mínima de longitud
+      if len(raw_bytes) < 3:  # Mínimo para vBat (2) + status (1)
+        raise ValueError("Paquete demasiado corto (mínimo 3 bytes requeridos)")
+
+      # Decodificar campos comunes
+      self.decoded_data['vBat'] = self.decode_float(raw_bytes[0:2], 100.0)
+      self.decoded_data['status'] = self.bytes_to_int(raw_bytes[2:3])
+
+      # Modo running (requiere más campos)
+      if len(raw_bytes) > 4:
+        if len(raw_bytes) < 69:  # Mínimo para todos los campos running
+          raise ValueError("Paquete running incompleto (mínimo 69 bytes requeridos)")
+
+        self.decoded_data.update({
+          'spm': self.decode_float(raw_bytes[3:5], 10.0),
+          'sLength': self.decode_float(raw_bytes[5:7], 100.0),
+          'fillPump': self.decode_float(raw_bytes[7:9], 100.0) * 100,
+          'diagnosis': [
+              self.decode_float(raw_bytes[9:11], 100.0) * 100,  # Corregido el índice
+              self.decode_float(raw_bytes[11:13], 100.0) * 100,
+              self.decode_float(raw_bytes[13:15], 100.0) * 100,
+              self.decode_float(raw_bytes[15:17], 100.0) * 100,
+              self.decode_float(raw_bytes[17:19], 100.0) * 100,
+              self.decode_float(raw_bytes[19:21], 100.0) * 100,
+              self.decode_float(raw_bytes[21:23], 100.0) * 100,
+              self.decode_float(raw_bytes[23:25], 100.0) * 100,
+              self.decode_float(raw_bytes[25:27], 100.0) * 100,
+              self.decode_float(raw_bytes[27:29], 100.0) * 100,
           ],
-        'load' : self.decode_array(raw_bytes[29:69]),
-        'pos' : self.decode_array(raw_bytes[69:])
+          'load': self.decode_array(raw_bytes[29:69], 2, 1000.0),
+          'pos': self.decode_array(raw_bytes[69:], 2, 100.0)
+        })
+      return self.decoded_data
+    except Exception as e:
+      # Registrar el error y el payload problemático
+      error_info = {
+          'error': str(e),
+          'payload': payload,
+          'raw_bytes': raw_bytes.hex() if 'raw_bytes' in locals() else None,
+          'timestamp': datetime.now().isoformat()
       }
-    
-    return self.decoded_data
-  
+      print(f"Error decodificando paquete: {error_info}")
+      raise  # Re-lanzar la excepc
+
   def to_json(self):
     """Convierte los datos decodificados a JSON."""
     return json.dumps(self.decoded_data, indent=2)
@@ -483,82 +520,135 @@ def on_message(client, userdata, message):
         db_local(sql_query)
 
       elif typeM == "wellAnalizer":
-        print(m_mqtt)
 
         dt = datetime.now()
+        print(dt)
         
         loraDevEUI = m_mqtt.get("devEUI","0")
         loraDevEUI = loraDevEUI[4:] + "0000" + loraDevEUI[0:4] # REEDIT MAC
 
-        spm = m_mqtt.get("spm","0")
-        fillPump = m_mqtt.get("fillPump","0")
-        sLength = m_mqtt.get("sLength","0")
+        sql_query_id = """
+          SELECT id,"SamplingRate"
+          FROM device_wellanalyzerdevice
+          WHERE "DeviceMacAddress" = '{0}'""".format(loraDevEUI)
+
+        raws_id = db_get(sql_query_id)
+        _id = raws_id[0][0]
+        SamplingRate = raws_id[0][1]
+
         vBat = m_mqtt.get("vBat","0")
         status = m_mqtt.get("status","-1")
-        sLoad = m_mqtt.get("load","")
-        sPos = m_mqtt.get("pos","")
-        sDiagnosis = m_mqtt.get("diagnosis","")
-
-        #print(vBat,sLength,fillPump,sLoad,sPos)
 
         Diagnosis = 0
 
         if status == "0" :
           Diagnosis = 11
+          sql_query = """
+            INSERT INTO 
+            data_rodpumpdata(
+              "DateCreate",
+              "IdDevice_id",
+              "VoltageBattery",
+              "Status",
+              "Diagnosis",
+              "Refresh") VALUES('{0}',{1},{2},{3},'{4}',{5})""".format(dt,_id,vBat,status,Diagnosis,SamplingRate)
+          db_local(sql_query)
+
         else:
+          spm = m_mqtt.get("spm","0")
+          fillPump = m_mqtt.get("fillPump","0")
+          sLength = m_mqtt.get("sLength","0")
+          sLoad = m_mqtt.get("load","")
+          sPos = m_mqtt.get("pos","")
+          sDiagnosis = m_mqtt.get("diagnosis","")
           sDiagnosis = sDiagnosis.split(",")
           Diagnosis = np.array([ 1 if float(i) > threshold else 0 for i in sDiagnosis])
           Diagnosis = np.where(Diagnosis == 1)[0]
           Diagnosis = Diagnosis + 1 # because model start in 1
           Diagnosis = ",".join([str(i) for i in Diagnosis])
 
-        sql_query_id = """SELECT id FROM device_wellanalyzerdevice WHERE "DeviceMacAddress" = '{0}'""".format(loraDevEUI)
+          sql_query = """
+            INSERT INTO 
+            data_rodpumpdata(
+              "DateCreate",
+              "IdDevice_id",
+              "RawSurfaceLoad",
+              "RawSurfacePosition",
+              "SPM",
+              "PumpFillage",
+              "Diagnosis",
+              "Status",
+              "VoltageBattery",
+              "StrokeLength",
+              "Refresh") VALUES('{0}',{1},'{2}','{3}',{4},{5},'{6}','{7}',{8},{9},{10})""".format(dt,_id,sLoad,sPos,spm,fillPump,Diagnosis,status,vBat,sLength,SamplingRate)
+          db_local(sql_query)
 
-        raws_id = db_get(sql_query_id)
-        _id = raws_id[0][0]
-
-        sql_query = """INSERT INTO data_rodpumpdata("DateCreate","IdDevice_id","RawSurfaceLoad","RawSurfacePosition","SPM","PumpFillage","Diagnosis","Status") VALUES('{0}',{1},'{2}','{3}',{4},{5},'{6}','{7}')""".format(dt,_id,sLoad,sPos,spm,fillPump,Diagnosis,"Normal running")
-        db_local(sql_query)
+        # save samplig rate from mesuarment 
     
     # ================ LORA DATA ================
     elif topic_in == "jhpOandG/data/lora":
       try:
+        print(data_in)
         loraData = json.loads(data_in)
         loraDevEUI = loraData["devEUI"]
         loraData = loraData["data"]
         decoder = LoRaPacketDecoder()
         decoded = decoder.decode_packet(loraData)
 
+        sql_query_id = """SELECT id,"SamplingRate" FROM device_wellanalyzerdevice WHERE "DeviceMacAddress" = '{0}'""".format(loraDevEUI)
+
+        raws_id = db_get(sql_query_id)
+        _id = raws_id[0][0]
+        SamplingRate = raws_id[0][1]
+
         #client.publish("jhpOandG/setting/lora","77777")
         dt = datetime.now()
         vBat = decoded.get("vBat","0")
         status = decoded.get("status","-1")
-        spm = decoded.get("spm","0")
-        sLength = decoded.get("sLength","0")
-        fillPump = decoded.get("fillPump","0")
-        sDiagnosis = decoded.get("diagnosis","")
-        sLoad = decoded.get("load","")
-        sPos = decoded.get("pos","")
-
-        #print(vBat,sLength,fillPump,sLoad,sPos)
-
+        
         Diagnosis = 0
 
         if status == 0 :
           Diagnosis = 11
+          sql_query = """
+            INSERT INTO 
+            data_rodpumpdata(
+              "DateCreate",
+              "IdDevice_id",
+              "VoltageBattery",
+              "Status",
+              "Diagnosis",
+              "Refresh") VALUES('{0}',{1},{2},{3},'{4}',{5})""".format(dt,_id,vBat,status,Diagnosis,SamplingRate)
+          db_local(sql_query)
         else:
+          spm = decoded.get("spm","0")
+          sLength = decoded.get("sLength","0")
+          fillPump = decoded.get("fillPump","0")
+          sDiagnosis = decoded.get("diagnosis","")
+          sLoad = decoded.get("load","")
+          sLoad = ",".join([str(i) for i in sLoad])
+          sPos = decoded.get("pos","")
+          sPos = ",".join([str(i) for i in sPos])
           Diagnosis = np.array([ 1 if float(i) > threshold else 0 for i in sDiagnosis])
           Diagnosis = np.where(Diagnosis == 1)[0]
           Diagnosis = Diagnosis + 1 # because model start in 1
           Diagnosis = ",".join([str(i) for i in Diagnosis])
         
-        sql_query_id = """SELECT id FROM device_wellanalyzerdevice WHERE "DeviceMacAddress" = '{0}'""".format(loraDevEUI)
-
-        raws_id = db_get(sql_query_id)
-        _id = raws_id[0][0]
-
-        sql_query = """INSERT INTO data_rodpumpdata("DateCreate","IdDevice_id","RawSurfaceLoad","RawSurfacePosition","SPM","PumpFillage","Diagnosis","Status") VALUES('{0}',{1},'{2}','{3}',{4},{5},'{6}','{7}')""".format(dt,_id,sLoad,sPos,spm,fillPump,Diagnosis,"Normal running")
-        db_local(sql_query)
+          sql_query = """
+            INSERT INTO 
+            data_rodpumpdata(
+              "DateCreate",
+              "IdDevice_id",
+              "RawSurfaceLoad",
+              "RawSurfacePosition",
+              "SPM",
+              "PumpFillage",
+              "Diagnosis",
+              "Status",
+              "VoltageBattery",
+              "StrokeLength",
+              "Refresh") VALUES('{0}',{1},'{2}','{3}',{4},{5},'{6}','{7}',{8},{9},{10})""".format(dt,_id,sLoad,sPos,spm,fillPump,Diagnosis,status,vBat,sLength,SamplingRate)
+          db_local(sql_query)
         
         #print(decoder.to_json())
       except Exception as e:
