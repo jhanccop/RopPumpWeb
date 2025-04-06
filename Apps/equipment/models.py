@@ -113,13 +113,11 @@ class Tank(TimeStampedModel):
     def __str__(self):
         return self.TankName
     
-class Environmental(models.Model):
+class Environmental(TimeStampedModel):
     id = models.BigAutoField(primary_key=True)
 
     # General information
     Owner = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL,related_name="Env_owner")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     EnvironmentalName = models.CharField('Environmental Name', max_length=100, unique=True)
     #FieldName = models.ForeignKey(Field, on_delete=models.CASCADE, unique=False,blank=True, null=True)
     #BatteryName = models.ForeignKey(Battery, on_delete=models.CASCADE, unique=False,blank=True,null=True)
@@ -129,19 +127,21 @@ class Environmental(models.Model):
     SupervisorUser = models.ForeignKey(settings.AUTH_USER_MODEL,null=True, blank=True, on_delete=models.SET_NULL)  
    
     # Monitoring data
+    OUTOFSERVICE = "0"
+    NORMALRUNNING = "1"
+    MAINTENANCE = "2"
+
     Status_CHOICES = (
-        ("Out of service", "Out of service"),
-        ("Maintenance", "Maintenance"),
-        ("Normal running", "Normal running"),
-        ("Testing", "Testing"),
-        ("Not assigned", "Not assigned"),
+        (OUTOFSERVICE, "Out of service"),
+        (NORMALRUNNING, "Normal running"),
+        (MAINTENANCE, "Maintenance"),
     )
-    Status = models.CharField('Status', max_length=50, choices=Status_CHOICES, default="normal running")
+    Status = models.CharField('Status', max_length=50, choices=Status_CHOICES, default="1")
        
     objects = EnvironmentalManager()
     class Meta:
         verbose_name = 'Environment'
-        verbose_name_plural = 'Environmental sesnors'
+        verbose_name_plural = 'Environmental sensors'
         #unique_together = ('TankName',)
 
     def __str__(self):

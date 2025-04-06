@@ -551,7 +551,10 @@ def on_message(client, userdata, message):
               "VoltageBattery",
               "Status",
               "Diagnosis",
-              "Refresh") VALUES('{0}',{1},{2},{3},'{4}',{5})""".format(dt,_id,vBat,status,Diagnosis,SamplingRate)
+              "Refresh"
+              "SPM",
+              "PumpFillage",
+              "StrokeLength") VALUES('{0}',{1},{2},{3},'{4}',{5},{6},{7},{8})""".format(dt,_id,vBat,status,Diagnosis,SamplingRate,0,0,0)
           db_local(sql_query)
 
         else:

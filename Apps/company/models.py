@@ -4,11 +4,13 @@ from .managers import CompanyManager
 class Company(models.Model):
     OILGAS = "0"
     AGRICULTURAL = "1"
+    RESOURCE = "2"
     OTHER = "9"
 
     TYPE_CHOICES = [
         (OILGAS, "Oil Production"),
         (AGRICULTURAL, "Agricultural"),
+        (RESOURCE, "Resource"),
         (OTHER, "Other"),
     ]
 
@@ -19,7 +21,7 @@ class Company(models.Model):
     LocationCounty = models.CharField('Location County', max_length=100)
     DateCreate = models.DateTimeField(auto_now_add=True)
 
-    CompanyType = models.CharField('Role',max_length=2, choices = TYPE_CHOICES, default="9", blank=True, null=True)
+    CompanyType = models.CharField('Company Type',max_length=2, choices = TYPE_CHOICES, default="9", blank=True, null=True)
     
     objects = CompanyManager()
 

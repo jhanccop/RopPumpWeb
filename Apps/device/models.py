@@ -82,6 +82,7 @@ class EnvironmentalDevice(models.Model):
     def __str__(self):
         return self.DeviceName
     
+# ====== CANELONES ==========
 class CamVidDevice(models.Model):
     id = models.BigAutoField(primary_key=True)
 
