@@ -1,11 +1,12 @@
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 #ALLOWED_HOSTS = ["0.0.0.0",'24.199.125.52',"*","24.144.68.190","192.168.3.56"]
-ALLOWED_HOSTS = ['24.199.125.52',"192.168.3.31","datagreensolutions.com","www.datagreensolutions.com"]
+ALLOWED_HOSTS = ['24.199.125.52',"192.168.3.31","localhost","datagreensolutions.com","www.datagreensolutions.com"]
 
+CSRF_TRUSTED_ORIGINS = ['https://datagreensolutions.com', 'https://www.datagreensolutions.com']
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 # get_secret("SECRET_KEY")
