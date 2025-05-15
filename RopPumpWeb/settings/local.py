@@ -4,7 +4,7 @@ from .base import *
 DEBUG = False
 
 #ALLOWED_HOSTS = ["0.0.0.0",'24.199.125.52',"*","24.144.68.190","192.168.3.56"]
-ALLOWED_HOSTS = ['24.199.125.52',"192.168.3.31","davinchyis.tech","localhost","datagreensolutions.com"]
+ALLOWED_HOSTS = ['24.199.125.52',"192.168.3.31","datagreensolutions.com","www.datagreensolutions.com"]
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
