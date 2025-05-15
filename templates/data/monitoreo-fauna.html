@@ -5,6 +5,394 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row">
+
+        <!-- ======================================== Main Content ======================================== -->
+        <div class="col-lg-8 col-md-7 p-4">
+            <h4 class="mb-4" id="dashboardTitle">Monitoreo de Lepidopteros en la UNALM</h4>
+
+            <!-- Alertas 
+            <div class="alert bg-gradient-warning  alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2 text-dark font-weight-bold"></i>
+                <span id="alertMessage" class="text-dark text-md" >Alerta: Temperatura inusualmente alta detectada en la Estación
+                    Bosque Norte.</span>
+                <button type="button" class="btn-close bg-gradient-dark" data-bs-dismiss="alert" aria-label="Close"><i class="fas fa-times text-dark"></i></button>
+            </div>
+            -->
+
+
+            <!-- ======================================== Contenido de Mariposas ======================================== -->
+            {% for key, value in dev.TV.items %}
+            <div id="div-{{key}}" class="content-div {% if forloop.first %}active{% endif %}">
+
+                <!-- Estadísticas en tiempo real -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-start">
+                        <h6 class="font-weight-bolder"> {{key}} </h6>
+                    </div>
+                    <div class="text-end">
+                        <h6>Actualizado: <span id="lastUpdate">{{ value.0.DateCreate|date:'d-M-Y h:i' }} UTC</span>
+                        </h6>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="stat-value text-primary" id="temperatureValue">{{ value.0.Temperature }} <span
+                                    class="stat-label text-primary"> °C</span> </div>
+                            <div class="stat-label">Temperatura</div>
+                            <div class="mt-2">
+                                <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 1.2°C desde
+                                    ayer</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="stat-value text-info" id="humidityValue">{{ value.0.Humidity }} <span
+                                    class="stat-label text-info"> %</span></div>
+                            <div class="stat-label">Humedad</div>
+                            <div class="mt-2">
+                                <small class="text-danger"><i class="fas fa-arrow-down me-1"></i> 5% desde
+                                    ayer</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="stat-value text-success" id="butterfliesValue">142</div>
+                            <div class="stat-label">Mariposas identificadas</div>
+                            <div class="mt-2">
+                                <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 23 desde
+                                    ayer</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="stat-value" id="batteryValue">
+                                <!-- Valor de la batería con color dinámico según nivel -->
+                                <span class="
+                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
+                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
+                                        {% else %}text-danger{% endif %}
+                                    ">
+                                    {{ value.0.VoltageBattery }}
+                                </span>
+                                <span class="stat-label 
+                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
+                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
+                                        {% else %}text-danger{% endif %}
+                                    "> V</span>
+                            </div>
+
+                            <!-- Indicador visual de batería -->
+                            <div class="battery-indicator mt-3">
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar 
+                                            {% if value.0.VoltageBattery >= 3.7 %}bg-success
+                                            {% elif value.0.VoltageBattery >= 3.4 %}bg-warning
+                                            {% else %}bg-danger{% endif %}" role="progressbar"
+                                        style="width: {% widthratio value.0.VoltageBattery|floatformat:2 4.2 100 %}%;"
+                                        aria-valuenow="{{ value.0.VoltageBattery }}" aria-valuemin="3.0"
+                                        aria-valuemax="4.2">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Estado de la batería -->
+                            <div class="stat-label mt-2">
+                                {% if value.0.VoltageBattery >= 3.7 %}
+                                <small class="text-success"><i class="fas fa-battery-full me-1"></i> Batería
+                                    óptima</small>
+                                {% elif value.0.VoltageBattery >= 3.4 %}
+                                <small class="text-warning"><i class="fas fa-battery-half me-1"></i> Batería
+                                    media</small>
+                                {% else %}
+                                <small class="text-danger"><i class="fas fa-battery-quarter me-1"></i> Batería
+                                    baja</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Última Captura y Gráfico Histórico -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-gradient-secondary p-2">
+                                <span class="align-items-center text-md text-white font-weight-bolder"><i
+                                        class="fas fa-camera me-2"></i> Capturado a las {{
+                                    value.0.DateCreate|date:'m-d-Y H:i' }} UTC </span>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="img-container">
+                                    <img src="data:image/png;base64,{{ value.0.img64 }}" alt="Mariposa monarca"
+                                        id="currentImage" style="height: 100%;">
+                                </div>
+                                <div class="p-0">
+                                    <h6 id="imageTitle">Morpho azul</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-gradient-secondary p-2">
+                                <span class="align-items-center text-md text-white font-weight-bolder"><i
+                                        class="fas fa-chart-line me-2"></i> Plot de registros </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
+                                    <canvas id="plot-{{key}}"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de datos -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card h-100">
+
+                            <div class="table-responsive">
+                                <table class="table" id="datatable-{{key}}">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Cantidad</th>
+                                            <th>Temp (°C)</th>
+                                            <th>Hum (%)</th>
+                                            <th>Batería (V)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for i in value %}
+                                        <tr>
+                                            <td>{{i.DateCreate|date:'d-m-Y h:i'}}</td>
+                                            <td>{{i.nDetected}}</td>
+                                            <td>{{i.Temperature}}</td>
+                                            <td>{{i.Humidity}}</td>
+                                            <td>{{i.VoltageBattery}}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+
+            <!-- ======================================== Contenido de Datos Meteorológicos  ======================================== -->
+            {% for key, value in dev.WS.items %}
+            <div id="div-{{key}}" class="content-div">
+                <!-- <div class="tab-pane fade show active" id="weather" role="tabpanel"> -->
+                <!-- Estadísticas meteorológicas en tiempo real -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-start">
+                        <h6 class="font-weight-bolder"> {{key}} </h6>
+                    </div>
+                    <div class="text-end">
+                        <h6>Actualizado: <span id="lastUpdate">{{ value.0.DateCreate|date:'d-M-Y h:i' }} UTC</span>
+                        </h6>
+                    </div>
+                </div>
+
+                <div class="row">
+                    {% if value.0.Temperature %}
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="stat-value text-primary" id="weatherTempValue">{{ value.0.Temperature }}<span
+                                    class="stat-label text-primary"> °C</span> </div>
+                            <div class="stat-label">Temperatura</div>
+                            <div class="mt-2">
+                                <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 1.2°C desde
+                                    ayer</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if value.0.Humidity %}
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="stat-value text-info" id="weatherHumidityValue">{{ value.0.Humidity }} <span
+                                    class="stat-label text-info"> %</span></div>
+                            <div class="stat-label">Humedad Relativa</div>
+                            <div class="mt-2">
+                                <small class="text-danger"><i class="fas fa-arrow-down me-1"></i> 5% desde
+                                    ayer</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if value.0.RainCounter %}
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="stat-value text-success" id="weatherRainValue">{{ value.0.RainCounter }}
+                                <span class="stat-label text-success">mm</span>
+                            </div>
+                            <div class="stat-label">Precipitación</div>
+                            <div class="mt-2">
+                                <small class="text-muted"><i class="fas fa-minus me-1"></i> Sin cambios</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if value.0.Radiation %}
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="stat-value text-warning" id="weatherSolarValue">{{ value.0.Radiation }} <span
+                                    class="stat-label text-warning">W/m²</span></div>
+                            <div class="stat-label">Radiación Solar</div>
+                            <div class="mt-2">
+                                <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 120 W/m² desde
+                                    ayer</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if value.0.WindVelocity %}
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="stat-value text-danger" id="weatherWindSpeedValue">{{value.0.WindVelocity}}
+                                <span class="stat-label text-danger">km/h</span></div>
+                            <div class="stat-label">Velocidad Viento</div>
+                            <div class="mt-2">
+                                <i class="fas fa-arrow-up wind-direction" id="windDirectionIcon"
+                                    style="transform: rotate(45deg);"></i>
+                                <small id="weatherWindDirValue">NE (45°)</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="stat-value" id="batteryValue">
+                                <!-- Valor de la batería con color dinámico según nivel -->
+                                <span class="
+                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
+                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
+                                        {% else %}text-danger{% endif %}
+                                    ">
+                                    {{ value.0.VoltageBattery }}
+                                </span>
+                                <span class="stat-label 
+                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
+                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
+                                        {% else %}text-danger{% endif %}
+                                    "> V</span>
+                            </div>
+
+                            <!-- Indicador visual de batería -->
+                            <div class="battery-indicator mt-3">
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar 
+                                            {% if value.0.VoltageBattery >= 3.7 %}bg-success
+                                            {% elif value.0.VoltageBattery >= 3.4 %}bg-warning
+                                            {% else %}bg-danger{% endif %}" role="progressbar"
+                                        style="width: {% widthratio value.0.VoltageBattery|floatformat:2 4.2 100 %}%;"
+                                        aria-valuenow="{{ value.0.VoltageBattery }}" aria-valuemin="3.0"
+                                        aria-valuemax="4.2">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Estado de la batería -->
+                            <div class="stat-label mt-2">
+                                {% if value.0.VoltageBattery >= 3.7 %}
+                                <small class="text-success"><i class="fas fa-battery-full me-1"></i> Batería
+                                    óptima</small>
+                                {% elif value.0.VoltageBattery >= 3.4 %}
+                                <small class="text-warning"><i class="fas fa-battery-half me-1"></i> Batería
+                                    media</small>
+                                {% else %}
+                                <small class="text-danger"><i class="fas fa-battery-quarter me-1"></i> Batería
+                                    baja</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Gráficos meteorológicos -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-gradient-secondary p-2">
+                                <span class="align-items-center text-md text-white font-weight-bolder"><i
+                                        class="fas fa-chart-line me-2"></i> Plot de registros </span>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
+                                    <canvas id="plot-{{key}}"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de datos históricos meteorológicos -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card h-100">
+
+                            <div class="table-responsive">
+                                <table class="table h-100" id="datatable-{{key}}">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Temp (°C)</th>
+                                            <th>Hum (%)</th>
+                                            <th>Ppt (mm)</th>
+                                            <th>Vel (km/h)</th>
+                                            <th>Dir</th>
+                                            <th>Rad (W/m²)</th>
+                                            <th>Bat (V)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for i in value %}
+                                        <tr>
+                                            <td>{{i.DateCreate|date:'d-m-Y h:i'}}</td>
+                                            <td>{{i.Temperature}}</td>
+                                            <td>{{i.Humidity}}</td>
+                                            <td>{{i.RainCounter}}</td>
+                                            <td>{{i.WindVelocity}}</td>
+                                            <td>{{i.WindDirection}}</td>
+                                            <td>{{i.Radiation}}</td>
+                                            <td>{{i.VoltageBattery}}</td>
+                                        </tr>
+                                        {% endfor %}
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- </div> -->
+            </div>
+            {% endfor %}
+
+        </div>
+
         <!-- Sidebar con mapa -->
         <div class="col-lg-4 col-md-5 sidebar p-3">
 
@@ -17,7 +405,8 @@
             <!-- Mapa -->
             <div class="card">
                 <div class="card-header bg-gradient-dark p-2">
-                    <span class="align-items-center text-md text-white font-weight-bolder"><i class="fas fa-map-marked-alt me-2"></i> Ubicación de Estaciones</span>
+                    <span class="align-items-center text-md text-white font-weight-bolder"><i
+                            class="fas fa-map-marked-alt me-2"></i> Ubicación de Estaciones</span>
                 </div>
                 <div class="card-body p-0">
                     <div id="map"></div>
@@ -29,7 +418,8 @@
                 <h6 class="mb-3 font-weight-bolder text-dark"><i class="fas fa-camera me-2"></i>Cámaras:</h6>
                 <div class="list-group">
                     {% for key, value in dev.TV.items %}
-                    <a href="#" class="list-group-item list-group-item-action station-selector tab-link {% if forloop.first %}show active{% endif %}"
+                    <a href="#"
+                        class="list-group-item list-group-item-action station-selector tab-link {% if forloop.first %}show active{% endif %}"
                         data-target="div-{{key}}">
                         <i class="fas fa-bug me-2"></i> {{ key }}
                     </a>
@@ -70,380 +460,6 @@
             </div>
         </div>
 
-        <!-- ======================================== Main Content ======================================== -->
-        <div class="col-lg-8 col-md-7 p-4">
-            <h4 class="mb-4" id="dashboardTitle">Monitoreo de Lepidopteros en la UNALM</h4>
-
-            <!-- Alertas 
-            <div class="alert bg-gradient-warning  alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-triangle me-2 text-dark font-weight-bold"></i>
-                <span id="alertMessage" class="text-dark text-md" >Alerta: Temperatura inusualmente alta detectada en la Estación
-                    Bosque Norte.</span>
-                <button type="button" class="btn-close bg-gradient-dark" data-bs-dismiss="alert" aria-label="Close"><i class="fas fa-times text-dark"></i></button>
-            </div>
-            -->
-
-            <div class="content-container">
-                <!-- ======================================== Contenido de Mariposas ======================================== -->
-                {% for key, value in dev.TV.items %}
-                <div id="div-{{key}}" class="content-div {% if forloop.first %}active{% endif %}">
-
-                    <!-- Estadísticas en tiempo real -->
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-start">
-                            <h6 class="font-weight-bolder"> {{key}} </h6>
-                        </div>
-                        <div class="text-end">
-                            <h6>Actualizado: <span id="lastUpdate">{{ value.0.DateCreate|date:'d-M-Y h:i' }} UTC</span>
-                            </h6>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-value text-primary" id="temperatureValue">{{ value.0.Temperature }} <span class="stat-label text-primary"> °C</span> </div>
-                                <div class="stat-label">Temperatura</div>
-                                <div class="mt-2">
-                                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 1.2°C desde
-                                        ayer</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-value text-info" id="humidityValue">{{ value.0.Humidity }} <span class="stat-label text-info"> %</span></div>
-                                <div class="stat-label">Humedad</div>
-                                <div class="mt-2">
-                                    <small class="text-danger"><i class="fas fa-arrow-down me-1"></i> 5% desde
-                                        ayer</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-value text-success" id="butterfliesValue">142</div>
-                                <div class="stat-label">Mariposas identificadas</div>
-                                <div class="mt-2">
-                                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 23 desde
-                                        ayer</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-value" id="batteryValue">
-                                    <!-- Valor de la batería con color dinámico según nivel -->
-                                    <span class="
-                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
-                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
-                                        {% else %}text-danger{% endif %}
-                                    ">
-                                        {{ value.0.VoltageBattery }}
-                                    </span>
-                                    <span class="stat-label 
-                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
-                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
-                                        {% else %}text-danger{% endif %}
-                                    "> V</span>
-                                </div>
-                                                                
-                                <!-- Indicador visual de batería -->
-                                <div class="battery-indicator mt-3">
-                                    <div class="progress" style="height: 10px;">
-                                        <div class="progress-bar 
-                                            {% if value.0.VoltageBattery >= 3.7 %}bg-success
-                                            {% elif value.0.VoltageBattery >= 3.4 %}bg-warning
-                                            {% else %}bg-danger{% endif %}" 
-                                            role="progressbar" 
-                                            style="width: {% widthratio value.0.VoltageBattery|floatformat:2 4.2 100 %}%;" 
-                                            aria-valuenow="{{ value.0.VoltageBattery }}" 
-                                            aria-valuemin="3.0" 
-                                            aria-valuemax="4.2">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Estado de la batería -->
-                                <div class="stat-label mt-2">
-                                    {% if value.0.VoltageBattery >= 3.7 %}
-                                        <small class="text-success"><i class="fas fa-battery-full me-1"></i> Batería óptima</small>
-                                    {% elif value.0.VoltageBattery >= 3.4 %}
-                                        <small class="text-warning"><i class="fas fa-battery-half me-1"></i> Batería media</small>
-                                    {% else %}
-                                        <small class="text-danger"><i class="fas fa-battery-quarter me-1"></i> Batería baja</small>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Última Captura y Gráfico Histórico -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-header bg-gradient-secondary p-2">
-                                    <span class="align-items-center text-md text-white font-weight-bolder"><i class="fas fa-camera me-2"></i> Capturado a las {{ value.0.DateCreate|date:'m-d-Y H:i' }} UTC </span>
-                                </div>
-
-                                <div class="card-body">
-                                    <div class="img-container">
-                                        <img src="data:image/png;base64,{{ value.0.img64 }}" alt="Mariposa monarca"
-                                            id="currentImage" style="height: 100%;">
-                                    </div>
-                                    <div class="p-0">
-                                        <h6 id="imageTitle">Morpho azul</h6>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-header bg-gradient-secondary p-2">
-                                    <span class="align-items-center text-md text-white font-weight-bolder"><i class="fas fa-chart-line me-2"></i> Plot de registros </span>
-                                </div>
-                                <div class="card-body">
-                                    <div class="historical-chart-container">
-                                        <div ui-jp="plot"  id = "plot-{{key}}" ></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tabla de datos -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card h-100">
-
-                                <div class="table-responsive">
-                                    <table class="table" id="datatable-{{key}}">
-                                        <thead>
-                                            <tr>
-                                                <th>Fecha</th>
-                                                <th>Cantidad</th>
-                                                <th>Temp (°C)</th>
-                                                <th>Hum (%)</th>
-                                                <th>Batería (V)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for i in value %}
-                                            <tr>
-                                                <td>{{i.DateCreate|date:'d-m-Y h:i'}}</td>
-                                                <td>{{i.nDetected}}</td>
-                                                <td>{{i.Temperature}}</td>
-                                                <td>{{i.Humidity}}</td>
-                                                <td>{{i.VoltageBattery}}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-                {% endfor %}
-
-                <!-- ======================================== Contenido de Datos Meteorológicos  ======================================== -->
-                {% for key, value in dev.WS.items %}
-                <div id="div-{{key}}" class="content-div">
-                    <!-- <div class="tab-pane fade show active" id="weather" role="tabpanel"> -->
-                    <!-- Estadísticas meteorológicas en tiempo real -->
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-start">
-                            <h6 class="font-weight-bolder"> {{key}} </h6>
-                        </div>
-                        <div class="text-end">
-                            <h6>Actualizado: <span id="lastUpdate">{{ value.0.DateCreate|date:'d-M-Y h:i' }} UTC</span>
-                            </h6>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        {% if value.0.Temperature %}
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-value text-primary" id="weatherTempValue">{{ value.0.Temperature }}<span class="stat-label text-primary"> °C</span> </div>
-                                <div class="stat-label">Temperatura</div>
-                                <div class="mt-2">
-                                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 1.2°C desde
-                                        ayer</small>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        {% if value.0.Humidity %}
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-value text-info" id="weatherHumidityValue">{{ value.0.Humidity }} <span
-                                        class="stat-label text-info"> %</span></div>
-                                <div class="stat-label">Humedad Relativa</div>
-                                <div class="mt-2">
-                                    <small class="text-danger"><i class="fas fa-arrow-down me-1"></i> 5% desde
-                                        ayer</small>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        {% if value.0.RainCounter %}
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-value text-success" id="weatherRainValue">{{ value.0.RainCounter }}
-                                    <span class="stat-label text-success">mm</span></div>
-                                <div class="stat-label">Precipitación</div>
-                                <div class="mt-2">
-                                    <small class="text-muted"><i class="fas fa-minus me-1"></i> Sin cambios</small>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        {% if value.0.Radiation %}
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-value text-warning" id="weatherSolarValue">{{ value.0.Radiation }} <span
-                                        class="stat-label text-warning">W/m²</span></div>
-                                <div class="stat-label">Radiación Solar</div>
-                                <div class="mt-2">
-                                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 120 W/m² desde
-                                        ayer</small>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        {% if value.0.WindVelocity %}
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-value text-danger" id="weatherWindSpeedValue">{{value.0.WindVelocity}} <span
-                                        class="stat-label text-danger">km/h</span></div>
-                                <div class="stat-label">Velocidad Viento</div>
-                                <div class="mt-2">
-                                    <i class="fas fa-arrow-up wind-direction" id="windDirectionIcon"
-                                        style="transform: rotate(45deg);"></i>
-                                    <small id="weatherWindDirValue">NE (45°)</small>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <div class="col-md-3">
-                            <div class="card stat-card">
-                                <div class="stat-value" id="batteryValue">
-                                    <!-- Valor de la batería con color dinámico según nivel -->
-                                    <span class="
-                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
-                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
-                                        {% else %}text-danger{% endif %}
-                                    ">
-                                        {{ value.0.VoltageBattery }}
-                                    </span>
-                                    <span class="stat-label 
-                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
-                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
-                                        {% else %}text-danger{% endif %}
-                                    "> V</span>
-                                </div>
-                                                                
-                                <!-- Indicador visual de batería -->
-                                <div class="battery-indicator mt-3">
-                                    <div class="progress" style="height: 10px;">
-                                        <div class="progress-bar 
-                                            {% if value.0.VoltageBattery >= 3.7 %}bg-success
-                                            {% elif value.0.VoltageBattery >= 3.4 %}bg-warning
-                                            {% else %}bg-danger{% endif %}" 
-                                            role="progressbar" 
-                                            style="width: {% widthratio value.0.VoltageBattery|floatformat:2 4.2 100 %}%;" 
-                                            aria-valuenow="{{ value.0.VoltageBattery }}" 
-                                            aria-valuemin="3.0" 
-                                            aria-valuemax="4.2">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Estado de la batería -->
-                                <div class="stat-label mt-2">
-                                    {% if value.0.VoltageBattery >= 3.7 %}
-                                        <small class="text-success"><i class="fas fa-battery-full me-1"></i> Batería óptima</small>
-                                    {% elif value.0.VoltageBattery >= 3.4 %}
-                                        <small class="text-warning"><i class="fas fa-battery-half me-1"></i> Batería media</small>
-                                    {% else %}
-                                        <small class="text-danger"><i class="fas fa-battery-quarter me-1"></i> Batería baja</small>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <!-- Gráficos meteorológicos -->
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="card">
-                                <div class="card-header bg-gradient-secondary p-2">
-                                    <span class="align-items-center text-md text-white font-weight-bolder"><i class="fas fa-chart-line me-2"></i> Plot de registros </span>
-                                </div>
-                                
-                                <div class="card-body">
-                                    <div ui-jp="plot"  id = "plot-{{key}}" ></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tabla de datos históricos meteorológicos -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card h-100">
-                                
-                                <div class="table-responsive">
-                                    <table class="table h-100" id="datatable-{{key}}">
-                                        <thead>
-                                            <tr>
-                                                <th>Fecha</th>
-                                                <th>Temp (°C)</th>
-                                                <th>Hum (%)</th>
-                                                <th>Ppt (mm)</th>
-                                                <th>Vel (km/h)</th>
-                                                <th>Dir</th>
-                                                <th>Rad (W/m²)</th>
-                                                <th>Bat (V)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for i in value %}
-                                            <tr>
-                                                <td>{{i.DateCreate|date:'d-m-Y h:i'}}</td>
-                                                <td>{{i.Temperature}}</td>
-                                                <td>{{i.Humidity}}</td>
-                                                <td>{{i.RainCounter}}</td>
-                                                <td>{{i.WindVelocity}}</td>
-                                                <td>{{i.WindDirection}}</td>
-                                                <td>{{i.Radiation}}</td>
-                                                <td>{{i.VoltageBattery}}</td>
-                                            </tr>
-                                            {% endfor %}
-                                            
-                                        </tbody>
-                                    </table>
-                                </div>
-                                
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- </div> -->
-                </div>
-                {% endfor %}
-            </div>
-        </div>
     </div>
 </div>
 
@@ -451,186 +467,201 @@
 
 {% block JSscripts %}
 
-<!-- Bootstrap JS Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{% static 'assets/js/plugins/plotly-2.12.1.min.js' %}"></script>
+<script src="{% static 'assets/js/plugins/chart.js' %}"></script>
 <!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script src="{% static 'assets/js/plugins/leaflet.js' %}"></script>
+
+<script src="{% static 'assets/js/plugins/chartjs-plugin-zoom.min.js' %}"></script>
+<!-- Adaptador de fecha para Chart.js -->
+<script src="{% static 'assets/js/plugins/chartjs-adapter-date-fns.bundle.min.js' %}"></script>
 
 <script>
     // Variables globales para los marcadores y el mapa
     let map;
     let markers = [];
     let activeMarker = null;
+    let charts = {}; // Objeto para almacenar todas las instancias de gráficos
 
     function dtFormat(dateTime) {
-        var dd = dateTime.getDate();
-        var yyyy = dateTime.getFullYear();
-        var mm = dateTime.getMonth() + 1;
-
-        mm = (mm < 10 ? '0' : '') + mm;
-        dd = (dd < 10 ? '0' : '') + dd;
-
-        // Now setting up Time Format (hh:mm:ss)
-        var hr = dateTime.getHours();
-        var min = dateTime.getMinutes();
-        var sec = dateTime.getSeconds();
-
-        hr = (hr < 10 ? '0' : '') + hr;
-        min = (min < 10 ? '0' : '') + min;
-        sec = (sec < 10 ? '0' : '') + sec;
-        var dt = yyyy + "-" + mm + "-" + dd + " " + hr + ":" + min + ":" + sec;
-        return dt;
+        const pad = num => (num < 10 ? '0' : '') + num;
+        return `${dateTime.getFullYear()}-${pad(dateTime.getMonth()+1)}-${pad(dateTime.getDate())} ${pad(dateTime.getHours())}:${pad(dateTime.getMinutes())}:${pad(dateTime.getSeconds())}`;
     }
     
-    var layout = {
-        //background : gradientStroke1,
-        showlegend: true,
-        legend: {
-            "orientation": "v",
-            x: 1,
-            xanchor: 'left',
-            y: 1
-        },
-
-        margin: {l:40,t:10,b:10,r:30},
-		autosize: true,
-
-        yaxis2: {
-            domain: [0.6, 0.95],
-            anchor: 'x2'
-        },
-        xaxis2: {
-            domain: [0.6, 0.95],
-            anchor: 'y2'
-        },
-        xaxis: {
-            autorange: true,
-            range: ['2015-02-17', '2017-02-16'],
-            rangeselector: {buttons: [
-                {
-                count: 1,
-                label: '1h',
-                step: 'hour',
-                stepmode: 'backward'
+    // Configuración común para todos los gráficos
+    const chartConfig = {
+        type: 'line',
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        minUnit: 'hour',
+                        tooltipFormat: 'dd/MM/yyyy HH:mm',
+                        displayFormats: {
+                            hour: 'HH:mm dd/MM',
+                            day: 'dd/MM/yyyy'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Fecha y Hora'
+                    }
                 },
-                {
-                count: 12,
-                label: '12h',
-                step: 'hour',
-                stepmode: 'backward'
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: 'Valores'
+                    }
+                }
+            },
+            plugins: {
+                zoom: {
+                    zoom: {
+                        wheel: {
+                            enabled: true
+                        },
+                        pinch: {
+                            enabled: true
+                        },
+                        mode: 'xy'
+                    },
+                    pan: {
+                        enabled: true,
+                        mode: 'xy'
+                    }
                 },
-                {step: 'all'}
-            ]},
-            rangeslider: {range: ['2022-08-13', '2022-08-13']},
-            //rangeslider: {range: autorange},
-            type: 'date'
-        },
-        yaxis: {
-            autorange: true,
-            //range: [0, 200],
-            type: 'linear'
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 12
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.y}`;
+                        }
+                    }
+                }
+            }
         }
     };
 
-    var config = {
-        modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d', 'zoomOut2d'],
-        responsive: true,
-        displaylogo: false
-    }
-    
     // Inicializar el mapa
     function initMap() {
         var latmean = 0;
         var lonmean = 0;
+        var counter = 0;
 
         // Marcadores de estaciones de mariposas
         var trapViewStations = [];
-        var counter = 0;
         "{% for key, value in dev.TV.items %}"
-
         var payload = {
-            id:counter,
+            id: counter,
             name: "{{key}}", 
             lat: "{{value.0.IdDevice__Lat}}", 
             lng: "{{value.0.IdDevice__Long}}", 
             temp: "{{value.0.Temperature}}", 
             hum: "{{value.0.Humidity}}", 
-            butterflies:"{{value.0.nDetected}}",
+            butterflies: "{{value.0.nDetected}}",
         }
-        trapViewStations.push(payload)
+        trapViewStations.push(payload);
 
         latmean += Number("{{value.0.IdDevice__Lat}}");
         lonmean += Number("{{value.0.IdDevice__Long}}");
         counter++;
 
+        // Preparar datos para Chart.js
         var dateTime = [];
         var dataTemp = [];
         var dataHum = [];
         var dataN = [];
 
         "{% for i in value %}"
-        var ddt = new Date("{{i.DateCreate|date:'Y-m-d H:i'}}");
-        dateTime.push(ddt);
-        dataTemp.push('{{i.Temperature}}');
-        dataHum.push('{{i.Humidity}}');
-        dataN.push('{{i.nDetected}}');
+        dateTime.push(new Date("{{i.DateCreate|date:'Y-m-d H:i'}}"));
+        dataTemp.push(parseFloat('{{i.Temperature}}'));
+        dataHum.push(parseFloat('{{i.Humidity}}'));
+        dataN.push(parseInt('{{i.nDetected}}'));
         "{% endfor %}"
 
-        var trace0 = {
-            type: "scatter",
-            mode: "'lines+markers'",
-            name: 'Temp',
-            x: dateTime,
-            y: dataTemp,
-            line: {color: '#7F7F7F'},
-            line: {shape: 'spline'},
-        }
-        var trace1 = {
-            type: "scatter",
-            mode: "'lines+markers'",
-            name: 'Hum',
-            x: dateTime,
-            y: dataHum,
-            line: {color: '#7F7F7F'},
-            line: {shape: 'spline'},
-        }
-        var trace2 = {
-            type: "bar",
-            //mode: "'lines+markers'",
-            name: 'N',
-            x: dateTime,
-            y: dataN,
-            line: {color: '#7F7F7F'},
-            line: {shape: 'spline'},
-        }
-
-        var data = [trace0,trace1,trace2];
-
-        Plotly.newPlot('plot-{{key}}', data, layout, config);
-
+        // Crear gráfico con Chart.js
+        const ctx_{{key|slugify}} = document.getElementById('plot-{{key}}').getContext('2d');
+        charts['{{key}}'] = new Chart(ctx_{{key|slugify}}, {
+            ...chartConfig,
+            data: {
+                labels: dateTime,
+                datasets: [
+                    {
+                        label: 'Temperatura (°C)',
+                        data: dataTemp,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        tension: 0.1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Humedad (%)',
+                        data: dataHum,
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        tension: 0.1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'N° Mariposas',
+                        data: dataN,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        type: 'bar',
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                ...chartConfig.options,
+                scales: {
+                    ...chartConfig.options.scales,
+                    y: {
+                        ...chartConfig.options.scales.y,
+                        title: { text: 'Temp/Hum' }
+                    },
+                    y1: {
+                        position: 'right',
+                        title: { text: 'N° Mariposas' },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
         "{% endfor %}"
 
         // Marcadores de estaciones meteorológicas
         var WeatherStations = [];
         "{% for key, value in dev.WS.items %}"
         var payload = {
-            id:counter,
+            id: counter,
             name: "{{key}}", 
             lat: "{{value.0.IdDevice__Lat}}", 
             lng: "{{value.0.IdDevice__Long}}", 
             temp: "{{value.0.Temperature}}", 
             hum: "{{value.0.Humidity}}",
         }
-        WeatherStations.push(payload)
+        WeatherStations.push(payload);
         
         latmean += Number("{{value.0.IdDevice__Lat}}");
         lonmean += Number("{{value.0.IdDevice__Long}}");
         counter++;
 
+        // Preparar datos para Chart.js
         var dateTime = [];
         var dataTemp = [];
         var dataHum = [];
@@ -639,67 +670,62 @@
         var dataRS = [];
 
         "{% for i in value %}"
-        var ddt = new Date("{{i.DateCreate|date:'Y-m-d H:i'}}");
-        dateTime.push(ddt);
-        dataTemp.push('{{i.Temperature}}');
-        dataHum.push('{{i.Humidity}}');
-        dataPp.push('{{i.RainCounter}}');
-        dataWV.push('{{i.WindVelocity}}');
-        dataRS.push('{{i.Radiation}}');
+        dateTime.push(new Date("{{i.DateCreate|date:'Y-m-d H:i'}}"));
+        dataTemp.push(parseFloat('{{i.Temperature}}'));
+        dataHum.push(parseFloat('{{i.Humidity}}'));
+        dataPp.push(parseFloat('{{i.RainCounter}}'));
+        dataWV.push(parseFloat('{{i.WindVelocity}}'));
+        dataRS.push(parseFloat('{{i.Radiation}}'));
         "{% endfor %}"
 
-        var trace0 = {
-            type: "scatter",
-            mode: "'lines+markers'",
-            name: 'Temp',
-            x: dateTime,
-            y: dataTemp,
-            line: {color: '#7F7F7F'},
-            line: {shape: 'spline'},
-        }
-        var trace1 = {
-            type: "scatter",
-            mode: "'lines+markers'",
-            name: 'Hum',
-            x: dateTime,
-            y: dataHum,
-            line: {color: '#7F7F7F'},
-            line: {shape: 'spline'},
-        }
-        var trace2 = {
-            type: "scatter",
-            mode: "'lines+markers'",
-            name: 'Ppt',
-            x: dateTime,
-            y: dataPp,
-            line: {color: '#7F7F7F'},
-            line: {shape: 'spline'},
-        }
-        var trace3 = {
-            type: "scatter",
-            mode: "'lines+markers'",
-            name: 'Vel Viento',
-            x: dateTime,
-            y: dataWV,
-            line: {color: '#7F7F7F'},
-            line: {shape: 'spline'},
-        }
-        var trace4 = {
-            type: "scatter",
-            mode: "'lines+markers'",
-            name: 'Rad',
-            x: dateTime,
-            y: dataRS,
-            line: {color: '#7F7F7F'},
-            line: {shape: 'spline'},
-        }
-
-        var data = [trace0,trace1,trace2,trace3,trace4];
-
-        Plotly.newPlot('plot-{{key}}', data, layout, config);
-
+        // Crear gráfico con Chart.js
+        const ctx_{{key|slugify}} = document.getElementById('plot-{{key}}').getContext('2d');
+        charts['{{key}}'] = new Chart(ctx_{{key|slugify}}, {
+            ...chartConfig,
+            data: {
+                labels: dateTime,
+                datasets: [
+                    {
+                        label: 'Temperatura (°C)',
+                        data: dataTemp,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Humedad (%)',
+                        data: dataHum,
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Precipitación (mm)',
+                        data: dataPp,
+                        borderColor: 'rgb(153, 102, 255)',
+                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Vel. Viento (km/h)',
+                        data: dataWV,
+                        borderColor: 'rgb(255, 159, 64)',
+                        backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Radiación (W/m²)',
+                        data: dataRS,
+                        borderColor: 'rgb(255, 205, 86)',
+                        backgroundColor: 'rgba(255, 205, 86, 0.2)',
+                        tension: 0.1
+                    }
+                ]
+            }
+        });
         "{% endfor %}"
 
+        // Configuración del mapa (igual que antes)
         latmean = latmean/counter;
         lonmean = lonmean/counter;
 
@@ -709,44 +735,6 @@
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
         
-        // Marcadores de estaciones meteorológicas
-        const weatherStations = [
-            {
-                id: 101, 
-                name: "Estación Climática Este", 
-                lat: 4.61971, 
-                lng: -74.06175,
-                weather: {
-                    temperature: 21.5,
-                    humidity: 75,
-                    precipitation: 3.2,
-                    solarRadiation: 650,
-                    windSpeed: 16,
-                    windDirection: 90,
-                    soilPH: 6.4,
-                    soilMoisture: 58,
-                    conductivity: 0.9
-                }
-            },
-            {
-                id: 102, 
-                name: "Estación Climática Oeste", 
-                lat: 4.60971, 
-                lng: -74.11175,
-                weather: {
-                    temperature: 24.0,
-                    humidity: 60,
-                    precipitation: 0.0,
-                    solarRadiation: 950,
-                    windSpeed: 10,
-                    windDirection: 270,
-                    soilPH: 7.1,
-                    soilMoisture: 35,
-                    conductivity: 1.6
-                }
-            }
-        ];
-        
         // Crear marcadores para estaciones de mariposas
         trapViewStations.forEach(station => {
             const marker = L.marker([station.lat, station.lng], {
@@ -754,20 +742,16 @@
                 stationType: 'butterfly'
             }).addTo(map);
             
-            // Estilo personalizado para el marcador
             const icon = L.divIcon({
                 className: 'custom-marker',
-                html: `<div style="background-color: #0d6efd; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px;"> <i class="fas fa-bug"></i></div>`,
+                html: `<div style="background-color: #0d6efd; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fas fa-bug"></i></div>`,
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
             });
             
             marker.setIcon(icon);
-            
             marker.bindPopup(`<b>${station.name}</b><br>Temp: ${station.temp}°C<br>Hum: ${station.hum}%<br>Mariposas: ${station.butterflies}`);
-            
             markers.push(marker);
-
         });
         
         // Crear marcadores para estaciones meteorológicas
@@ -777,36 +761,28 @@
                 stationType: 'weather'
             }).addTo(map);
             
-            // Estilo personalizado para el marcador
             const icon = L.divIcon({
                 className: 'custom-marker',
-                html: `<div style="background-color: #fd7e14; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px;"> <i class="fas fa-cloud-sun"></i></div>`,
+                html: `<div style="background-color: #fd7e14; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fas fa-cloud-sun"></i></div>`,
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
             });
             
             marker.setIcon(icon);
-            
             marker.bindPopup(`<b>${station.name}</b><br>Temp: ${station.temp}°C<br>Hum: ${station.hum}%`);
-            
             markers.push(marker);
         });
     }
-    
 
-    // Convertir grados a dirección del viento
-    function getWindDirection(degrees) {
-        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-        const index = Math.round((degrees % 360) / 45) % 8;
-        return `${directions[index]} (${degrees}°)`;
-    }
-    
     // Event listeners para selección de estación
     document.addEventListener('DOMContentLoaded', function() {
         initMap();
-
     });
 
+    // Función para redimensionar gráficos cuando cambia el tamaño de la ventana
+    window.addEventListener('resize', function() {
+        Object.values(charts).forEach(chart => chart.resize());
+    });
 </script>
 
 <script>
