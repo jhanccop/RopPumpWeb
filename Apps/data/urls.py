@@ -21,8 +21,12 @@ urlpatterns = [
     path('data-camera/<VisualSamplingPointName>', views.ListCamera.as_view(), name='data-camera'),
     path('data-trapView/detail/<pk>', views.DetailTrapView.as_view(), name='data-trapView-detail'),
     path('data-trapView/<name>', views.ListTrapView.as_view(), name='data-trapView'),
-    path('success/', views.SuccessView.as_view(), name='success'),
+    
+    path('monitoreo-fauna/<ubicacion>', views.MonitoreoFaunaPorUbicacionView.as_view(), name='monitoreo-fauna'),
 
     path('data/oil-overview', views.ListOilOverview.as_view(), name='oil-overview'),
     path('data/oil-overview/<WellName>', views.ListDataRodPump.as_view(), name='data-rod-pump'),
+
+    path('success/', views.SuccessView.as_view(), name='success'),
+
 ]

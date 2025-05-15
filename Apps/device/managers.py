@@ -38,3 +38,21 @@ class AnalyzerDeviceManager(models.Manager):
                 "IdRodPumpWell__WellName",
                 )
         return result
+    
+class WeatherStationManager(models.Manager):
+    def get_by_locations(self, location):
+        result = self.filter(
+            IdLocation__LocationName = location
+        ).values(
+                "DeviceName",
+                )
+        return result
+    
+class TrapViewManager(models.Manager):
+    def get_by_locations(self, location):
+        result = self.filter(
+            IdLocation__LocationName = location
+        ).values(
+                "DeviceName",
+                )
+        return result

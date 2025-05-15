@@ -16,7 +16,13 @@ from Apps.equipment.models import (
 
 from Apps.location.models import Location
 
-from .managers import TankDeviceManager, EnvironmentalDeviceManager, AnalyzerDeviceManager
+from .managers import (
+    TankDeviceManager,
+    EnvironmentalDeviceManager,
+    AnalyzerDeviceManager,
+    WeatherStationManager,
+    TrapViewManager
+)
 
 class TankDevice(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -287,6 +293,7 @@ class TrapView(models.Model):
     Objective = models.CharField('Objective', choices = OBJECT_CHOICES,max_length=2,blank =True,null=True)
     runningNN = models.BooleanField("running NN?", default = False)
 
+    objects = TrapViewManager()
     class Meta:
         verbose_name = 'TrapView device'
         verbose_name_plural = 'TrapView devices'
@@ -314,6 +321,8 @@ class WeatherStation(models.Model):
     
     DeviceName = models.CharField('Device Name', max_length=50, unique=True)
     DeviceMacAddress = models.CharField('Mac Address', max_length=50, unique=True)
+    Lat = models.FloatField("Latitud" ,null=True, blank=True)
+    Long = models.FloatField("Longitud" ,null=True, blank=True)
 
     # ===== SETTINGS =====
     IdLocation = models.ForeignKey(Location, on_delete=models.CASCADE, unique=False,blank=True,null=True)
@@ -325,6 +334,7 @@ class WeatherStation(models.Model):
 
     SleepTime = models.IntegerField('Sleep Time', choices=SleepTime_CHOICES,null=True, blank =True,default=60)
 
+    objects = WeatherStationManager()
     class Meta:
         verbose_name = 'Weather station'
         verbose_name_plural = 'Weather station devices'

@@ -379,7 +379,61 @@ def on_message(client, userdata, message):
           time.sleep(0.1)
           client.publish(topic_pub + "/"+ mac ,payload)
           print("server GATEWAY",payload)
-          
+      
+      elif typeM == "weatherStationSetting":
+        name = m_mqtt.get("name","NULL")
+        mac = m_mqtt.get("mac","NULL")
+        function = m_mqtt.get("function","NULL")
+
+        if function == "setting":
+          sql_query = """SELECT * FROM device_weatherstation WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+          payloadRaw = db_get(sql_query)
+          payloadRaw = payloadRaw[0]
+
+          print(payloadRaw)
+
+          payload = {
+            "status":True,
+            "timesleep":payloadRaw[6],
+            "A_TH":payloadRaw[3],
+            "A_WS":payloadRaw[4],
+            "A_RD":payloadRaw[5],
+            }
+          payload = json.dumps(payload)
+          time.sleep(0.1)
+          client.publish(topic_pub + "/"+ mac ,payload)
+          print("server weather station",payload)
+      
+      elif typeM == "weatherStationData":
+        dt = datetime.now()
+        mac = m_mqtt.get("mac","NULL")
+        vB = m_mqtt.get("vB","NULL")
+        T = m_mqtt.get("T","NULL")
+        H = m_mqtt.get("H","NULL")
+        WV = m_mqtt.get("WV","NULL")
+        WD = m_mqtt.get("WD","NULL")
+        RA = m_mqtt.get("RA","NULL")
+        RS = m_mqtt.get("RS","NULL")
+
+        sql_query_id = """SELECT id FROM device_weatherstation WHERE "DeviceMacAddress" = '{0}'""".format(mac)
+        raws_id = db_get(sql_query_id)
+        _id = raws_id[0][0]
+        
+        sql_query = """INSERT INTO data_weatherstationdata(
+          "DateCreate",
+          "IdDevice_id",
+          "VoltageBattery",
+          "Temperature",
+          "Humidity",
+          "WindVelocity",
+          "WindDirection",
+          "RainCounter",
+          "Radiation",
+          "Status") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}')""".format(dt,_id,vB,T,H,WV,WD,RA,RS,"Normal running")
+        
+        
+        db_local(sql_query)
+
       elif typeM == "trapViewSetting":
         mac = m_mqtt.get("mac","NULL")
         function = m_mqtt.get("function","NULL")

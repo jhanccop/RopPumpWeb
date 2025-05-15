@@ -355,3 +355,103 @@ class TrapViewDataManager(models.Manager):
             payload.append(data.filter(IdDevice__id = val).order_by('DateCreate'))
 
         return payload
+    
+    # =========== DATOS WEATHER STATION PARA VISUALIZACION PUBLICO ===========
+    def get_trapView_data_by_locations(self,location, interval):
+
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        datos = (
+            self.filter(
+                DateCreate__range = rangeDate,
+                IdDevice__IdLocation__LocationName = location
+                )
+            .values(
+                'IdDevice__DeviceName',
+                'IdDevice__Lat',
+                'IdDevice__Long',  
+                'DateCreate',
+                'Humidity',
+                'Temperature',
+                'VoltageBattery',
+                'nDetected',
+                'img64',
+                'img_bool',
+                'Status'
+            )
+            .order_by('IdDevice__DeviceName', '-DateCreate')
+        )
+
+        resultado = {}
+
+        for dato in datos:
+            # Extraemos el nombre del dispositivo
+            device_name = dato['IdDevice__DeviceName']
+            
+            # Si el dispositivo no está en el diccionario, lo inicializamos
+            if device_name not in resultado:
+                resultado[device_name] = []
+            
+            # Añadimos el registro actual a la lista del dispositivo
+            resultado[device_name].append(dato)
+
+        return resultado
+    
+class WeatherStationDataManager(models.Manager):
+    # =========== DATOS WEATHER STATION PARA VISUALIZACION PUBLICO ===========
+    def get_weatherStation_data_by_locations(self,location, interval):
+
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        datos = (
+            self.filter(
+                DateCreate__range = rangeDate,
+                IdDevice__IdLocation__LocationName = location
+                )
+            .values(
+                'IdDevice__DeviceName',   # Ajusta si el campo nombre tiene otro nombre
+                'IdDevice__Lat',
+                'IdDevice__Long',
+                'DateCreate',
+                'Humidity',
+                'Temperature',
+                'VoltageBattery',
+                'WindVelocity',
+                'WindDirection',
+                'RainCounter',
+                'Radiation',
+                'Status'
+            )
+            .order_by('IdDevice__DeviceName', '-DateCreate')
+        )
+
+        resultado = {}
+
+        for dato in datos:
+            # Extraemos el nombre del dispositivo
+            device_name = dato['IdDevice__DeviceName']
+            
+            # Si el dispositivo no está en el diccionario, lo inicializamos
+            if device_name not in resultado:
+                resultado[device_name] = []
+            
+            # Añadimos el registro actual a la lista del dispositivo
+            resultado[device_name].append(dato)
+
+        return resultado

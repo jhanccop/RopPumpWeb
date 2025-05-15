@@ -1,0 +1,186 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="76x76" href="{% static 'assets/img/logo-ct.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'assets/img/logo-ct.png' %}">
+    <title>DataGreen | AI-Powered Environmental Monitoring</title>
+    
+    <!-- Font Awesome Icons -->
+    <script src="{% static 'assets/js/plugins/awesone.js' %}" crossorigin="anonymous"></script>
+    
+    <!-- Bootstrap CSS -->
+    <link href="{% static 'assets/css/bootstrap.min.css' %}" rel="stylesheet">
+
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    
+    <style>
+        :root {
+            --wildlife-green: #2e7d32;
+            --pest-brown: #6d4c41;
+            --oil-blue: #0d47a1;
+        }
+        .hero-section {
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url("{% static 'assets/img/fondo.jpeg' %}");
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 120px 0;
+        }
+        .wildlife-card {
+            border-top: 5px solid var(--wildlife-green);
+        }
+        .pest-card {
+            border-top: 5px solid var(--pest-brown);
+        }
+        .oil-card {
+            border-top: 5px solid var(--oil-blue);
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .dashboard-preview {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .navbar {
+            transition: all 0.3s;
+        }
+        .navbar.scrolled {
+            background-color: #239b56 !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand text-lg font-weight-bolder" href="#">
+                <i class="fas fa-frog text-lg "></i>&emsp;  DataGreen Solutions
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#solutions">Solutions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#technology">Technology</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    {% block content %}
+
+    {% endblock content %}
+
+        <!-- Footer -->
+        <footer class="bg-dark text-white py-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4 mb-4">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-leaf me-2"></i>DataGreen Solutions</h5>
+                        <p>
+                            Soluciones de monitoreo ambiental impulsadas por IA e IoT para un futuro sustentable.
+                        </p>
+                        <div class="social-icons">
+                            <!-- 
+                            <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="text-white me-3"><i class="fab fa-linkedin"></i></a>
+                            <a href="#" class="text-white"><i class="fab fa-github"></i></a>
+                            -->
+                            <a href="#" class="text-white me-3"><i class="fab fa-facebook"></i></a>
+                            
+
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-6 mb-4">
+                        <h5 class="fw-bold mb-3">Soluciones</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><a href="#" class="text-white text-decoration-none">Fauna</a></li>
+                            <li class="mb-2"><a href="#" class="text-white text-decoration-none">Agrícola</a></li>
+                            <li class="mb-2"><a href="#" class="text-white text-decoration-none">Industria</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-2 col-md-6 mb-4">
+                        <h5 class="fw-bold mb-3">Tecnología</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><a href="#" class="text-white text-decoration-none">Redes IoT</a></li>
+                            <li class="mb-2"><a href="#" class="text-white text-decoration-none">Modelos AI</a></li>
+                            <li class="mb-2"><a href="#" class="text-white text-decoration-none">Dashboard</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-4 mb-4">
+                        <h5 class="fw-bold mb-3">Contacto</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Lima, Perú</li>
+                            <li class="mb-2"><i class="fas fa-phone me-2"></i>(+51) 931146986</li>
+                            <li class="mb-2"><i class="fas fa-envelope me-2"></i>info@datagreensolutions.com</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr class="my-4 bg-secondary">
+                <div class="row">
+                    <div class="col-md-6 text-center text-md-start">
+                        <p class="mb-0">&copy; 2024 DataGreen. All rights reserved.</p>
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <p class="mb-0">
+                            <a href="#" class="text-white text-decoration-none me-3">Privacy Policy</a>
+                            <a href="#" class="text-white text-decoration-none">Terms of Service</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    
+        <!-- Bootstrap JS -->
+        <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}""></script>
+        <script>
+            // Navbar scroll effect
+            window.addEventListener('scroll', function() {
+                const navbar = document.querySelector('.navbar');
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            });
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        </script>
+
+</body>
+</html>

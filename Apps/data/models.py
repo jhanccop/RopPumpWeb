@@ -17,7 +17,8 @@ from .managers import (
     TankDataManager,
     EnvironmentalDataManager,
     CamVidDataManager,
-    TrapViewDataManager
+    TrapViewDataManager,
+    WeatherStationDataManager
 )
 
 # Create your models here.
@@ -256,6 +257,7 @@ class WeatherStationData(models.Model):
     )
     Status = models.CharField('Status', choices = STATUS_CHOICES,max_length=20,blank =True,null=True)
 
+    objects = WeatherStationDataManager()
     class Meta:
         verbose_name = 'Weather Station Data'
         verbose_name_plural = 'All Weather Station Data'

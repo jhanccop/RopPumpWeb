@@ -1,104 +1,388 @@
-{% extends 'base_home.html' %}
+{% extends 'home/base-home.html' %}
 {% load static %}
 
 {% block title %} Home {% endblock title %}
 
 {% block content %}
 
-<div class="main-content position-relative bg-gray-100 max-height-vh-100 h-100">
-    <div class="container-fluid px-2 px-md-4">
-        <div class="page-header min-height-300 border-radius-xl mt-4" style="background-image: url('{% static 'assets/img/oil_monitoring.png' %}');">
-          <span class="mask  bg-gradient-info  opacity-3"></span>
+
+<!-- Hero Section -->
+<section class="hero-section text-center" id="home">
+    <div class="container">
+        <h4 class="display-6 fw-bold mb-2">Monitoreo industrial y ambiental basadas en IA e IoT</h4>
+        <p class="lead mb-5">Soluciones impulsadas por IA e IoT para el monitoreo de fauna, control de plagas y la generación de energía</p>
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+            <a href=""  class="btn btn-primary btn-lg px-4 gap-3">Ver dispositivos</a>
+            <a href="{% url 'data_app:monitoreo-fauna' 'JardinBotanico' %}" class="btn btn-outline-light btn-lg px-4">Ver monitoreo de fauna</a>
         </div>
-        <div class="card card-body mx-3 mx-md-4 mt-n6">
-          <div class="row gx-4 mb-2">
-            <div class="col-auto">
-              <div class="avatar avatar-xl position-relative">
-                <img src="{% static 'assets/img/oilserv.png' %}" alt="profile_image" class="w-100 border-radius-lg shadow-sm">
-              </div>
-            </div>
-            <div class="col-auto my-auto">
-              <div class="h-100">
-                <h5 class="mb-1">
-                 Wild Monitoring
-                </h5>
-                <p class="mb-0 font-weight-normal text-sm">
-                  Smart monitoring.
-                </p>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="row">
-              <div class="col-12 col-xl-4">
-                <div class="card card-plain h-100">
-                  <div class="card-header pb-0 p-3">
-                    <h6 class="mb-0">About project</h6>
-                  </div>
-                  <div class="card-body p-3">
-                    <p class = "text-justify">
-                      In recent years, we have seen the enormous advance of technology in artificial intelligence and image analysis, which has revolutionized multiple fields, from creating surreal images with very specific details to recognizing a person. However, this use of AI and intelligent images has not reached the area of ​​biology and agriculture with the required force, since there are many challenges that limit this widespread adoption. Some problems include the low quantity and quality of data, interdisciplinary experience, where many professionals do not have advanced training in AI, and the biological complexity of organisms.</p>
-                  </div>
-                </div>
-              </div>
+    </div>
+</section>
 
-              <div class="col-12 col-xl-4">
-                <div class="card card-plain h-100">
-                  <div class="card-header pb-0 p-3">
-                    <div class="row">
-                      <div class="col-md-8 d-flex align-items-center">
-                        <h6 class="mb-0">Objects</h6>
-                      </div>
-                      <div class="col-md-4 text-end">
-                        <a href="javascript:;">
-                          <i class="fas fa-building text-secondary text-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Profile"></i>
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-body p-3">
-                    <p class="text-sm text-justify">
-                     
-                    Wildlife monitoring is carried out for various reasons, such as biodiversity conservation and management, population health assessment, pest control, behavioral patterns, species or population activity, detection of environmental impacts, and more. The traditional wildlife monitoring process in general is based on observation and in many cases the collection of some organisms for identification. This monitoring involves manual identification and can be slow in many cases since it involves too much valuable time from the researcher who has to be an expert in their taxonomy, so it depends a lot on experience. In addition, cash monitoring requires information from field data such as environmental variables (temperature, location, wind direction, precipitator, among others).
-                    </p>
-
-                    <hr class="horizontal gray-light my-4">
-
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12 col-xl-4">
-                <div class="card card-plain h-100">
-                  <div class="card-header pb-0 p-3">
-                    <div class="row">
-                      <div class="col-md-8 d-flex align-items-center">
-                        <h6 class="mb-0">Cameras</h6>
-                      </div>
-                      <div class="col-md-4 text-end">
-                        <a href="javascript:;">
-                          <i class="fas fa-user-edit text-secondary text-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Profile"></i>
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-body p-3">
-
-                    <hr class="horizontal gray-light my-4">
-                    <ul class="list-group">
-                      <a class="d-block shadow-xl border-radius-xl">
-                        <img src="{% static 'assets/img/img-detected.jpg' %}" alt="img-blur-shadow" class="img-fluid shadow border-radius-xl">
-                        </a>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              
-
-            </div>
-          </div>
+<!-- Solutions Section -->
+<section class="py-5" id="solutions">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Soluciones de monitoreo para la industria y la investigación</h2>
+            <p class="lead text-muted">Una visión integral asistida con tecnologías emergentes </p>
         </div>
-      </div>
-</div>
+        
+        <div class="row g-4">
+            <!-- Wildlife Card -->
+            <div class="col-md-4">
+                <div class="card h-100 wildlife-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon text-success">
+                            <i class="fas fa-spider"></i>
+                        </div>
+                        <h4 class="card-title">Monitoreo de fauna</h4>
+                        <p class="card-text">
+                            El monitoreo de la flora y fauna es clave para conservar la biodiversidad. Gracias a la unión entre ciencia y tecnología, hoy es posible observar y proteger la naturaleza sin alterarla.
+                        </p>
+                        <ul class="text-start text-muted">
+                            <li>Indetificación de fauna</li>
+                            <li>Correlación con variables ambientales</li>
+                            <li>Mantenimiento mínimo</li>
+                            <li>Emisión de alertas</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pest Card -->
+            <div class="col-md-4">
+                <div class="card h-100 pest-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon" style="color: var(--pest-brown);">
+                            <i class="fas fa-bug"></i>
+                        </div>
+                        <h4 class="card-title">Pest Monitoring</h4>
+                        <p class="card-text">
+                            El monitoreo de plagas, potenciado por inteligencia artificial, mejora la gestión agrícola al anticipar problemas, reducir costos y optimizar recursos de forma eficiente y sostenible.
+                        </p>
+                        <ul class="text-start text-muted">
+                            <li>Detección automática de plagas</li>
+                            <li>Pronóstico de población</li>
+                            <li>Seguimiento del tratamiento</li>
+                            <li>Reducción de pesticidas</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Oil Extraction Card -->
+            <div class="col-md-4">
+                <div class="card h-100 oil-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon text-primary">
+                            <i class="fas fa-industry"></i>
+                        </div>
+                        <h4 class="card-title">Monitoreo de UBM</h4>
+                        <p class="card-text">
+                            Seguimiento inteligente de parámetros de producción y operación de campos de petróleo.
+                        </p>
+                        <ul class="text-start text-muted">
+                            <li>Nivel de tanque</li>
+                            <li>Presión y flujo de lineas</li>
+                            <li>Cartas dinamométricas</li>
+                            <li>Llenado de bomba</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Technology Section -->
+<section class="py-5 bg-light" id="technology">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Tecnología empleada</h2>
+            <p class="lead text-muted">Tecnologías de vanguardia que impulsan nuestras soluciones de monitoreo</p>
+        </div>
+        
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="p-4">
+                    <div class="d-flex mb-4">
+                        <div class="me-4">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block">
+                                <i class="fas fa-microchip text-primary fs-2"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Red de sensores IoT</h4>
+                            <p class="text-muted mb-0">
+                                Red distribuida de sensores ambientales y cámaras que recopilan datos en tiempo real sobre temperatura, humedad, movimiento y más.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-4">
+                        <div class="me-4">
+                            <div class="bg-success bg-opacity-10 p-3 rounded-circle d-inline-block">
+                                <i class="fas fa-brain text-success fs-2"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>AI & Machine Learning</h4>
+                            <p class="text-muted mb-0">
+                                Algoritmos avanzados para reconocimiento de especies, detección de anomalías y análisis predictivo.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-4">
+                        <div class="me-4">
+                            <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-block">
+                                <i class="fas fa-cloud text-info fs-2"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Datos en la nube</h4>
+                            <p class="text-muted mb-0">
+                                Infraestructura en nube segura y escalable para almacenamiento, procesamiento y visualización de datos.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex mb-4">
+                        <div class="me-4">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded-circle d-inline-block">
+                                <i class="fas fa-chart-line text-warning fs-2"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Dashboard</h4>
+                            <p class="text-muted mb-0">
+                                Gráficos y datos históricos, con emisión de alertas automáticas. 
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <img src="{% static 'assets/img/camera.JPEG' %} " alt="Technology Illustration" class="img-fluid rounded shadow" width="450">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Dashboard Preview -->
+<section class="py-5" id="dashboard">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Dashboard intuitivo e interactivo</h2>
+            <p class="lead text-muted">Visualización y análisis de datos robusto</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="dashboard-preview">
+                    <img src="{% static 'assets/img/dash.png' %}" alt="Dashboard Preview" class="img-fluid">
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <h3>Visualización integral de datos</h3>
+                <p>Nuestro panel de control proporciona información en tiempo real de todos sus sistemas de monitoreo en una plataforma centralizada.</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex">
+                            <div class="me-3 text-primary">
+                                <i class="fas fa-chart-line fs-2"></i>
+                            </div>
+                            <div>
+                                <h5>Analisis en sitio</h5>
+                                <p class="text-muted mb-0">Nuestros dispositivos analizan la información en el sitio.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex">
+                            <div class="me-3 text-success">
+                                <i class="fas fa-bell fs-2"></i>
+                            </div>
+                            <div>
+                                <h5>Sistema de alertas</h5>
+                                <p class="text-muted mb-0">Envian alertas al detectar organismos o anomalías de manera automática.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex">
+                            <div class="me-3 text-info">
+                                <i class="fas fa-map-marked-alt fs-2"></i>
+                            </div>
+                            <div>
+                                <h5>Ubicación geografica</h5>
+                                <p class="text-muted mb-0">El mapa interactivo muestra la posición geografica de los sensores.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex">
+                            <div class="me-3 text-warning">
+                                <i class="fas fa-file-export fs-2"></i>
+                            </div>
+                            <div>
+                                <h5>Generación de reportes</h5>
+                                <p class="text-muted mb-0">Emisión de resumenes diarios, semanales o mensuales automáticoas.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Case Studies -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Proyectos implementados</h2>
+            <p class="lead text-muted">Soluciones que generan impacto</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="{% static 'assets/img/MARIPOSA.png' %}" class="card-img-top" alt="Wildlife Conservation" style="height: 500px;">
+                    <div class="card-body">
+                        <span class="badge bg-success mb-2">Monitoreo de fauna</span>
+                        <h5 class="card-title">Monitoreo de lepidópteros (UNALM)</h5>
+                        <p class="card-text text-justify">
+                            Monitoreo de mariposas junto con parámetros microclimáticos para determianción de dinámica poblacional.
+                        </p>
+
+
+                    <a href="{% url 'data_app:monitoreo-fauna' 'JardinBotanico' %}" class="btn btn-primary mt-3">Ver datos</a>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <small class="text-muted">Implemented 2024</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="{% static 'assets/img/plutella.png' %}" class="card-img-top" alt="Agriculture" style="height: 500px;">
+                    <div class="card-body">
+                        <span class="badge" style="background-color: var(--pest-brown);">Control de plagas</span>
+                        <h5 class="card-title">Plutella cynostella - mosca blanca</h5>
+                        <p class="card-text">
+                            Monitoreo de la mosca blanca para el monitoreo de la plaga de las mosca blanca en coles.
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <small class="text-muted">Implemented 2024</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="{% static 'assets/img/oilRP.png' %}" class="card-img-top" alt="Oil Extraction" style="height: 500px;">
+                    <div class="card-body">
+                        <span class="badge bg-primary">Industria</span>
+                        <h5 class="card-title">Monitoreo dinamométrico</h5>
+                        <p class="card-text">
+                            Obtención de cartas dinamométricas y llenado de bomba en sistema de bombeo hidraulicos.
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <small class="text-muted">Implemented 2024</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="py-5" id="contact">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="fw-bold mb-4">¿Estás interesado?</h2>
+                <p class="lead mb-5">Contáctenos para conocer cómo nuestras soluciones de monitoreo pueden beneficiar a su proyecto u organización.</p>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.Name.id_for_label }}" class="form-label">Nombres</label>
+                                {{ form.Name }}
+                                {% if form.Name.errors %}
+                                    <div class="text-danger">
+                                        {{ form.Name.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.apellido.id_for_label }}" class="form-label">Apellido</label>
+                                {{ form.LastName }}
+                                {% if form.LastName.errors %}
+                                    <div class="text-danger">
+                                        {{ form.LastName.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.Email.id_for_label }}" class="form-label">Email</label>
+                            {{ form.Email }}
+                            {% if form.Email.errors %}
+                                <div class="text-danger">
+                                    {{ form.Email.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.Organization.id_for_label }}" class="form-label">Organización</label>
+                            {{ form.Organization }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.Interes.id_for_label }}" class="form-label">Interés</label>
+                            {{ form.Interes }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.Message.id_for_label }}" class="form-label">Mensaje</label>
+                            {{ form.Message }}
+                        </div>
+
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Enviar</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
 
 {% endblock content %}

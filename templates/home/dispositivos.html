@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soluciones en Cámaras Trampa | Wildlife Tech</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c786c;
+            --secondary-color: #004445;
+            --accent-color: #f8b400;
+            --light-color: #faf5e4;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        
+        .hero-section {
+            background: linear-gradient(rgba(0, 68, 69, 0.8), rgba(0, 68, 69, 0.8)), 
+                        url('https://images.unsplash.com/photo-1452570053594-1b985d6ea890?ixlib=rb-4.0.3') no-repeat center center;
+            background-size: cover;
+            color: white;
+            padding: 100px 0;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            padding: 1.5rem;
+        }
+        
+        .badge-feature {
+            background-color: var(--accent-color);
+            color: #333;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .comparison-table th {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .tech-badge {
+            background-color: var(--light-color);
+            border: 1px solid var(--primary-color);
+            color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-camera me-2"></i>DataGreen Solutions
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home_app:home' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#models">Modelos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Características</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#comparison">Comparación</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Models Section -->
+    <section id="models" class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Nuestros Modelos de Cámaras Trampa</h2>
+                <p class="lead text-muted">Selecciona la solución que mejor se adapte a tus necesidades</p>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Model 1 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="my-0">Básica</h4>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title text-center">$199<small class="text-muted fw-light">/unidad</small></h3>
+                            <ul class="list-unstyled mt-3 mb-4">
+                                <li><i class="fas fa-check text-success me-2"></i>Cámara trampa tradicional</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Baterías recargables</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Resolución 12MP</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Detector de movimiento PIR</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Resistente a la intemperie</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>Sin panel solar</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>Sin sensores ambientales</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>Sin telemetría</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-white text-center">
+                            <button class="btn btn-outline-primary w-100">Más información</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Model 2 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="my-0">Solar</h4>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title text-center">$299<small class="text-muted fw-light">/unidad</small></h3>
+                            <ul class="list-unstyled mt-3 mb-4">
+                                <li><i class="fas fa-check text-success me-2"></i>Todas las características Básica</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Panel solar integrado</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Autonomía extendida</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Batería de mayor capacidad</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Modo de bajo consumo</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>Sin sensores ambientales</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>Sin telemetría</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-white text-center">
+                            <button class="btn btn-outline-primary w-100">Más información</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Model 3 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="my-0">Solar + Ambiental</h4>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title text-center">$399<small class="text-muted fw-light">/unidad</small></h3>
+                            <ul class="list-unstyled mt-3 mb-4">
+                                <li><i class="fas fa-check text-success me-2"></i>Todas las características Solar</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Sensores de temperatura</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Sensores de humedad</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Registro ambiental integrado</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Correlación datos ambiente/fotos</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>Sin telemetría</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-white text-center">
+                            <button class="btn btn-outline-primary w-100">Más información</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Model 4 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="my-0">Premium IA</h4>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title text-center">$599<small class="text-muted fw-light">/unidad</small></h3>
+                            <ul class="list-unstyled mt-3 mb-4">
+                                <li><i class="fas fa-check text-success me-2"></i>Todas las características Solar + Ambiental</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Telemetría LTE/4G</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Inteligencia Artificial integrada</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Detección de especies</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Alertas en tiempo real</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Plataforma de monitoreo en la nube</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-white text-center">
+                            <button class="btn btn-primary w-100">Cotizar ahora</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Tecnologías Integradas</h2>
+                <p class="lead text-muted">Características avanzadas para investigación profesional</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3 text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-solar-panel"></i>
+                    </div>
+                    <h4>Energía Solar</h4>
+                    <p class="text-muted">Paneles de alta eficiencia para operación continua en campo sin necesidad de mantenimiento frecuente.</p>
+                    <span class="badge tech-badge">Eficiencia 22%</span>
+                </div>
+                
+                <div class="col-md-6 col-lg-3 text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-temperature-low"></i>
+                    </div>
+                    <h4>Sensores Ambientales</h4>
+                    <p class="text-muted">Monitoreo preciso de temperatura (-20°C a 60°C) y humedad relativa (0-100% RH) con registro horario.</p>
+                    <span class="badge tech-badge">±0.5°C precisión</span>
+                </div>
+                
+                <div class="col-md-6 col-lg-3 text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <h4>Telemetría LTE</h4>
+                    <p class="text-muted">Transmisión de datos y fotos en tiempo real a través de redes celulares con bajo consumo energético.</p>
+                    <span class="badge tech-badge">Banda ancha IoT</span>
+                </div>
+                
+                <div class="col-md-6 col-lg-3 text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h4>Inteligencia Artificial</h4>
+                    <p class="text-muted">Reconocimiento de especies, filtrado de falsos positivos y alertas inteligentes para investigación eficiente.</p>
+                    <span class="badge tech-badge">+95% precisión</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section id="comparison" class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Comparación de Modelos</h2>
+                <p class="lead text-muted">Todos los detalles técnicos en una sola vista</p>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Característica</th>
+                            <th>Básica</th>
+                            <th>Solar</th>
+                            <th>Solar + Ambiental</th>
+                            <th>Premium IA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Panel Solar</strong></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Sensores Ambientales</strong></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Telemetría LTE</strong></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Inteligencia Artificial</strong></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Autonomía (días)</strong></td>
+                            <td>30-60</td>
+                            <td>180+</td>
+                            <td>180+</td>
+                            <td>120+ (con telemetría activa)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Resolución Foto</strong></td>
+                            <td>12MP</td>
+                            <td>12MP</td>
+                            <td>16MP</td>
+                            <td>20MP</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rango de Temperatura</strong></td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            <td>-20°C a 60°C</td>
+                            <td>-30°C a 70°C</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Plataforma en la Nube</strong></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <h2 class="fw-bold mb-4">¿Necesitas asesoría técnica?</h2>
+                    <p class="lead">Nuestros expertos pueden ayudarte a seleccionar la mejor solución para tu proyecto de investigación o conservación.</p>
+                    
+                    <div class="mt-5">
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-phone-alt me-3 mt-1 text-primary"></i>
+                            <div>
+                                <h5 class="mb-0">Teléfono</h5>
+                                <p class="text-muted mb-0">+1 (555) 123-4567</p>
+                            </div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-envelope me-3 mt-1 text-primary"></i>
+                            <div>
+                                <h5 class="mb-0">Email</h5>
+                                <p class="text-muted mb-0">contacto@wildlifetech.com</p>
+                            </div>
+                        </div>
+                        <div class="d-flex">
+                            <i class="fas fa-map-marker-alt me-3 mt-1 text-primary"></i>
+                            <div>
+                                <h5 class="mb-0">Oficina Central</h5>
+                                <p class="text-muted mb-0">123 Tech Park, Silicon Valley, CA</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6 mt-4 mt-lg-0">
+                    <div class="card shadow">
+                        <div class="card-body p-4">
+                            <h4 class="card-title mb-4">Formulario de Contacto</h4>
+                            <form>
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" placeholder="Nombre completo" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="email" class="form-control" placeholder="Correo electrónico" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="tel" class="form-control" placeholder="Teléfono">
+                                </div>
+                                <div class="mb-3">
+                                    <select class="form-select" required>
+                                        <option value="" selected disabled>Interés en modelo...</option>
+                                        <option>Básica</option>
+                                        <option>Solar</option>
+                                        <option>Solar + Ambiental</option>
+                                        <option>Premium IA</option>
+                                        <option>Varios modelos</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <textarea class="form-control" rows="4" placeholder="Mensaje o consulta específica"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Enviar Mensaje</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h5><i class="fas fa-camera me-2"></i>Wildlife Tech</h5>
+                    <p class="text-muted">Tecnología avanzada para la conservación e investigación de vida silvestre.</p>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h5>Enlaces Rápidos</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#models" class="text-decoration-none text-muted">Modelos</a></li>
+                        <li><a href="#features" class="text-decoration-none text-muted">Características</a></li>
+                        <li><a href="#comparison" class="text-decoration-none text-muted">Comparación</a></li>
+                        <li><a href="#contact" class="text-decoration-none text-muted">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>Conéctate</h5>
+                    <div class="social-links">
+                        <a href="#" class="text-decoration-none text-muted me-2"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-decoration-none text-muted me-2"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-decoration-none text-muted me-2"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="text-decoration-none text-muted me-2"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-decoration-none text-muted"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4 bg-secondary">
+            <div class="text-center text-muted">
+                <small>&copy; 2023 Wildlife Tech. Todos los derechos reservados.</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

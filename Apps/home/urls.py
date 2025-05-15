@@ -12,5 +12,11 @@ urlpatterns = [
             name = "home"
         ),
 
+    path(
+            'dispositivos',
+            views.DevicesView.as_view(),
+            name = "dispositivos"
+        ),
+
     #path('login', views.LoginView.as_view()),
 ]

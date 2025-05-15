@@ -44,19 +44,13 @@ INSTALLED_APPS = [
     'Apps.groups',
     'Apps.home',
     'Apps.location',
-    #'Apps.input',
-    #'Apps.overview',
-    #'Apps.production',
-    #'Apps.settings',
-    #'Apps.tests',
     'Apps.users',
-    #'Apps.wells',
-    #'Apps.wellServices',
     
     # third apps
     'multiselectfield',
     'rest_framework',
-    'import_export'
+    'import_export',
+    #'captcha',
 ]
 
 MIDDLEWARE = [
@@ -117,6 +111,9 @@ AUTH_USER_MODEL = 'users.User'
 DATETIME_FORMAT = '%d-%m-%Y %H:%M:%S'
 
 LANGUAGE_CODE = 'en-us'
+
+#RECAPTCHA_PUBLIC_KEY = 'your_site_key_here'
+#RECAPTCHA_PRIVATE_KEY = 'your_secret_key_here'
 
 TIME_ZONE = 'UTC'
 #TIME_ZONE = 'America/Lima'

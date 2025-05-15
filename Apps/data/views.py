@@ -191,6 +191,30 @@ class OverviewAllLocation(LoginRequiredMixin, CompanyMixin, ListView):
         }
 
         return allData
+    
+# =================== MONITOREO FAUNA POR UBICACION PUBLICO FREE (MAIN SCREEN) ===================
+class MonitoreoFaunaPorUbicacionView(ListView):
+    template_name = "data/monitoreo-fauna.html"
+    context_object_name = "dev"
+
+    def get_queryset(self):
+        location = self.kwargs['ubicacion']
+        intervalDate = self.request.GET.get("dateKword", '')
+
+        if intervalDate == "today" or intervalDate =="":
+            intervalDate = str(date.today() - timedelta(days = 2)) + " to " + str(date.today())
+
+        WS = WeatherStationData.objects.get_weatherStation_data_by_locations(location, intervalDate)
+        TV = TrapViewData.objects.get_trapView_data_by_locations(location, intervalDate)
+ 
+        allData = {
+            "intervalDate": intervalDate,
+            "location": location,
+            "WS": WS,
+            "TV": TV,
+        }
+
+        return allData
 
 # OVERVIEW by LOCATION (MAIN SCREEN)
 class OverviewByLocation(LoginRequiredMixin, CompanyMixin, ListView):

@@ -1,10 +1,10 @@
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 #ALLOWED_HOSTS = ["0.0.0.0",'24.199.125.52',"*","24.144.68.190","192.168.3.56"]
-ALLOWED_HOSTS = ['24.199.125.52',"192.168.3.31","davinchyis.tech","localhost"]
+ALLOWED_HOSTS = ['24.199.125.52',"192.168.3.31","davinchyis.tech","localhost","datagreensolutions.com"]
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -35,5 +35,5 @@ STATIC_ROOT = BASE_DIR.child('staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR.child('media')
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 1485760
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
