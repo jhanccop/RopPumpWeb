@@ -412,8 +412,10 @@ def on_message(client, userdata, message):
         H = m_mqtt.get("H","NULL")
         WV = m_mqtt.get("WV","NULL")
         WD = m_mqtt.get("WD","NULL")
-        RA = m_mqtt.get("RA","NULL")
+        RA = m_mqtt.get("PP","NULL")
         RS = m_mqtt.get("RS","NULL")
+
+        
 
         sql_query_id = """SELECT id FROM device_weatherstation WHERE "DeviceMacAddress" = '{0}'""".format(mac)
         raws_id = db_get(sql_query_id)
