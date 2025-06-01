@@ -94,7 +94,7 @@
                                             {% elif value.0.VoltageBattery >= 3.4 %}bg-warning
                                             {% else %}bg-danger{% endif %}" role="progressbar"
                                         style="width: {% widthratio value.0.VoltageBattery|floatformat:2 4.2 100 %}%;"
-                                        aria-valuenow="{{ value.0.VoltageBattery }}" aria-valuemin="3.0"
+                                        aria-valuenow="{{ value.0.VoltageBattery|floatformat:2 }}" aria-valuemin="3.0"
                                         aria-valuemax="4.2">
                                     </div>
                                 </div>
@@ -200,7 +200,7 @@
                         <h6 class="font-weight-bolder"> {{key}} </h6>
                     </div>
                     <div class="text-end">
-                        <h6>Actualizado: <span id="lastUpdate">{{ value.0.DateCreate|date:'d-M-Y h:i' }} UTC</span>
+                        <h6>Actualizado: <span id="lastUpdate">{{ value.0.DateCreate|date:'d-M-Y H:i' }} UTC</span>
                         </h6>
                     </div>
                 </div>
@@ -265,7 +265,7 @@
                     {% if value.0.WindVelocity %}
                     <div class="col-md-3">
                         <div class="card stat-card">
-                            <div class="stat-value text-danger" id="weatherWindSpeedValue">{{value.0.WindVelocity}}
+                            <div class="stat-value text-danger" id="weatherWindSpeedValue">{{value.0.WindVelocity|floatformat:2}}
                                 <span class="stat-label text-danger">km/h</span></div>
                             <div class="stat-label">Velocidad Viento</div>
                             <div class="mt-2">
@@ -371,7 +371,7 @@
                                             <td>{{i.Temperature}}</td>
                                             <td>{{i.Humidity}}</td>
                                             <td>{{i.RainCounter}}</td>
-                                            <td>{{i.WindVelocity}}</td>
+                                            <td>{{i.WindVelocity|floatformat:2}}</td>
                                             <td>{{i.WindDirection}}</td>
                                             <td>{{i.Radiation}}</td>
                                             <td>{{i.VoltageBattery}}</td>

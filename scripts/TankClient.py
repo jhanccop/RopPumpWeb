@@ -405,6 +405,7 @@ def on_message(client, userdata, message):
           print("server weather station",payload)
       
       elif typeM == "weatherStationData":
+
         dt = datetime.now()
         mac = m_mqtt.get("mac","NULL")
         vB = m_mqtt.get("vB","NULL")
@@ -412,10 +413,11 @@ def on_message(client, userdata, message):
         H = m_mqtt.get("H","NULL")
         WV = m_mqtt.get("WV","NULL")
         WD = m_mqtt.get("WD","NULL")
-        RA = m_mqtt.get("PP","NULL")
+        RA = m_mqtt.get("RA","NULL")
         RS = m_mqtt.get("RS","NULL")
 
-        
+
+        print(dt, m_mqtt)
 
         sql_query_id = """SELECT id FROM device_weatherstation WHERE "DeviceMacAddress" = '{0}'""".format(mac)
         raws_id = db_get(sql_query_id)
@@ -432,7 +434,6 @@ def on_message(client, userdata, message):
           "RainCounter",
           "Radiation",
           "Status") VALUES('{0}',{1},{2},{3},{4},{5},{6},{7},{8},'{9}')""".format(dt,_id,vB,T,H,WV,WD,RA,RS,"Normal running")
-        
         
         db_local(sql_query)
 
