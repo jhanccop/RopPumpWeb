@@ -755,20 +755,22 @@ def on_message(client, userdata, message):
         if float(bat) < 3.5:
           StatusB = "1"
 
-        nDetected = 0
-        Objective = 0
+        nDetected = imsg.get("nDetected","0")
+        
 
         sql_query_id = """SELECT * FROM device_trapview WHERE "DeviceMacAddress" = '{0}';""".format(mac)
         raws_id = db_get(sql_query_id)
 
         _id = raws_id[0][0]
 
+        Objective =  raws_id[0]1[0]
+
         img_bool = True
         if img64 == "NULL" or img64 == "":
           img_bool = False
         else:
           nDetected = 2
-          Objective = 1
+          #Objective = 1
 
         sql_query = """INSERT INTO data_trapviewdata("DateCreate","IdDevice_id","Humidity","Temperature","VoltageBattery","Status","img64","nDetected","img_bool","Objective") VALUES('{0}',{1},{2},{3},{4},'{5}','{6}',{7},{8},{9})""".format(dt,_id,hum,temp,bat,StatusB,img64,nDetected,img_bool,Objective)
 
