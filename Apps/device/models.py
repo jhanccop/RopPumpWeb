@@ -235,6 +235,9 @@ class TrapView(models.Model):
     MOSCAFRUTA = '5'
     ORUGAZEBRA = '6'
     ORUGAROJA = '7'
+    MARIPOSA = '8'
+    LAGARTIJA = '9'
+    SAPO = '10'
 
     OBJECT_CHOICES = [
         (PLUTELLA, "Plutella Xylostella"),
@@ -245,6 +248,9 @@ class TrapView(models.Model):
         (MOSCAFRUTA, "Mosca de la fruta"),
         (ORUGAZEBRA, "Oruga Zebra"),
         (ORUGAROJA, "Oruga Roja"),
+        (MARIPOSA, "Mariposas"),
+        (LAGARTIJA, "Lagartijas"),
+        (SAPO, "Sapo"),
     ]
 
     # SLEEP TIME 
@@ -292,6 +298,8 @@ class TrapView(models.Model):
     # ===== SETTINGS NN =====
     Objective = models.CharField('Objective', choices = OBJECT_CHOICES,max_length=2,blank =True,null=True)
     runningNN = models.BooleanField("running NN?", default = False)
+    isContinue = models.BooleanField("is Continue?", default = False)
+    sensibility = models.FloatField("sensibilidad", default = 0.5)
 
     objects = TrapViewManager()
     class Meta:

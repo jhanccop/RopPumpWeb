@@ -15,6 +15,8 @@ class TrapViewSerializer(serializers.ModelSerializer):
             'A_TH',
             'SleepTime',
             'runningNN',
+            'isContinue',
+            'sensibility',
             'Resolution'
         ]
     
