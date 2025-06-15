@@ -257,12 +257,14 @@ class MonitoreoFaunaPorUbicacionViewPorId(ListView):
         # default, al inicio cuando no se haya seleccionado nada
         if DEVselect == "" or None:
             if TVList:
-                DEVselect = TVList[0].IdDevice.DeviceName
-                TVData = TrapViewData.objects.get_TV_data_by_id(DEVselect, intervalDate)
-                TVLast = TrapViewData.objects.get_trapView_last_data_by_locations(DEVselect, intervalDate)
+                dev = TVList[0].IdDevice.DeviceName
+                DEVselect = dev
+                TVData = TrapViewData.objects.get_TV_data_by_id(dev, intervalDate)
+                TVLast = TrapViewData.objects.get_last_TV_data_by_id(dev, intervalDate)
             elif WSList:
-                DEVselect = WSList[0].IdDevice.DeviceName
-                WSData = WeatherStationData.objects.get_WS_data_by_id(DEVselect, intervalDate)
+                dev = WSList[0].IdDevice.DeviceName
+                DEVselect = dev
+                WSData = WeatherStationData.objects.get_WS_data_by_id(dev, intervalDate)
         else:
             # identificar y extraer nombre de estación
             dev = DEVselect.split(",")[0]
