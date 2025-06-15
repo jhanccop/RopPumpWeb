@@ -488,7 +488,7 @@ class TrapViewDataManager(models.Manager):
             IdDevice__DeviceName = devName,
             DateCreate__range = rangeDate,
             img_bool = True
-            ).order_by('-DateCreate').last()
+            ).order_by('-DateCreate').first()
         return result
     
     def get_TV_data_by_id(self, devName, interval):
