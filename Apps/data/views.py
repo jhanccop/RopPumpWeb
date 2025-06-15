@@ -250,6 +250,7 @@ class MonitoreoFaunaPorUbicacionViewPorId(ListView):
         TVData = None
         WSData = None
         TVLast = None
+        typ = "0"
 
         TVList = TrapViewData.objects.get_list_TV_by_location(location,intervalDate)
         WSList = WeatherStationData.objects.get_list_WS_by_location(location,intervalDate)
