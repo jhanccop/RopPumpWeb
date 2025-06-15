@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import time
 import json
 import psycopg2
-#import pymysql
 import random
 import numpy as np
 from collections import Counter

@@ -8,7 +8,6 @@
 
         <!-- ======================================== Main Content ======================================== -->
         <div class="col-lg-8 col-md-7 p-4">
-            <h4 class="mb-4" id="dashboardTitle">Monitoreo de Lepidopteros en la UNALM</h4>
 
             <!-- Alertas 
             <div class="alert bg-gradient-warning  alert-dismissible fade show" role="alert">
@@ -21,16 +20,17 @@
 
 
             <!-- ======================================== Contenido de Mariposas ======================================== -->
-            {% for key, value in dev.TV.items %}
-            <div id="div-{{key}}" class="content-div {% if forloop.first %}active{% endif %}">
+
+            {% if dev.typ == "0" %}
+            <div class="">
 
                 <!-- Estadísticas en tiempo real -->
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="text-start">
-                        <h6 class="font-weight-bolder"> {{key}} </h6>
+                        <h5 class="font-weight-bolder"> {{dev.DEVselect}} en {{dev.location}}</h5>
                     </div>
                     <div class="text-end">
-                        <h6>Actualizado: <span id="lastUpdate">{{ value.0.DateCreate|date:'d-M-Y H:i' }} UTC</span>
+                        <h6>Actualizado: <span id="lastUpdate">{{ dev.TVData.0.DateCreate|date:'d-M-Y H:i' }} UTC</span>
                         </h6>
                     </div>
                 </div>
@@ -38,7 +38,7 @@
                 <div class="row">
                     <div class="col-md-3">
                         <div class="card stat-card">
-                            <div class="stat-value text-primary" id="temperatureValue">{{ value.0.Temperature }} <span
+                            <div class="stat-value text-primary" id="temperatureValue">{{  dev.TVData.0.Temperature }} <span
                                     class="stat-label text-primary"> °C</span> </div>
                             <div class="stat-label">Temperatura</div>
                             <div class="mt-2">
@@ -49,7 +49,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class="card stat-card">
-                            <div class="stat-value text-info" id="humidityValue">{{ value.0.Humidity }} <span
+                            <div class="stat-value text-info" id="humidityValue">{{ dev.TVData.0.Humidity }} <span
                                     class="stat-label text-info"> %</span></div>
                             <div class="stat-label">Humedad</div>
                             <div class="mt-2">
@@ -73,15 +73,15 @@
                             <div class="stat-value" id="batteryValue">
                                 <!-- Valor de la batería con color dinámico según nivel -->
                                 <span class="
-                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
-                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
+                                        {% if dev.TVData.0.VoltageBattery >= 3.7 %}text-success
+                                        {% elif dev.TVData.0.VoltageBattery >= 3.4 %}text-warning
                                         {% else %}text-danger{% endif %}
                                     ">
-                                    {{ value.0.VoltageBattery }}
+                                    {{  dev.TVData.0.VoltageBattery }}
                                 </span>
                                 <span class="stat-label 
-                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
-                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
+                                        {% if dev.TVData.0.VoltageBattery >= 3.7 %}text-success
+                                        {% elif dev.TVData.0.VoltageBattery >= 3.4 %}text-warning
                                         {% else %}text-danger{% endif %}
                                     "> V</span>
                             </div>
@@ -90,11 +90,11 @@
                             <div class="battery-indicator mt-3">
                                 <div class="progress" style="height: 10px;">
                                     <div class="progress-bar 
-                                            {% if value.0.VoltageBattery >= 3.7 %}bg-success
-                                            {% elif value.0.VoltageBattery >= 3.4 %}bg-warning
+                                            {% if  dev.TVData.0.VoltageBattery >= 3.7 %}bg-success
+                                            {% elif  dev.TVData.0.VoltageBattery >= 3.4 %}bg-warning
                                             {% else %}bg-danger{% endif %}" role="progressbar"
-                                        style="width: {% widthratio value.0.VoltageBattery|floatformat:2 4.2 100 %}%;"
-                                        aria-valuenow="{{ value.0.VoltageBattery|floatformat:2 }}" aria-valuemin="3.0"
+                                        style="width: {% widthratio  dev.TVData.0.VoltageBattery|floatformat:2 4.2 100 %}%;"
+                                        aria-valuenow="{{  dev.TVData.0.VoltageBattery|floatformat:2 }}" aria-valuemin="3.0"
                                         aria-valuemax="4.2">
                                     </div>
                                 </div>
@@ -102,10 +102,10 @@
 
                             <!-- Estado de la batería -->
                             <div class="stat-label mt-2">
-                                {% if value.0.VoltageBattery >= 3.7 %}
+                                {% if  dev.TVData.0.VoltageBattery >= 3.7 %}
                                 <small class="text-success"><i class="fas fa-battery-full me-1"></i> Batería
                                     óptima</small>
-                                {% elif value.0.VoltageBattery >= 3.4 %}
+                                {% elif  dev.TVData.0.VoltageBattery >= 3.4 %}
                                 <small class="text-warning"><i class="fas fa-battery-half me-1"></i> Batería
                                     media</small>
                                 {% else %}
@@ -123,12 +123,12 @@
                         <div class="card h-100">
                             <div class="card-header bg-gradient-secondary p-2">
                                 <span class="align-items-center text-md text-white font-weight-bolder"><i
-                                        class="fas fa-camera me-2"></i> Capturado a las {{ value.0.DateCreate|date:'m-d-Y H:i' }} UTC </span>
+                                        class="fas fa-camera me-2"></i> Capturado a las {{  dev.TVData.0.DateCreate|date:'m-d-Y H:i' }} UTC </span>
                             </div>
 
                             <div class="card-body">
                                 <div class="img-container">
-                                    <img src="data:image/png;base64,{{ value.0.img64 }}" alt="Mariposa monarca"
+                                    <img src="data:image/png;base64,{{ dev.TVLast.img64 }}" alt="Mariposa monarca"
                                         id="currentImage" style="height: 100%;">
                                 </div>
                                 <div class="p-0">
@@ -146,7 +146,7 @@
                             </div>
                             <div class="card-body">
                                 <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
-                                    <canvas id="plot-{{key}}"></canvas>
+                                    <canvas id="plot-{{dev.DEVselect}}"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -159,7 +159,7 @@
                         <div class="card h-100">
 
                             <div class="table-responsive">
-                                <table class="table" id="datatable-{{key}}">
+                                <table class="table" id="datatable-{{dev.DEVselect}}">
                                     <thead>
                                         <tr>
                                             <th>Fecha</th>
@@ -170,9 +170,13 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for i in value %}
+                                        {% for i in dev.TVData %}
                                         <tr>
-                                            <td>{{i.DateCreate|date:'d-m-Y H:i'}}</td>
+                                            <td>{{i.DateCreate|date:'d-m-Y H:i'}}
+                                                {% if i.img_bool %}
+                                                <i class="fas fa-bug ms-4"></i>
+                                                {% endif %}
+                                            </td>
                                             <td>{{i.nDetected}}</td>
                                             <td>{{i.Temperature}}</td>
                                             <td>{{i.Humidity}}</td>
@@ -188,28 +192,27 @@
                 </div>
 
             </div>
-            {% endfor %}
 
-            <!-- ======================================== Contenido de Datos Meteorológicos  ======================================== -->
-            {% for key, value in dev.WS.items %}
-            <div id="div-{{key}}" class="content-div">
+             <!-- ======================================== Contenido de WEATHER STATION ======================================== -->
+            {% elif dev.typ == "1" %}
+            <div class="">
                 <!-- <div class="tab-pane fade show active" id="weather" role="tabpanel"> -->
                 <!-- Estadísticas meteorológicas en tiempo real -->
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="text-start">
-                        <h6 class="font-weight-bolder"> {{key}} </h6>
+                        <h6 class="font-weight-bolder"> {{dev.DEVselect}} en {{dev.location}}</h6>
                     </div>
                     <div class="text-end">
-                        <h6>Actualizado: <span id="lastUpdate">{{ value.0.DateCreate|date:'d-M-Y H:i' }} UTC</span>
+                        <h6>Actualizado: <span id="lastUpdate">{{ dev.WSData.0.DateCreate|date:'d-M-Y H:i' }} UTC</span>
                         </h6>
                     </div>
                 </div>
 
                 <div class="row">
-                    {% if value.0.Temperature %}
+                    {% if dev.WSData.0.Temperature %}
                     <div class="col-md-3">
                         <div class="card stat-card">
-                            <div class="stat-value text-primary" id="weatherTempValue">{{ value.0.Temperature }}<span
+                            <div class="stat-value text-primary" id="weatherTempValue">{{ dev.WSData.0.Temperature }}<span
                                     class="stat-label text-primary"> °C</span> </div>
                             <div class="stat-label">Temperatura</div>
                             <div class="mt-2">
@@ -220,10 +223,10 @@
                     </div>
                     {% endif %}
 
-                    {% if value.0.Humidity %}
+                    {% if dev.WSData.0.Humidity %}
                     <div class="col-md-3">
                         <div class="card stat-card">
-                            <div class="stat-value text-info" id="weatherHumidityValue">{{ value.0.Humidity }} <span
+                            <div class="stat-value text-info" id="weatherHumidityValue">{{ dev.WSData.0.Humidity }} <span
                                     class="stat-label text-info"> %</span></div>
                             <div class="stat-label">Humedad Relativa</div>
                             <div class="mt-2">
@@ -234,10 +237,10 @@
                     </div>
                     {% endif %}
 
-                    {% if value.0.RainCounter %}
+                    {% if dev.WSData.0.RainCounter %}
                     <div class="col-md-3">
                         <div class="card stat-card">
-                            <div class="stat-value text-success" id="weatherRainValue">{{ value.0.RainCounter }}
+                            <div class="stat-value text-success" id="weatherRainValue">{{ dev.WSData.0.RainCounterDiferencia }}
                                 <span class="stat-label text-success">mm</span>
                             </div>
                             <div class="stat-label">Precipitación</div>
@@ -248,10 +251,10 @@
                     </div>
                     {% endif %}
 
-                    {% if value.0.Radiation %}
+                    {% if dev.WSData.0.Radiation %}
                     <div class="col-md-3">
                         <div class="card stat-card">
-                            <div class="stat-value text-warning" id="weatherSolarValue">{{ value.0.Radiation }} <span
+                            <div class="stat-value text-warning" id="weatherSolarValue">{{ dev.WSData.0.Radiation }} <span
                                     class="stat-label text-warning">W/m²</span></div>
                             <div class="stat-label">Radiación Solar</div>
                             <div class="mt-2">
@@ -262,10 +265,10 @@
                     </div>
                     {% endif %}
 
-                    {% if value.0.WindVelocity %}
+                    {% if dev.WSData.0.WindVelocity %}
                     <div class="col-md-3">
                         <div class="card stat-card">
-                            <div class="stat-value text-danger" id="weatherWindSpeedValue">{{value.0.WindVelocity|floatformat:2}}
+                            <div class="stat-value text-danger" id="weatherWindSpeedValue">{{dev.WSData.0.WindVelocity|floatformat:2}}
                                 <span class="stat-label text-danger">km/h</span></div>
                             <div class="stat-label">Velocidad Viento</div>
                             <div class="mt-2">
@@ -282,15 +285,15 @@
                             <div class="stat-value" id="batteryValue">
                                 <!-- Valor de la batería con color dinámico según nivel -->
                                 <span class="
-                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
-                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
+                                        {% if dev.WSData.0.VoltageBattery >= 3.7 %}text-success
+                                        {% elif dev.WSData.0.VoltageBattery >= 3.4 %}text-warning
                                         {% else %}text-danger{% endif %}
                                     ">
-                                    {{ value.0.VoltageBattery }}
+                                    {{ dev.WSData.0.VoltageBattery }}
                                 </span>
                                 <span class="stat-label 
-                                        {% if value.0.VoltageBattery >= 3.7 %}text-success
-                                        {% elif value.0.VoltageBattery >= 3.4 %}text-warning
+                                        {% if dev.WSData.0.VoltageBattery >= 3.7 %}text-success
+                                        {% elif dev.WSData.0.VoltageBattery >= 3.4 %}text-warning
                                         {% else %}text-danger{% endif %}
                                     "> V</span>
                             </div>
@@ -299,11 +302,11 @@
                             <div class="battery-indicator mt-3">
                                 <div class="progress" style="height: 10px;">
                                     <div class="progress-bar 
-                                            {% if value.0.VoltageBattery >= 3.7 %}bg-success
-                                            {% elif value.0.VoltageBattery >= 3.4 %}bg-warning
+                                            {% if dev.WSData.0.VoltageBattery >= 3.7 %}bg-success
+                                            {% elif dev.WSData.0.VoltageBattery >= 3.4 %}bg-warning
                                             {% else %}bg-danger{% endif %}" role="progressbar"
-                                        style="width: {% widthratio value.0.VoltageBattery|floatformat:2 4.2 100 %}%;"
-                                        aria-valuenow="{{ value.0.VoltageBattery }}" aria-valuemin="3.0"
+                                        style="width: {% widthratio dev.WSData.0.VoltageBattery|floatformat:2 4.2 100 %}%;"
+                                        aria-valuenow="{{ dev.WSData.0.VoltageBattery }}" aria-valuemin="3.0"
                                         aria-valuemax="4.2">
                                     </div>
                                 </div>
@@ -311,10 +314,10 @@
 
                             <!-- Estado de la batería -->
                             <div class="stat-label mt-2">
-                                {% if value.0.VoltageBattery >= 3.7 %}
+                                {% if dev.WSData.0.VoltageBattery >= 3.7 %}
                                 <small class="text-success"><i class="fas fa-battery-full me-1"></i> Batería
                                     óptima</small>
-                                {% elif value.0.VoltageBattery >= 3.4 %}
+                                {% elif dev.WSData.0.VoltageBattery >= 3.4 %}
                                 <small class="text-warning"><i class="fas fa-battery-half me-1"></i> Batería
                                     media</small>
                                 {% else %}
@@ -338,7 +341,7 @@
 
                             <div class="card-body">
                                 <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
-                                    <canvas id="plot-{{key}}"></canvas>
+                                    <canvas id="plot-{{dev.DEVselect}}"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -351,7 +354,7 @@
                         <div class="card h-100">
 
                             <div class="table-responsive">
-                                <table class="table h-100" id="datatable-{{key}}">
+                                <table class="table h-100" id="datatable-{{dev.DEVselect}}">
                                     <thead>
                                         <tr>
                                             <th>Fecha</th>
@@ -365,12 +368,12 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for i in value %}
+                                        {% for i in dev.WSData %}
                                         <tr>
                                             <td>{{i.DateCreate|date:'d-m-Y H:i'}}</td>
                                             <td>{{i.Temperature}}</td>
                                             <td>{{i.Humidity}}</td>
-                                            <td>{{i.RainCounter}}</td>
+                                            <td>{{i.RainCounterDiferencia|floatformat:2}}</td>
                                             <td>{{i.WindVelocity|floatformat:2}}</td>
                                             <td>{{i.WindDirection}}</td>
                                             <td>{{i.Radiation}}</td>
@@ -388,7 +391,7 @@
 
                 <!-- </div> -->
             </div>
-            {% endfor %}
+            {% endif %}
 
         </div>
 
@@ -413,50 +416,49 @@
             </div>
 
             <!-- Lista de estaciones de mariposas-->
+            <form method="GET">{% csrf_token %}
+                
             <div id="butterflyStationList">
-                <h6 class="mb-3 font-weight-bolder text-dark"><i class="fas fa-camera me-2"></i>Cámaras:</h6>
-                <div class="list-group">
-                    {% for key, value in dev.TV.items %}
-                    <a href="#"
-                        class="list-group-item list-group-item-action station-selector tab-link {% if forloop.first %}show active{% endif %}"
-                        data-target="div-{{key}}">
-                        <i class="fas fa-bug me-2"></i> {{ key }}
-                    </a>
-                    {% endfor %}
+                <h6 class="mb-3 font-weight-bolder text-dark"></i>Estaciones:</h6>
+
+                <div class="col-lg-12 col-sm-6 text-center text-dark font-weight-bold">
+                    <select class="form-control" name="DEVselect" id="DEVselect" text-start>
+                        {% for i in dev.TVList %}
+                            {% if i.IdDevice.DeviceName  == dev.DEVselect %}
+                            <option value="{{i}},0" selected> <i class="fas fa-video me-4"></i>{{i}}</option>
+                            {% else %}
+                            <option value="{{i}},0"> <i class="fas fa-video me-4"></i>{{i}}</option>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% for i in dev.WSList %}
+                            {% if i.IdDevice.DeviceName  == dev.DEVselect %}
+                            <option value="{{i}},1" selected> <i class="fas fa-temperature-high me-4"></i>{{i}}</option>
+                            {% else %}
+                            <option value="{{i}},1"> <i class="fas fa-temperature-high me-4"></i>{{i}}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
                 </div>
+
             </div>
 
-            <br><br>
-
-            <!-- Lista de estaciones meteorológicas -->
-            <div id="weatherStationList">
-                <h6 class="mb-3 font-weight-bolder text-dark"><i class="fas fa-temperature-high me-2"></i>Estaciones
-                    Meteorológicas:</h6>
-                <div class="list-group">
-                    {% for key, value in dev.WS.items %}
-                    <a href="#" class="list-group-item list-group-item-action station-selector tab-link "
-                        data-target="div-{{key}}">
-                        <i class="fas fa-cloud-sun me-2"></i> {{ key }}
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
 
             <!-- Filtro fecha -->
             <div class="mt-4">
-                <form method="GET">{% csrf_token %}
-                    <div class="row align-items-center">
-                        <label for="dateRange" class="form-label">Rango de fechas</label>
-                        <input class="form-control datetimepicker text-center" value="{{object_list.intervalDate}}"
-                            type="text" placeholder="today" id="dateKword" name="dateKword" />
-                        <br>
-                        <button class="btn btn-outline-primary" type="submit">
-                            <i class="far fa-calendar-alt me-2 text-md"></i>Buscar por fecha
-                        </button>
+                
+                <div class="row align-items-center">
+                    <h6 class="mb-3 font-weight-bolder text-dark"></i>Intérvalo de fechas:</h6>
+                    <input class="form-control datetimepicker text-center" value="{{object_list.intervalDate}}"
+                        type="text" placeholder="today" id="dateKword" name="dateKword" />
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="far fa-calendar-alt me-4 text-md"></i>Aplicar filtros
+                    </button>
 
-                    </div>
-                </form>
+                </div>
+                
             </div>
+            </form>
         </div>
 
     </div>
@@ -557,44 +559,115 @@
 
     // Inicializar el mapa
     function initMap() {
+
         var latmean = 0;
         var lonmean = 0;
         var counter = 0;
 
         // Marcadores de estaciones de mariposas
         var trapViewStations = [];
-        "{% for key, value in dev.TV.items %}"
+
+        '{% for i in dev.TVList %}'
         var payload = {
             id: counter,
-            name: "{{key}}", 
-            lat: "{{value.0.IdDevice__Lat}}", 
-            lng: "{{value.0.IdDevice__Long}}", 
-            temp: "{{value.0.Temperature}}", 
-            hum: "{{value.0.Humidity}}", 
-            butterflies: "{{value.0.nDetected}}",
+            name: "{{i.IdDevice.DeviceName}}", 
+            lat: "{{i.IdDevice.Lat}}", 
+            lng: "{{i.IdDevice.Long}}", 
+            temp: "{{i.Temperature}}", 
+            hum: "{{i.Humidity}}", 
+            butterflies: "{{i.nDetected}}",
         }
         trapViewStations.push(payload);
 
-        latmean += Number("{{value.0.IdDevice__Lat}}");
-        lonmean += Number("{{value.0.IdDevice__Long}}");
+        latmean += Number("{{i.IdDevice.Lat}}");
+        lonmean += Number("{{i.IdDevice.Long}}");
         counter++;
 
-        // Preparar datos para Chart.js
+        '{% endfor %}'
+
+        // Marcadores de estaciones meteorologicas
+        var WeatherStations = [];
+        '{% for i in dev.WSList %}'
+        var payload = {
+            id: counter,
+            name: "{{i.IdDevice.DeviceName}}", 
+            lat: "{{i.IdDevice.Lat}}", 
+            lng: "{{i.IdDevice.Long}}", 
+            temp: "{{i.Temperature}}", 
+            hum: "{{i.Humidity}}",
+        }
+        WeatherStations.push(payload);
+        
+        latmean += Number("{{i.IdDevice.Lat}}");
+        lonmean += Number("{{i.IdDevice.Long}}");
+        counter++;
+
+        '{% endfor %}'
+        
+        latmean = latmean/counter;
+        lonmean = lonmean/counter;
+
+        map = L.map('map').setView([latmean, lonmean], 15);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Crear marcadores para estaciones de mariposas
+        trapViewStations.forEach(station => {
+            const marker = L.marker([station.lat, station.lng], {
+                stationId: station.id,
+                stationType: 'butterfly'
+            }).addTo(map);
+            
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="background-color: #0d6efd; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fas fa-bug"></i></div>`,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            
+            marker.setIcon(icon);
+            marker.bindPopup(`<b>${station.name}</b><br>Temp: ${station.temp}°C<br>Hum: ${station.hum}%<br>Mariposas: ${station.butterflies}`);
+            markers.push(marker);
+        });
+
+        // Crear marcadores para estaciones meteorológicas
+        WeatherStations.forEach(station => {
+            const marker = L.marker([station.lat, station.lng], {
+                stationId: station.id,
+                stationType: 'weather'
+            }).addTo(map);
+            
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="background-color: #fd7e14; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fas fa-cloud-sun"></i></div>`,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            
+            marker.setIcon(icon);
+            marker.bindPopup(`<b>${station.name}</b><br>Temp: ${station.temp}°C<br>Hum: ${station.hum}%`);
+            markers.push(marker);
+        });
+
+        '{% if dev.typ  == "0" %}'
+        // Preparar datos para Chart.js TRAPVIEW
         var dateTime = [];
         var dataTemp = [];
         var dataHum = [];
         var dataN = [];
 
-        "{% for i in value %}"
+        "{% for i in dev.TVData %}"
         dateTime.push(new Date("{{i.DateCreate|date:'Y-m-d H:i'}}"));
         dataTemp.push(parseFloat('{{i.Temperature}}'));
         dataHum.push(parseFloat('{{i.Humidity}}'));
         dataN.push(parseInt('{{i.nDetected}}'));
         "{% endfor %}"
-
+        
         // Crear gráfico con Chart.js
-        const ctx_{{key|slugify}} = document.getElementById('plot-{{key}}').getContext('2d');
-        charts['{{key}}'] = new Chart(ctx_{{key|slugify}}, {
+        const ctx_1 = document.getElementById('plot-{{dev.DEVselect}}').getContext('2d');
+        charts = new Chart(ctx_1, {
             ...chartConfig,
             data: {
                 labels: dateTime,
@@ -618,8 +691,8 @@
                     {
                         label: 'N° Mariposas',
                         data: dataN,
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgb(25, 111, 61)',
+                        backgroundColor: 'rgba(46, 204, 113, 0.6)',
                         type: 'bar',
                         yAxisID: 'y1'
                     }
@@ -641,26 +714,10 @@
                 }
             }
         });
-        "{% endfor %}"
-
-        // Marcadores de estaciones meteorológicas
-        var WeatherStations = [];
-        "{% for key, value in dev.WS.items %}"
-        var payload = {
-            id: counter,
-            name: "{{key}}", 
-            lat: "{{value.0.IdDevice__Lat}}", 
-            lng: "{{value.0.IdDevice__Long}}", 
-            temp: "{{value.0.Temperature}}", 
-            hum: "{{value.0.Humidity}}",
-        }
-        WeatherStations.push(payload);
         
-        latmean += Number("{{value.0.IdDevice__Lat}}");
-        lonmean += Number("{{value.0.IdDevice__Long}}");
-        counter++;
+        '{% elif dev.typ  == "1" %}'
 
-        // Preparar datos para Chart.js
+        // Preparar datos para Chart.js TWEATHER STATION
         var dateTime = [];
         var dataTemp = [];
         var dataHum = [];
@@ -668,7 +725,7 @@
         var dataWV = [];
         var dataRS = [];
 
-        "{% for i in value %}"
+        "{% for i in dev.WSData %}"
         dateTime.push(new Date("{{i.DateCreate|date:'Y-m-d H:i'}}"));
         dataTemp.push(parseFloat('{{i.Temperature}}'));
         dataHum.push(parseFloat('{{i.Humidity}}'));
@@ -678,8 +735,8 @@
         "{% endfor %}"
 
         // Crear gráfico con Chart.js
-        const ctx_{{key|slugify}} = document.getElementById('plot-{{key}}').getContext('2d');
-        charts['{{key}}'] = new Chart(ctx_{{key|slugify}}, {
+        const ctx_2= document.getElementById('plot-{{dev.DEVselect}}').getContext('2d');
+        charts2 = new Chart(ctx_2, {
             ...chartConfig,
             data: {
                 labels: dateTime,
@@ -722,55 +779,9 @@
                 ]
             }
         });
-        "{% endfor %}"
 
-        // Configuración del mapa (igual que antes)
-        latmean = latmean/counter;
-        lonmean = lonmean/counter;
-
-        map = L.map('map').setView([latmean, lonmean], 15);
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-        
-        // Crear marcadores para estaciones de mariposas
-        trapViewStations.forEach(station => {
-            const marker = L.marker([station.lat, station.lng], {
-                stationId: station.id,
-                stationType: 'butterfly'
-            }).addTo(map);
-            
-            const icon = L.divIcon({
-                className: 'custom-marker',
-                html: `<div style="background-color: #0d6efd; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fas fa-bug"></i></div>`,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
-            });
-            
-            marker.setIcon(icon);
-            marker.bindPopup(`<b>${station.name}</b><br>Temp: ${station.temp}°C<br>Hum: ${station.hum}%<br>Mariposas: ${station.butterflies}`);
-            markers.push(marker);
-        });
-        
-        // Crear marcadores para estaciones meteorológicas
-        WeatherStations.forEach(station => {
-            const marker = L.marker([station.lat, station.lng], {
-                stationId: station.id,
-                stationType: 'weather'
-            }).addTo(map);
-            
-            const icon = L.divIcon({
-                className: 'custom-marker',
-                html: `<div style="background-color: #fd7e14; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="fas fa-cloud-sun"></i></div>`,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
-            });
-            
-            marker.setIcon(icon);
-            marker.bindPopup(`<b>${station.name}</b><br>Temp: ${station.temp}°C<br>Hum: ${station.hum}%`);
-            markers.push(marker);
-        });
+        '{% endif %}'
+    
     }
 
     // Event listeners para selección de estación
@@ -784,52 +795,13 @@
     });
 </script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Seleccionar todos los enlaces de pestañas
-        const tabLinks = document.querySelectorAll('.tab-link');
-        
-        // Agregar evento de clic a cada enlace
-        tabLinks.forEach(function(link) {
-            link.addEventListener('click', function(e) {
-                e.preventDefault(); // Prevenir que el enlace redireccione
-                
-                // Obtener el ID del div objetivo desde el atributo data-target
-                const targetId = this.getAttribute('data-target');
-                
-                // Desactivar todas las pestañas y divs
-                document.querySelectorAll('.tab-link').forEach(function(tab) {
-                    tab.classList.remove('active');
-                });
-                
-                document.querySelectorAll('.content-div').forEach(function(div) {
-                    div.classList.remove('active');
-                });
-                
-                // Activar la pestaña actual y su div correspondiente
-                this.classList.add('active');
-                document.getElementById(targetId).classList.add('active');
-            });
-        });
-    });
-</script>
-
 <!--Table-->
 <script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
 <script>
-    "{% for key, value in dev.TV.items %}"
-    const dataTableBasic_{{key}} = new simpleDatatables.DataTable("#datatable-{{key}}", {
+    const dataTableBasic = new simpleDatatables.DataTable("#datatable-{{dev.DEVselect}}", {
         searchable: false,
         fixedHeight: false
     });
-    "{% endfor %}"
-
-    "{% for key, value in dev.WS.items %}"
-    const dataTableBasic_{{key}} = new simpleDatatables.DataTable("#datatable-{{key}}", {
-        searchable: false,
-        fixedHeight: false
-    });
-    "{% endfor %}"
 
 </script>
 
@@ -841,6 +813,14 @@
             allowInput: true,
             mode: "range"
         }); // flatpickr
+    }
+</script>
+
+<script src="{% static 'assets/js/plugins/choices.min.js' %}"></script>
+<script type="text/javascript">
+    if (document.getElementById('DEVselect')) {
+        var element = document.getElementById('DEVselect');
+        const example = new Choices(element, {});
     }
 </script>
 

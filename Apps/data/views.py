@@ -200,21 +200,162 @@ class MonitoreoFaunaPorUbicacionView(ListView):
     def get_queryset(self):
         location = self.kwargs['ubicacion']
         intervalDate = self.request.GET.get("dateKword", '')
+        TVselect = self.request.GET.get("TVselect", '')
+        WSselect = self.request.GET.get("WSselect", '')
+
+        if intervalDate == "today" or intervalDate =="":
+            intervalDate = str(date.today() - timedelta(days = 2)) + " to " + str(date.today())
+        
+        if TVselect =="":
+            TVList = TrapViewData.objects.get_list_TV_by_location(location,intervalDate)
+            TVselect = TVList[0]
+        if WSselect =="":
+            WSList = WeatherStationData.objects.get_list_WS_by_location(location,intervalDate)
+            WSselect = WSList[0]
+
+        TVData = TrapViewData.objects.get_TV_data_by_id(TVselect.IdDevice.id, intervalDate)
+        WSData = WeatherStationData.objects.get_WS_data_by_id(WSselect.IdDevice.id, intervalDate)
+        #TVLAST = TrapViewData.objects.get_trapView_last_data_by_locations(TVselect, intervalDate)
+
+        print("******",TVData,TVselect)
+ 
+        allData = {
+            "TVselect":TVselect,
+            "WSselect":WSselect,
+            "WSList": WSList,
+            "TVList":TVList,
+
+            "intervalDate": intervalDate,   # rango de fechas
+            "location": location,           # agrupados por locacion
+            
+            "WSData": WSData, 
+            "TVData": TVData,
+            #"TVLAST": TVLAST
+        }
+
+        return allData
+
+class MonitoreoFaunaPorUbicacionViewPorId(ListView):
+    template_name = "data/monitoreo-fauna-trapview.html"
+    context_object_name = "dev"
+
+    def get_queryset(self):
+        location = self.kwargs['ubicacion']
+        intervalDate = self.request.GET.get("dateKword", '')
+        DEVselect = self.request.GET.get("DEVselect", '')
 
         if intervalDate == "today" or intervalDate =="":
             intervalDate = str(date.today() - timedelta(days = 2)) + " to " + str(date.today())
 
-        WS = WeatherStationData.objects.get_weatherStation_data_by_locations(location, intervalDate)
-        TV = TrapViewData.objects.get_trapView_data_by_locations(location, intervalDate)
+        TVData = None
+        WSData = None
+        TVLast = None
+
+        TVList = TrapViewData.objects.get_list_TV_by_location(location,intervalDate)
+        WSList = WeatherStationData.objects.get_list_WS_by_location(location,intervalDate)
+
+        # default, al inicio cuando no se haya seleccionado nada
+        if DEVselect == "" or None:
+            if TVList:
+                DEVselect = TVList[0].IdDevice.DeviceName
+                TVData = TrapViewData.objects.get_TV_data_by_id(DEVselect, intervalDate)
+                TVLast = TrapViewData.objects.get_trapView_last_data_by_locations(DEVselect, intervalDate)
+            elif WSList:
+                DEVselect = WSList[0].IdDevice.DeviceName
+                WSData = WeatherStationData.objects.get_WS_data_by_id(DEVselect, intervalDate)
+        else:
+            # identificar y extraer nombre de estación
+            dev = DEVselect.split(",")[0]
+            typ = DEVselect.split(",")[1]
+
+            print(dev,typ)
+            DEVselect = dev
+            
+            # 0 si son camaras TRAPVIEW
+            if typ == "0":
+                TVData = TrapViewData.objects.get_TV_data_by_id(dev, intervalDate)
+                TVLast = TrapViewData.objects.get_last_TV_data_by_id(dev, intervalDate)
+            elif typ == "1":
+                WSData = WeatherStationData.objects.get_WS_data_by_id(dev, intervalDate)
  
         allData = {
-            "intervalDate": intervalDate,
-            "location": location,
-            "WS": WS,
-            "TV": TV,
+            "typ":typ,
+            "DEVselect":DEVselect,
+            "TVList": TVList,
+            "WSList": WSList,
+
+            "intervalDate": intervalDate,   # rango de fechas
+            "location": location,           # agrupados por locacion
+            
+            "WSData": WSData, 
+            "TVData": TVData,
+            "TVLast": TVLast
         }
 
         return allData
+
+class MonitoreoPlagaPorUbicacionViewPorId(ListView):
+    template_name = "data/monitoreo-plaga-trapview.html"
+    context_object_name = "dev"
+
+    def get_queryset(self):
+        location = self.kwargs['ubicacion']
+        intervalDate = self.request.GET.get("dateKword", '')
+        DEVselect = self.request.GET.get("DEVselect", '')
+
+        if intervalDate == "today" or intervalDate =="":
+            intervalDate = str(date.today() - timedelta(days = 2)) + " to " + str(date.today())
+
+        TVData = None
+        WSData = None
+        TVLast = None
+        typ = "0"
+
+        TVList = TrapViewData.objects.get_list_TV_by_location(location,intervalDate)
+        WSList = WeatherStationData.objects.get_list_WS_by_location(location,intervalDate)
+
+        # default, al inicio cuando no se haya seleccionado nada
+        if DEVselect == "" or None:
+            if TVList:
+                dev = TVList[0].IdDevice.DeviceName
+                DEVselect = dev
+                TVData = TrapViewData.objects.get_TV_data_by_id(dev, intervalDate)
+                TVLast = TrapViewData.objects.get_last_TV_data_by_id(dev, intervalDate)
+            elif WSList:
+                dev = WSList[0].IdDevice.DeviceName
+                DEVselect = dev
+                WSData = WeatherStationData.objects.get_WS_data_by_id(dev, intervalDate)
+        else:
+            # identificar y extraer nombre de estación
+            dev = DEVselect.split(",")[0]
+            typ = DEVselect.split(",")[1]
+
+            print(dev,typ)
+            DEVselect = dev
+            
+            # 0 si son camaras TRAPVIEW
+            if typ == "0":
+                TVData = TrapViewData.objects.get_TV_data_by_id(dev, intervalDate)
+                TVLast = TrapViewData.objects.get_last_TV_data_by_id(dev, intervalDate)
+            elif typ == "1":
+                WSData = WeatherStationData.objects.get_WS_data_by_id(dev, intervalDate)
+ 
+        allData = {
+            "typ":typ,
+            "DEVselect":DEVselect,
+            "TVList": TVList,
+            "WSList": WSList,
+
+            "intervalDate": intervalDate,   # rango de fechas
+            "location": location,           # agrupados por locacion
+            
+            "WSData": WSData, 
+            "TVData": TVData,
+            "TVLast": TVLast
+        }
+
+        return allData
+
 
 # OVERVIEW by LOCATION (MAIN SCREEN)
 class OverviewByLocation(LoginRequiredMixin, CompanyMixin, ListView):

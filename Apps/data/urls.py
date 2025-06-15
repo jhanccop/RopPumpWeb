@@ -22,7 +22,10 @@ urlpatterns = [
     path('data-trapView/detail/<pk>', views.DetailTrapView.as_view(), name='data-trapView-detail'),
     path('data-trapView/<name>', views.ListTrapView.as_view(), name='data-trapView'),
     
+    # =============== PUBLICO
     path('monitoreo-fauna/<ubicacion>', views.MonitoreoFaunaPorUbicacionView.as_view(), name='monitoreo-fauna'),
+    path('monitoreo-fauna/<ubicacion>/trapview', views.MonitoreoFaunaPorUbicacionViewPorId.as_view(), name='monitoreo-fauna-trapview'),
+    path('monitoreo-plaga/<ubicacion>/trapview', views.MonitoreoPlagaPorUbicacionViewPorId.as_view(), name='monitoreo-plaga-trapview'),
 
     path('data/oil-overview', views.ListOilOverview.as_view(), name='oil-overview'),
     path('data/oil-overview/<WellName>', views.ListDataRodPump.as_view(), name='data-rod-pump'),

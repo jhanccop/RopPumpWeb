@@ -383,11 +383,62 @@ class TrapViewDataManager(models.Manager):
                 'Temperature',
                 'VoltageBattery',
                 'nDetected',
-                'img64',
+                #'img64',
                 'img_bool',
                 'Status'
             )
             .order_by('IdDevice__DeviceName', '-DateCreate')
+        )
+
+        print(datos)
+
+        resultado = {}
+
+        for dato in datos:
+            # Extraemos el nombre del dispositivo
+            device_name = dato['IdDevice__DeviceName']
+            
+            # Si el dispositivo no está en el diccionario, lo inicializamos
+            if device_name not in resultado:
+                resultado[device_name] = []
+            
+            # Añadimos el registro actual a la lista del dispositivo
+            resultado[device_name].append(dato)
+
+        return resultado
+    
+    def get_trapView_last_data_by_locations(self,location, interval):
+
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        datos = (
+            self.filter(
+                DateCreate__range = rangeDate,
+                IdDevice__IdLocation__LocationName = location,
+                img_bool = True
+                )
+            .values(
+                'IdDevice__DeviceName',
+                'IdDevice__Lat',
+                'IdDevice__Long',  
+                'DateCreate',
+                'Humidity',
+                'Temperature',
+                'VoltageBattery',
+                'nDetected',
+                #'img64',
+                'img_bool',
+                'Status'
+            )
+            .last()
         )
 
         resultado = {}
@@ -405,6 +456,89 @@ class TrapViewDataManager(models.Manager):
 
         return resultado
     
+    def get_trapView_data_by_locations(self, location, interval):
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        result = self.filter(
+            IdDevice__IdLocation__LocationName = location,
+            DateCreate__range = rangeDate
+            )
+        return result
+    
+    def get_last_TV_data_by_id(self, devName, interval):
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        result = self.filter(
+            IdDevice__DeviceName = devName,
+            DateCreate__range = rangeDate
+            ).order_by('-DateCreate').last()
+        return result
+    
+    def get_TV_data_by_id(self, devName, interval):
+        print("***tttt***",devName)
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        result = self.filter(
+            IdDevice__DeviceName = devName,
+            DateCreate__range = rangeDate
+            ).values(
+                'IdDevice__DeviceName',
+                'IdDevice__Lat',
+                'IdDevice__Long',  
+                'DateCreate',
+                'Humidity',
+                'Temperature',
+                'VoltageBattery',
+                'nDetected',
+                #'img64',
+                'img_bool',
+                'Status'
+            ).order_by('-DateCreate')
+        return result
+    
+    def get_list_TV_by_location(self, location, interval):
+
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        latest_ids = self.filter(
+            IdDevice__IdLocation__LocationName = location,
+            DateCreate__range = rangeDate,
+            IdDevice=OuterRef('IdDevice')
+            ).order_by('-DateCreate').values('id')[:1]
+        return self.filter(id__in=Subquery(latest_ids))
+
 class WeatherStationDataManager(models.Manager):
     # =========== DATOS WEATHER STATION PARA VISUALIZACION PUBLICO ===========
     def get_weatherStation_data_by_locations(self,location, interval):
@@ -443,6 +577,7 @@ class WeatherStationDataManager(models.Manager):
 
         resultado = {}
 
+
         for dato in datos:
             # Extraemos el nombre del dispositivo
             device_name = dato['IdDevice__DeviceName']
@@ -453,5 +588,61 @@ class WeatherStationDataManager(models.Manager):
             
             # Añadimos el registro actual a la lista del dispositivo
             resultado[device_name].append(dato)
-
+        print(resultado)
         return resultado
+
+    def get_list_WS_by_location(self, location, interval):
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        latest_ids = self.filter(
+            IdDevice__IdLocation__LocationName = location,
+            DateCreate__range = rangeDate,
+            IdDevice=OuterRef('IdDevice')
+            ).order_by('-DateCreate').values('id')[:1]
+        return self.filter(id__in=Subquery(latest_ids))
+    
+    def get_WS_data_by_id(self, devName, interval):
+        Intervals = interval.split(' to ')
+        intervals = [ datetime.strptime(dt,"%Y-%m-%d") for dt in Intervals]
+
+        # =========== Creacion de rango de fechas ===========
+        rangeDate = [intervals[0] - timedelta(days = 1),None]
+        if len(intervals) == 1:
+            rangeDate[1] = intervals[0] + timedelta(days = 1)
+        else:
+            rangeDate[1] = intervals[1] + timedelta(days = 1)
+
+        result = self.filter(
+            IdDevice__DeviceName = devName,
+            DateCreate__range = rangeDate
+        ).annotate(
+            RainCounterDiferencia = (F('RainCounter') - Window(
+                expression=Lag('RainCounter', default=0),
+                partition_by=[F('IdDevice')],
+                order_by=F('DateCreate').asc()
+            ) ) * 0.2794 
+        ).values(
+            'IdDevice__DeviceName',
+            'IdDevice__Lat',
+            'IdDevice__Long', 
+            'DateCreate',
+            'Humidity',
+            'Temperature',
+            'VoltageBattery',
+            'WindVelocity',
+            'WindDirection',
+            'RainCounter',
+            'RainCounterDiferencia',  # La diferencia con la lectura anterior
+            'Radiation',
+            'Status'
+        ).order_by('IdDevice__DeviceName', '-DateCreate')
+        
+        return result
