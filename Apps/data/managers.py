@@ -486,7 +486,8 @@ class TrapViewDataManager(models.Manager):
 
         result = self.filter(
             IdDevice__DeviceName = devName,
-            DateCreate__range = rangeDate
+            DateCreate__range = rangeDate,
+            img_bool = True
             ).order_by('-DateCreate').last()
         return result
     
