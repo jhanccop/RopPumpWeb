@@ -232,6 +232,8 @@ def on_message(client, userdata, message):
       typeM = m_mqtt.get("type","NULL")
       print(typeM)
 
+     #print(m_mqtt)
+
       if typeM == "tank":
         dt = datetime.now()
         mac = m_mqtt.get("mac","NULL")
@@ -590,10 +592,11 @@ def on_message(client, userdata, message):
 
         raws_id = db_get(sql_query_id)
         _id = raws_id[0][0]
+
         SamplingRate = raws_id[0][1]
 
-        vBat = m_mqtt.get("vBat","0")
-        status = m_mqtt.get("status","-1")
+        vBat = m_mqtt.get("vBat",0)
+        status = str(m_mqtt.get("status","-1"))
 
         Diagnosis = 0
 
@@ -619,6 +622,9 @@ def on_message(client, userdata, message):
           sLength = m_mqtt.get("sLength","0")
           sLoad = m_mqtt.get("load","")
           sPos = m_mqtt.get("pos","")
+          RSLoad = m_mqtt.get("RSLoad","")
+          RSAcc = m_mqtt.get("RSAcc","")
+          sPos = m_mqtt.get("pos","")
           sDiagnosis = m_mqtt.get("diagnosis","")
           sDiagnosis = sDiagnosis.split(",")
           Diagnosis = np.array([ 1 if float(i) > threshold else 0 for i in sDiagnosis])
@@ -639,7 +645,9 @@ def on_message(client, userdata, message):
               "Status",
               "VoltageBattery",
               "StrokeLength",
-              "Refresh") VALUES('{0}',{1},'{2}','{3}',{4},{5},'{6}','{7}',{8},{9},{10})""".format(dt,_id,sLoad,sPos,spm,fillPump,Diagnosis,status,vBat,sLength,SamplingRate)
+              "RawAcceleration",
+              "SurfaceLoad",
+              "Refresh") VALUES('{0}',{1},'{2}','{3}',{4},{5},'{6}','{7}',{8},{9},'{10}','{11}','{12}')""".format(dt,_id,sLoad,sPos,spm,fillPump,Diagnosis,status,vBat,sLength,RSAcc,RSLoad,SamplingRate)
           db_local(sql_query)
 
         # save samplig rate from mesuarment 
