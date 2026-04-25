@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" type="image/png" href="{% static 'assets/img/oil-refinery.png' %}">
+    <title>FAUNA – {% block title %}Camera Traps{% endblock title %}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900|Roboto+Slab:400,700" />
+    <link href="{% static 'assets/css/nucleo-icons.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/css/nucleo-svg.css' %}" rel="stylesheet" />
+    <script src="{% static 'assets/js/awesome.js' %}"></script>
+    <script src="{% static 'assets/js/jquery-1.12.4.js' %}"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'assets/css/leaflet.css' %}" />
+    <link id="pagestyle" href="{% static 'assets/css/material-dashboard.css' %}" rel="stylesheet" />
+    {% block extra_css %}{% endblock extra_css %}
+    <style>
+        .sidenav .nav-link.active { border-radius: 8px; }
+        .leaflet-popup-content { font-size: 12px; line-height: 1.6; min-width: 180px; }
+        .popup-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; color: #344767; }
+        .popup-row { display: flex; justify-content: space-between; gap: 8px; }
+        .popup-label { color: #7b809a; }
+        .popup-val { font-weight: 600; color: #344767; }
+        .popup-status { display: inline-block; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .popup-link { display: block; text-align: center; margin-top: 6px; }
+        .popup-thumb { width: 100%; height: 80px; object-fit: cover; border-radius: 6px; margin-bottom: 6px; }
+    </style>
+</head>
+
+<body class="g-sidenav-show bg-gray-200">
+
+    {% include 'FAUNA/includes/fauna_sidebar.html' %}
+
+    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+
+        {% include 'FAUNA/includes/fauna_topbar.html' %}
+
+        <div class="container-fluid py-2">
+            {% block content %}{% endblock content %}
+        </div>
+
+        {% include 'includes/footer.html' %}
+        {% include 'FAUNA/includes/fauna_settings_panel.html' %}
+
+    </main>
+
+    <!-- Core JS -->
+    <script src="{% static 'assets/js/core/popper.min.js' %}"></script>
+    <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/perfect-scrollbar.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/smooth-scrollbar.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/choices.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/plotly-2.12.1.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/leaflet.js' %}"></script>
+    <script>
+        var win = navigator.platform.indexOf('Win') > -1;
+        if (win && document.querySelector('#sidenav-scrollbar')) {
+            Scrollbar.init(document.querySelector('#sidenav-scrollbar'), { damping: '0.5' });
+        }
+    </script>
+    <script src="{% static 'assets/js/material-dashboard.min.js' %}"></script>
+    {% block JSscripts %}{% endblock JSscripts %}
+</body>
+</html>

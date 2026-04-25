@@ -1,0 +1,44 @@
+{% extends 'FAUNA/camera/base_camera.html' %}
+{% load static %}
+
+{% block title %}Remove Capture{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock company %}
+{% block appName %}CAMERA TRAPS{% endblock appName %}
+{% block Type %}REMOVE{% endblock Type %}
+
+{% block content %}
+
+<div class="row min-vh-80">
+    <div class="col-lg-5 col-md-7 col-12 m-auto">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-danger shadow-danger border-radius-lg pt-3 pb-2">
+                    <h6 class="text-center text-white">REMOVE CAPTURE</h6>
+                </div>
+            </div>
+            <div class="card-body text-center py-4">
+                {% if object.Image %}
+                <img src="{{ object.Image.url }}" alt="capture"
+                    style="max-height:120px;border-radius:8px;margin-bottom:12px;">
+                {% endif %}
+                <i class="material-icons text-danger" style="font-size:2.5rem;">warning</i>
+                <h5 class="mt-2">Delete capture</h5>
+                <div class="mb-2">
+                    {% for det in object.detections.all %}
+                    <span class="badge bg-gradient-danger me-1">{{ det.Species }} ×{{ det.Count }}</span>
+                    {% empty %}<span class="text-secondary text-sm">No detections</span>{% endfor %}
+                </div>
+                <p class="text-secondary text-sm">
+                    Station: <b>{{ object.Station.StationName }}</b><br>
+                    Date: <b>{{ object.DateCapture|date:"d/m/Y H:i" }}</b>
+                </p>
+                <form method="POST">{% csrf_token %}
+                    <a class="btn bg-gradient-secondary" href="{% url 'camera_app:capture_list' %}">Cancel</a>
+                    <button class="btn bg-gradient-danger ms-2" type="submit">Yes, Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

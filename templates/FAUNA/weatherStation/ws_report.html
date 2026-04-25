@@ -1,0 +1,135 @@
+{% extends 'FAUNA/weatherStation/base_weatherstation.html' %}
+{% load static %}
+
+{% block title %}Reports{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock company %}
+{% block appName %}WEATHER STATIONS{% endblock appName %}
+{% block Type %}REPORTS{% endblock Type %}
+
+{% block content %}
+
+<!-- Filter form -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <h6 class="text-center text-white">
+                        <i class="material-icons me-1">filter_list</i> Report Filters
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="report-form">{% csrf_token %}
+                    <div class="row align-items-end">
+                        <div class="col-12 col-sm-4">
+                            <div class="input-group input-group-outline mb-3 is-focused">
+                                <label class="form-label">Station</label>
+                                {{ form.station }}
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="input-group input-group-outline mb-3 is-focused">
+                                <label class="form-label">From</label>
+                                {{ form.date_from }}
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="input-group input-group-outline mb-3 is-focused">
+                                <label class="form-label">To</label>
+                                {{ form.date_to }}
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-2 mb-3">
+                            <div class="d-flex gap-2">
+                                <button class="btn bg-gradient-primary mb-0 w-100" type="submit" name="filter">
+                                    <i class="fas fa-search me-1"></i> Filter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger text-sm">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}<p class="mb-0">{{ error }}</p>{% endfor %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if readings %}
+                    <div class="d-flex align-items-center mt-1">
+                        <span class="text-sm text-secondary me-3">{{ total }} records found</span>
+                        <button class="btn bg-gradient-success btn-sm mb-0" type="submit" name="download">
+                            <i class="fas fa-file-csv me-1"></i> Download CSV
+                        </button>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results table -->
+{% if readings %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-2 pb-2 mt-n4 mx-3">
+                    <h6 class="text-white text-center mb-0">
+                        Report Results — {{ total }} readings
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="dt-report">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Station</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Date / Time</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">T °C</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">H %</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Rad W/m²</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Precip mm</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Wind m/s</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Dir °</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in readings %}
+                            <tr>
+                                <td class="text-xs font-weight-bold ps-3">{{ r.Station__StationName }}</td>
+                                <td class="text-xs ps-2">{{ r.DateCreate|date:"d/m/Y H:i" }}</td>
+                                <td class="text-xs ps-2">{{ r.Temperature|default:"—"|floatformat:1 }}</td>
+                                <td class="text-xs ps-2">{{ r.Humidity|default:"—"|floatformat:1 }}</td>
+                                <td class="text-xs ps-2">{{ r.SolarRadiation|default:"—"|floatformat:0 }}</td>
+                                <td class="text-xs ps-2">{{ r.Precipitation|default:"—"|floatformat:1 }}</td>
+                                <td class="text-xs ps-2">{{ r.WindSpeed|default:"—"|floatformat:1 }}</td>
+                                <td class="text-xs ps-2">{{ r.WindDirection|default:"—"|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock content %}
+
+{% block JSscripts %}
+{% if readings %}
+<script>
+    const dtReport = new simpleDatatables.DataTable("#dt-report", {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 20,
+    });
+</script>
+{% endif %}
+{% endblock JSscripts %}

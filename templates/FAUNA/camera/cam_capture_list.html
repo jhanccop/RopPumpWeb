@@ -1,0 +1,190 @@
+{% extends 'FAUNA/camera/base_camera.html' %}
+{% load static %}
+
+{% block title %}Captures{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock company %}
+{% block appName %}CAMERA TRAPS{% endblock appName %}
+{% block Type %}CAPTURES{% endblock Type %}
+
+{% block content %}
+
+<!-- Filters + actions -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card p-3">
+            <form method="GET" class="d-flex flex-wrap gap-2 align-items-end">
+                <div style="min-width:200px;">
+                    <label class="text-xs text-secondary mb-1">Station</label>
+                    <select name="station" class="form-control form-control-sm">
+                        <option value="">All stations</option>
+                        {% for s in stations %}
+                        <option value="{{ s.id }}" {% if filter_station == s.id|stringformat:"s" %}selected{% endif %}>
+                            {{ s.StationName }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="min-width:180px;">
+                    <label class="text-xs text-secondary mb-1">Species</label>
+                    <input type="text" name="species" class="form-control form-control-sm"
+                           value="{{ filter_species }}" placeholder="Filter by species...">
+                </div>
+                <button class="btn btn-sm bg-gradient-primary mb-0" type="submit">
+                    <i class="fas fa-search me-1"></i> Filter
+                </button>
+                <a href="{% url 'camera_app:capture_list' %}" class="btn btn-sm bg-gradient-secondary mb-0">Clear</a>
+                <div class="ms-auto d-flex gap-2">
+                    <button class="export btn btn-sm bg-gradient-dark mb-0" data-type="csv">
+                        <i class="fas fa-download me-1"></i> CSV
+                    </button>
+                    <a href="{% url 'camera_app:capture_add' %}" class="btn btn-sm bg-gradient-success mb-0">
+                        <i class="fas fa-plus me-1"></i> Add Capture
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Captures table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2 mt-n4 mx-3">
+                    <div class="row align-items-center px-2">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">photo_camera</i>
+                                Capture Records
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <span class="text-white text-xs opacity-8">{{ captures|length }} record{{ captures|length|pluralize }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="dt-captures">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Image</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Station</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Detections</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">T °C</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">H %</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Battery</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date</th>
+                                <th class="text-secondary text-end opacity-7"> Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in captures %}
+                            <tr>
+                                <td class="ps-3">
+                                    {% if c.Image %}
+                                    <a href="{% url 'camera_app:capture_detail' c.id %}">
+                                        <img src="{{ c.Image.url }}" alt="capture"
+                                             style="height:40px;width:60px;object-fit:cover;border-radius:6px;">
+                                    </a>
+                                    {% else %}
+                                    <div style="height:40px;width:60px;border-radius:6px;background:#f0f0f0;
+                                                display:flex;align-items:center;justify-content:center;">
+                                        <i class="material-icons text-secondary" style="font-size:1.2rem;">no_photography</i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="text-xs font-weight-bold">{{ c.Station.StationName }}</span>
+                                </td>
+                                <td>
+                                    {% for det in c.detections.all %}
+                                    <span class="badge badge-sm bg-gradient-success me-1">{{ det.Species }} ×{{ det.Count }}</span>
+                                    {% empty %}
+                                    <span class="text-secondary text-xs">—</span>
+                                    {% endfor %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if c.Temperature is not None %}
+                                    <span class="text-danger font-weight-bolder">{{ c.Temperature|floatformat:1 }}</span>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if c.Humidity is not None %}
+                                    <span class="text-info">{{ c.Humidity|floatformat:1 }}</span>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if c.VoltageBattery is not None %}
+                                        {% if c.VoltageBattery < 3.5 %}
+                                        <span class="text-danger font-weight-bolder">
+                                            <i class="fas fa-battery-quarter me-1"></i>{{ c.VoltageBattery|floatformat:2 }}V
+                                        </span>
+                                        {% else %}
+                                        <span class="text-success">{{ c.VoltageBattery|floatformat:2 }}V</span>
+                                        {% endif %}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-xs text-secondary" style="white-space:nowrap;">
+                                    {{ c.DateCapture|date:"d/m/Y H:i" }}
+                                </td>
+                                <td class="text-end" style="white-space:nowrap;">
+                                    <a href="{% url 'camera_app:capture_detail' c.id %}"
+                                       class="btn btn-link btn-sm p-0 me-1" title="View">
+                                        <i class="material-icons mt-3 me-3 text-lg text-success">visibility</i>
+                                    </a>
+                                    <a href="{% url 'camera_app:capture_update' c.id %}"
+                                       class="btn btn-link btn-sm p-0 me-1" title="Edit">
+                                        <i class="material-icons mt-3 me-3 text-lg text-info">edit</i>
+                                    </a>
+                                    <a href="{% url 'camera_app:capture_remove' c.id %}"
+                                       class="btn btn-link btn-sm p-0" title="Delete">
+                                        <i class="material-icons mt-3 me-3 text-lg text-primary">delete</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-secondary py-5">
+                                    <i class="material-icons d-block mb-2" style="font-size:3rem;opacity:.3;">no_photography</i>
+                                    No captures found.
+                                    <a href="{% url 'camera_app:capture_add' %}" class="btn btn-sm bg-gradient-success ms-2">
+                                        Add First Capture
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    const dtCaptures = new simpleDatatables.DataTable("#dt-captures", {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 15,
+        perPageSelect: [15, 25, 50, 100],
+        columns: [
+            { select: 0, sortable: false },  // Image
+            { select: 8, sortable: false },  // Actions
+        ],
+    });
+
+    document.querySelector(".export[data-type='csv']").addEventListener("click", function () {
+        dtCaptures.export({
+            type: "csv",
+            filename: "captures_export",
+            columnDelimiter: ",",
+        });
+    });
+</script>
+{% endblock JSscripts %}

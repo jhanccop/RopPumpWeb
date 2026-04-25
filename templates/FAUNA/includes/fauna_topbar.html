@@ -1,0 +1,92 @@
+{% load static %}
+{# Pass page_section and page_view from the view context #}
+<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl mb-4" id="navbarBlur"
+    navbar-scroll="true">
+    <div class="container-fluid py-1 px-3">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+                <li class="breadcrumb-item text-sm">
+                    <a class="opacity-5 text-dark" href="javascript:;">
+                        <i class="material-icons opacity-10">eco</i>
+                    </a>
+                </li>
+                <li class="breadcrumb-item text-sm">
+                    <a class="opacity-5 text-dark" href="javascript:;">{{ CompanyName }}</a>
+                </li>
+                <li class="breadcrumb-item text-sm text-dark active" aria-current="page">
+                    {{ page_section|default:request.resolver_match.app_name|upper }}
+                </li>
+                <li class="breadcrumb-item text-sm text-dark" aria-current="page">
+                    {{ page_view|default:request.resolver_match.url_name|upper }}
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Right side -->
+        <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+            <ul class="navbar-nav ms-md-auto pe-md-3 align-items-center">
+
+                <!-- Weather shortcut -->
+                <li class="nav-item d-none d-sm-flex align-items-center me-2">
+                    <a href="{% url 'weather_app:dashboard' %}"
+                        class="btn btn-sm bg-gradient-primary mb-0 d-flex align-items-center gap-1"
+                        title="Weather Dashboard">
+                        <i class="material-icons" style="font-size:1rem;">cloud</i>
+                        <span class="d-none d-lg-inline text-xs">Weather</span>
+                    </a>
+                </li>
+
+                <!-- Camera shortcut -->
+                <li class="nav-item d-none d-sm-flex align-items-center me-3">
+                    <a href="{% url 'camera_app:dashboard' %}"
+                        class="btn btn-sm bg-gradient-success mb-0 d-flex align-items-center gap-1"
+                        title="Camera Dashboard">
+                        <i class="material-icons" style="font-size:1rem;">photo_camera</i>
+                        <span class="d-none d-lg-inline text-xs">Camera</span>
+                    </a>
+                </li>
+
+                <li class="nav-item d-none d-sm-flex align-items-center me-2">
+                    <span class="text-secondary opacity-5" style="font-size:1.2rem;">|</span>
+                </li>
+
+                <!-- User -->
+                <li class="nav-item d-flex align-items-center me-2">
+                    <span class="text-body text-sm font-weight-bold">
+                        <i class="material-icons me-1 text-primary">account_circle</i>
+                    </span>
+                    {{ user|default:"Guest" }}  
+                </li>
+
+                <!-- Logout -->
+                <li class="nav-item d-flex align-items-center me-2">
+                    <a href="{% url 'user_app:user-logout' %}"
+                        class="nav-link text-body font-weight-bold px-0">
+                        <i class="material-icons me-1">logout</i>
+                        Log out
+                    </a>
+                </li>
+
+                <!-- Settings toggle -->
+                <li class="nav-item px-2 d-flex align-items-center">
+                    <a href="javascript:;" class="nav-link text-body p-0">
+                        <i class="material-icons me-1">settings</i>
+                    </a>
+                </li>
+
+                <!-- Mobile sidenav -->
+                <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
+                    <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
+                        <div class="sidenav-toggler-inner">
+                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line"></i>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

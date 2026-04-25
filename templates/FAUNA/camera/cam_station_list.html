@@ -1,0 +1,106 @@
+{% extends 'FAUNA/camera/base_camera.html' %}
+{% load static %}
+
+{% block title %}Camera Stations{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock company %}
+{% block appName %}CAMERA TRAPS{% endblock appName %}
+{% block Type %}STATIONS{% endblock Type %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">Camera Trap Stations</h6>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'camera_app:station_add' %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-plus me-1"></i> New Station
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="dt-stations">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Station</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Location</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Status</th>
+                                <th class="text-uppercase text-secondary text-xs text-end font-weight-bolder opacity-7 ps-2 pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in stations %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1 align-items-center">
+                                        <img src="{% static 'assets/img/cctv.png' %}" class="avatar avatar-sm me-3 border-radius-xs" alt="cam">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a href="{% url 'camera_app:capture_list' %}?station={{ s.id }}" title="Captures">
+                                                <h6 class="mb-0 text-sm">{{ s.StationName }}</h6>
+                                            </a>
+                                            <p class="text-xs text-secondary mb-0">{{ s.Description|default:"—"|truncatechars:40 }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ s.Latitude|default:"—" }}, {{ s.Longitude|default:"—" }}</p>
+                                    <p class="text-xs text-secondary mb-0">Alt: {{ s.Altitude|default:"—" }} m</p>
+                                </td>
+                                <td>
+                                    {% if s.Status == 'Active' %}
+                                    <span class="badge badge-sm bg-gradient-success">{{ s.Status }}</span>
+                                    {% elif s.Status == 'Out of service' %}
+                                    <span class="badge badge-sm bg-gradient-danger">{{ s.Status }}</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-warning">{{ s.Status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class=" text-end">
+                                    <a href="{% url 'camera_app:station_detail' s.id %}" title="Detail">
+                                        <i class="material-icons mt-3 me-3">visibility</i>
+                                    </a>
+                                    <a href="{% url 'camera_app:capture_list' %}?station={{ s.id }}" title="Captures">
+                                        <i class="material-icons mt-3 me-3">table_rows</i>
+                                    </a>
+                                    <a href="{% url 'camera_app:capture_add' %}?station={{ s.id }}" title="Add Capture">
+                                        <i class="material-icons mt-3 me-3">add</i>
+                                    </a>
+                                    <a href="{% url 'camera_app:station_update' s.id %}" title="Edit">
+                                        <i class="material-icons mt-3 me-3">edit</i>
+                                    </a>
+                                    <a href="{% url 'camera_app:station_remove' s.id %}" title="Remove">
+                                        <i class="material-icons mt-3 me-3">delete</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary py-4">
+                                    No stations registered.
+                                    <a href="{% url 'camera_app:station_add' %}">Add your first camera station</a>.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    new simpleDatatables.DataTable("#dt-stations", { searchable: true, fixedHeight: false, perPage: 15 });
+</script>
+{% endblock JSscripts %}

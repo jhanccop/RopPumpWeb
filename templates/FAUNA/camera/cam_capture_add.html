@@ -1,0 +1,192 @@
+{% extends 'FAUNA/camera/base_camera.html' %}
+{% load static %}
+
+{% block title %}Add Capture{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock company %}
+{% block appName %}CAMERA TRAPS{% endblock appName %}
+{% block Type %}NEW CAPTURE{% endblock Type %}
+
+{% block content %}
+
+<div class="row min-vh-80">
+    <div class="col-lg-8 col-md-10 col-12 m-auto">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2">
+                    <h6 class="text-center text-white">REGISTER CAMERA TRAP CAPTURE</h6>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">{% csrf_token %}
+
+                    <!-- Station & Date -->
+                    <h6 class="font-weight-bolder mb-3">Station & Date</h6>
+                    <div class="row">
+                        <div class="col-12 col-sm-7">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label"></label>
+                                {{ form.Station }}
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-5">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label"></label>
+                                {{ form.DateCapture }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detections -->
+                    <h6 class="font-weight-bolder mb-2 mt-2">Detections</h6>
+                    {{ det_formset.management_form }}
+                    <div id="detection-rows">
+                        {% for det_form in det_formset %}
+                        <div class="detection-row d-flex align-items-center gap-2 mb-2">
+                            {{ det_form.id }}
+                            <div class="flex-grow-1">
+                                {{ det_form.Species }}
+                            </div>
+                            <div style="width:90px;">
+                                {{ det_form.Count }}
+                            </div>
+                            <div class="d-none">
+                                {{ det_form.DELETE }}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger mb-0 btn-remove-det px-2 py-1">×</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm bg-gradient-info mb-3" id="add-detection">
+                        + Add Detection
+                    </button>
+
+                    <!-- Image -->
+                    <h6 class="font-weight-bolder mb-3 mt-2">Capture Image</h6>
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="input-group mb-3">
+                                {{ form.Image }}
+                            </div>
+                            <div id="img-preview" class="mt-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Environmental -->
+                    <h6 class="font-weight-bolder mb-3 mt-2">Environmental Variables</h6>
+                    <div class="row">
+                        <div class="col-6 col-sm-4">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Temperature (°C)</label>
+                                {{ form.Temperature }}
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-4">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Humidity (%)</label>
+                                {{ form.Humidity }}
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-4">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Battery Voltage (V)</label>
+                                {{ form.VoltageBattery }}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Notes</label>
+                                {{ form.Notes }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if form.errors or det_formset.errors %}
+                    <div class="alert alert-danger text-sm">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}<p class="mb-0">{{ field }}: {{ error }}</p>{% endfor %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="button-row d-flex pt-3 mt-2">
+                        <a class="btn bg-gradient-dark" href="{% url 'camera_app:capture_list' %}">Back</a>
+                        <button class="btn bg-gradient-success ms-auto" type="submit">Save Capture</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    // Auto-fill datetime
+    var now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    var dtField = document.getElementById('id_DateCapture');
+    if (dtField && !dtField.value) dtField.value = now.toISOString().slice(0, 16);
+
+    // Image preview
+    document.getElementById('id_Image').addEventListener('change', function(e) {
+        var preview = document.getElementById('img-preview');
+        preview.innerHTML = '';
+        if (e.target.files && e.target.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                preview.innerHTML = '<img src="' + evt.target.result + '" style="max-height:200px;border-radius:8px;" />';
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    // Detection formset — add / remove rows
+    var totalForms = document.getElementById('id_det-TOTAL_FORMS');
+
+    document.getElementById('detection-rows').addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-remove-det')) {
+            var row = e.target.closest('.detection-row');
+            var delCheck = row.querySelector('input[name$="-DELETE"]');
+            if (delCheck) {
+                delCheck.checked = true;
+                row.style.opacity = '0.35';
+                e.target.textContent = '↩';
+                e.target.classList.replace('btn-outline-danger', 'btn-outline-secondary');
+                e.target.onclick = function() {
+                    delCheck.checked = false;
+                    row.style.opacity = '1';
+                    e.target.textContent = '×';
+                    e.target.classList.replace('btn-outline-secondary', 'btn-outline-danger');
+                    e.target.onclick = null;
+                };
+            } else {
+                row.remove();
+            }
+        }
+    });
+
+    document.getElementById('add-detection').addEventListener('click', function() {
+        var rows = document.getElementById('detection-rows');
+        var count = parseInt(totalForms.value);
+        var template = rows.querySelector('.detection-row');
+        var newRow = template.cloneNode(true);
+        newRow.style.opacity = '1';
+
+        newRow.innerHTML = newRow.innerHTML
+            .replace(/det-\d+-/g, 'det-' + count + '-')
+            .replace(/id_det-\d+-/g, 'id_det-' + count + '-');
+
+        newRow.querySelectorAll('input[type=number]').forEach(function(el) { el.value = '1'; });
+        newRow.querySelectorAll('select').forEach(function(el) { el.value = ''; });
+        newRow.querySelectorAll('input[type=checkbox]').forEach(function(el) { el.checked = false; });
+
+        // Reset remove button state
+        var btn = newRow.querySelector('.btn-remove-det');
+        if (btn) { btn.textContent = '×'; btn.className = 'btn btn-sm btn-outline-danger mb-0 btn-remove-det px-2 py-1'; btn.onclick = null; }
+
+        rows.appendChild(newRow);
+        totalForms.value = count + 1;
+    });
+</script>
+{% endblock JSscripts %}

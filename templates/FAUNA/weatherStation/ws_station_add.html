@@ -1,0 +1,136 @@
+{% extends 'FAUNA/weatherStation/base_weatherstation.html' %}
+{% load static %}
+
+{% block title %}Add Station{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock company %}
+{% block appName %}WEATHER STATIONS{% endblock appName %}
+{% block Type %}NEW STATION{% endblock Type %}
+
+{% block content %}
+
+<div class="row min-vh-80">
+    <div class="col-lg-8 col-md-10 col-12 m-auto">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2">
+                    <h6 class="text-center text-white">ADD NEW WEATHER STATION</h6>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST">{% csrf_token %}
+
+                    <!-- General info -->
+                    <h6 class="font-weight-bolder mb-3">General Information</h6>
+                    <div class="row">
+                        <div class="col-12 col-sm-6" hidden>
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Owner</label>
+                                {{ form.Owner }}
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-8">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Station Name *</label>
+                                {{ form.StationName }}
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label"></label>
+                                {{ form.Status }}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Description</label>
+                                {{ form.Description }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <h6 class="font-weight-bolder mb-3 mt-2">Location</h6>
+                    <div class="row">
+                        <div class="col-12 col-sm-4">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Latitude</label>
+                                {{ form.Latitude }}
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Longitude</label>
+                                {{ form.Longitude }}
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Altitude (m)</label>
+                                {{ form.Altitude }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Device configuration -->
+                    <h6 class="font-weight-bolder mb-3 mt-2">Device Configuration</h6>
+                    <div class="row">
+                        <div class="col-12 col-sm-6">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">MAC Address</label>
+                                {{ form.MacAddress }}
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label"></label>
+                                {{ form.TimeSleep }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sensors -->
+                    <h6 class="font-weight-bolder mb-3 mt-2">Available Sensors</h6>
+                    <div class="row">
+                        <div class="col-6 col-sm-4 col-md-3 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.HasTempHumidity }}
+                                <label class="form-check-label text-sm ms-2">Temp &amp; Humidity</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-4 col-md-3 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.HasSolarRadiation }}
+                                <label class="form-check-label text-sm ms-2">Solar Radiation</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-4 col-md-3 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.HasPrecipitation }}
+                                <label class="form-check-label text-sm ms-2">Precipitation</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-4 col-md-3 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.HasWind }}
+                                <label class="form-check-label text-sm ms-2">Wind</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="button-row d-flex pt-3 mt-2">
+                        <a class="btn bg-gradient-dark" href="{% url 'weather_app:station_list' %}">Back</a>
+                        <button class="btn bg-gradient-success ms-auto" type="submit">Save Station</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    document.getElementById("id_Owner").value = "{{ user.id }}";
+</script>
+{% endblock JSscripts %}

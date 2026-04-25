@@ -1,0 +1,159 @@
+{% extends 'FAUNA/weatherStation/base_weatherstation.html' %}
+{% load static %}
+
+{% block title %}All Readings{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock company %}
+{% block appName %}WEATHER STATIONS{% endblock appName %}
+{% block Type %}ALL READINGS{% endblock Type %}
+
+{% block content %}
+
+<!-- Filters + actions -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card p-3">
+            <form method="GET" class="d-flex flex-wrap gap-2 align-items-end">
+                <div style="min-width:220px;">
+                    <label class="text-xs text-secondary mb-1">Station</label>
+                    <select name="station" class="form-control form-control-sm">
+                        <option value="">All stations</option>
+                        {% for s in stations %}
+                        <option value="{{ s.id }}" {% if filter_station == s.id|stringformat:"s" %}selected{% endif %}>
+                            {{ s.StationName }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button class="btn btn-sm bg-gradient-primary mb-0" type="submit">
+                    <i class="fas fa-search me-1"></i> Filter
+                </button>
+                <a href="{% url 'weather_app:reading_list' %}" class="btn btn-sm bg-gradient-secondary mb-0">Clear</a>
+                <div class="ms-auto d-flex gap-2">
+                    <button class="export btn btn-sm bg-gradient-dark mb-0" data-type="csv">
+                        <i class="fas fa-download me-1"></i> CSV
+                    </button>
+                    <a href="{% url 'weather_app:reading_add' %}" class="btn btn-sm bg-gradient-success mb-0">
+                        <i class="fas fa-plus me-1"></i> Add Reading
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Readings table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2 mt-n4 mx-3">
+                    <div class="row align-items-center px-2">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">thermostat</i>
+                                Weather Readings
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <span class="text-white text-xs opacity-8">{{ readings|length }} record{{ readings|length|pluralize }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="dt-readings">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Date</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Station</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">T °C</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">H %</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Rad W/m²</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Prec mm</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Wind m/s</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Dir °</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in readings %}
+                            <tr>
+                                <td class="ps-3 text-xs text-secondary" style="white-space:nowrap;">
+                                    {{ r.DateCreate|date:"d/m/Y H:i" }}
+                                </td>
+                                <td>
+                                    <a href="{% url 'weather_app:station_detail' r.Station.id %}"
+                                       class="text-xs font-weight-bold text-dark">
+                                        {{ r.Station.StationName }}
+                                    </a>
+                                </td>
+                                <td class="text-xs">
+                                    {% if r.Temperature is not None %}
+                                    <span class="text-danger font-weight-bolder">{{ r.Temperature|floatformat:1 }}</span>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if r.Humidity is not None %}
+                                    <span class="text-info">{{ r.Humidity|floatformat:1 }}</span>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if r.SolarRadiation is not None %}
+                                    <span class="text-warning font-weight-bold">{{ r.SolarRadiation|floatformat:0 }}</span>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if r.Precipitation is not None %}
+                                    <span class="text-primary">{{ r.Precipitation|floatformat:1 }}</span>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if r.WindSpeed is not None %}
+                                    {{ r.WindSpeed|floatformat:1 }}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if r.WindDirection is not None %}
+                                    {{ r.WindDirection|floatformat:0 }}
+                                    {% else %}—{% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-secondary py-5">
+                                    <i class="material-icons d-block mb-2" style="font-size:3rem;opacity:.3;">thermostat</i>
+                                    No readings found.
+                                    <a href="{% url 'weather_app:reading_add' %}" class="btn btn-sm bg-gradient-success ms-2">
+                                        Add First Reading
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    const dtReadings = new simpleDatatables.DataTable("#dt-readings", {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 15,
+        perPageSelect: [15, 25, 50, 100],
+    });
+
+    document.querySelector(".export[data-type='csv']").addEventListener("click", function () {
+        dtReadings.export({
+            type: "csv",
+            filename: "weather_readings_export",
+            columnDelimiter: ",",
+        });
+    });
+</script>
+{% endblock JSscripts %}

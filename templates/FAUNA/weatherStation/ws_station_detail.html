@@ -1,0 +1,422 @@
+{% extends 'FAUNA/weatherStation/base_weatherstation.html' %}
+{% load static %}
+
+{% block title %}{{ station.StationName }}{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock company %}
+{% block appName %}WEATHER STATIONS{% endblock appName %}
+{% block Type %}{{ station.StationName }}{% endblock Type %}
+
+{% block extra_css %}
+<style>
+    #detail-map { height: 100%; min-height: 220px; border-radius: 10px; }
+    .chart-wrap { min-height: 240px; }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+
+<!-- Header card -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-info shadow-info border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">sensors</i>
+                                {{ station.StationName }}
+                            </h6>
+                            <p class="text-white text-xs mb-0 opacity-8">{{ station.Description|default:"" }}</p>
+                        </div>
+                        <div class="col-auto d-flex gap-2">
+                            <a href="{% url 'weather_app:reading_add' %}?station={{ station.id }}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-plus me-1"></i> Add Reading
+                            </a>
+                            <a href="{% url 'weather_app:station_update' station.id %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-edit me-1"></i> Edit
+                            </a>
+                            <a href="{% url 'weather_app:station_list' %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-arrow-left me-1"></i> Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body pt-3 pb-2">
+                <div class="row align-items-stretch">
+                    <!-- Latest metric cards -->
+                    <div class="col-lg-6">
+                        <div class="row g-2">
+                            <div class="col-6 col-md-6">
+                                <div class="card bg-gradient-primary text-white text-center py-2 mb-0">
+                                    <i class="material-icons" style="font-size:1.4rem;">thermostat</i>
+                                    <div class="fw-bold" style="font-size:.95rem;">{% if latest.Temperature is not None %}{{ latest.Temperature|floatformat:1 }}°C{% else %}—{% endif %}</div>
+                                    <small style="font-size:.65rem;">Temp</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6">
+                                <div class="card bg-gradient-primary text-white text-center py-2 mb-0">
+                                    <i class="material-icons" style="font-size:1.4rem;">water_drop</i>
+                                    <div class="fw-bold" style="font-size:.95rem;">{% if latest.Humidity is not None %}{{ latest.Humidity|floatformat:1 }}%{% else %}—{% endif %}</div>
+                                    <small style="font-size:.65rem;">Humidity</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6">
+                                <div class="card bg-gradient-warning text-white text-center py-2 mb-0">
+                                    <i class="material-icons" style="font-size:1.4rem;">wb_sunny</i>
+                                    <div class="fw-bold" style="font-size:.95rem;">{% if latest.SolarRadiation is not None %}{{ latest.SolarRadiation|floatformat:0 }}{% else %}—{% endif %}</div>
+                                    <small style="font-size:.65rem;">W/m²</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6">
+                                <div class="card bg-gradient-info text-white text-center py-2 mb-0">
+                                    <i class="material-icons" style="font-size:1.4rem;">grain</i>
+                                    <div class="fw-bold" style="font-size:.95rem;">{% if latest.Precipitation is not None %}{{ latest.Precipitation|floatformat:1 }}{% else %}—{% endif %}</div>
+                                    <small style="font-size:.65rem;">mm</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6">
+                                <div class="card bg-gradient-dark text-white text-center py-2 mb-0">
+                                    <i class="material-icons" style="font-size:1.4rem;">air</i>
+                                    <div class="fw-bold" style="font-size:.95rem;">{% if latest.WindSpeed is not None %}{{ latest.WindSpeed|floatformat:1 }}{% else %}—{% endif %}</div>
+                                    <small style="font-size:.65rem;">m/s</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6">
+                                <div class="card bg-gradient-dark text-white text-center py-2 mb-0">
+                                    <i class="material-icons" style="font-size:1.4rem;">explore</i>
+                                    <div class="fw-bold" style="font-size:.95rem;">{% if latest.WindDirection is not None %}{{ latest.WindDirection|floatformat:0 }}°{% else %}—{% endif %}</div>
+                                    <small style="font-size:.65rem;">Dir</small>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="card text-white text-center py-2 mb-0 {% if latest.VoltageBattery is not None and latest.VoltageBattery < 3.5 %}bg-gradient-danger{% else %}bg-gradient-success{% endif %}">
+                                    <i class="material-icons" style="font-size:1.4rem;">battery_charging_full</i>
+                                    <div class="fw-bold" style="font-size:.95rem;">{% if latest.VoltageBattery is not None %}{{ latest.VoltageBattery|floatformat:2 }} V{% else %}—{% endif %}</div>
+                                    <small style="font-size:.65rem;">Battery</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Mini-map -->
+                    <div class="col-lg-6 d-flex flex-column">
+                        <div id="detail-map" style="flex:1;"></div>
+                        <p class="text-xxs text-secondary mt-1 mb-0">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            {{ station.Latitude|default:"—" }}, {{ station.Longitude|default:"—" }}
+                            {% if station.Altitude %} · {{ station.Altitude }} m{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Period selector -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card px-3 py-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-sm font-weight-bolder me-1">Period:</span>
+                <a href="?days=1"  class="btn btn-sm {% if days == 1  %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} mb-0">1d</a>
+                <a href="?days=3"  class="btn btn-sm {% if days == 3  %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} mb-0">3d</a>
+                <a href="?days=7"  class="btn btn-sm {% if days == 7  %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} mb-0">7d</a>
+                <a href="?days=14" class="btn btn-sm {% if days == 14 %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} mb-0">14d</a>
+                <a href="?days=30" class="btn btn-sm {% if days == 30 %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} mb-0">30d</a>
+                <span class="text-xs text-secondary ms-auto">
+                    Last: {% if latest %}{{ latest.DateCreate|date:"d/m/Y H:i" }}{% else %}—{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts (left) + Table (right) -->
+<div class="row mt-4">
+    <!-- Left column: 4 compact charts stacked -->
+    <div class="col-lg-7 mb-4">
+
+        <div class="row">
+             <div class="col-lg-6 mb-4">
+                <!-- Temperature & Humidity -->
+                <div class="card mb-3">
+                    <div class="card-header p-2 pt-2">
+                        <div class="bg-gradient-primary shadow-primary border-radius-lg pt-2 pb-1 mt-n4 mx-3">
+                            <h6 class="text-white text-center mb-0" style="font-size:.75rem;">🌡 Temperature & 💧 Humidity</h6>
+                        </div>
+                    </div>
+                    <div class="card-body p-2">
+                        <div id="chart-temp-hum" class="chart-wrap"></div>
+                    </div>
+                </div>
+                <!-- Solar Radiation -->
+                <div class="card mb-3 mt-4">
+                    <div class="card-header p-2 pt-2">
+                        <div class="bg-gradient-warning shadow-warning border-radius-lg pt-2 pb-1 mt-n4 mx-3">
+                            <h6 class="text-white text-center mb-0" style="font-size:.75rem;">☀️ Solar Radiation</h6>
+                        </div>
+                    </div>
+                    <div class="card-body p-2">
+                        <div id="chart-radiation" class="chart-wrap"></div>
+                    </div>
+                </div>
+
+             </div>
+              <div class="col-lg-6 mb-4">
+                <!-- Precipitation -->
+                <div class="card mb-3">
+                    <div class="card-header p-2 pt-2">
+                        <div class="bg-gradient-info shadow-info border-radius-lg pt-2 pb-1 mt-n4 mx-3">
+                            <h6 class="text-white text-center mb-0" style="font-size:.75rem;">🌧 Precipitation</h6>
+                        </div>
+                    </div>
+                    <div class="card-body p-2">
+                        <div id="chart-precipitation" class="chart-wrap"></div>
+                    </div>
+                </div>
+                <!-- Wind -->
+                <div class="card mb-3 mt-4">
+                    <div class="card-header p-2 pt-2">
+                        <div class="bg-gradient-secondary shadow-secondary border-radius-lg pt-2 pb-1 mt-n4 mx-3">
+                            <h6 class="text-white text-center mb-0" style="font-size:.75rem;">🌬 Wind Speed & Direction</h6>
+                        </div>
+                    </div>
+                    <div class="card-body p-2">
+                        <div id="chart-wind" class="chart-wrap"></div>
+                    </div>
+                </div>
+
+              </div>
+        </div>
+
+        <!-- Battery chart full-width below grid -->
+        <div class="card mb-3">
+            <div class="card-header p-2 pt-2">
+                <div class="bg-gradient-success shadow-success border-radius-lg pt-2 pb-1 mt-n4 mx-3">
+                    <h6 class="text-white text-center mb-0" style="font-size:.75rem;">🔋 Battery Voltage</h6>
+                </div>
+            </div>
+            <div class="card-body p-2">
+                <div id="chart-battery" class="chart-wrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column: data table -->
+    <div class="col-lg-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-2 pb-2 mt-n4 mx-3">
+                    <div class="row align-items-center px-2">
+                        <div class="col">
+                            <h6 class="text-white mb-0" style="font-size:.8rem;">
+                                <i class="material-icons me-1" style="vertical-align:middle;font-size:14px;">table_chart</i>
+                                Readings ({{ readings|length }})
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <button class="export btn btn-sm btn-white mb-0 py-1 px-2" data-type="csv" style="font-size:.7rem;">
+                                <i class="fas fa-download me-1"></i> CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table table-sm align-items-center mb-0" id="readings-table">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Date</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">T °C</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">H %</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">W/m²</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">mm</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">m/s</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Dir°</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Bat V</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in readings %}
+                            <tr>
+                                <td class="ps-3 text-xs text-secondary" style="white-space:nowrap;">{{ r.DateCreate|date:"d/m/Y H:i" }}</td>
+                                <td class="text-xs">{% if r.Temperature is not None %}{{ r.Temperature|floatformat:1 }}{% else %}—{% endif %}</td>
+                                <td class="text-xs">{% if r.Humidity is not None %}{{ r.Humidity|floatformat:1 }}{% else %}—{% endif %}</td>
+                                <td class="text-xs">{% if r.SolarRadiation is not None %}{{ r.SolarRadiation|floatformat:0 }}{% else %}—{% endif %}</td>
+                                <td class="text-xs">{% if r.Precipitation is not None %}{{ r.Precipitation|floatformat:1 }}{% else %}—{% endif %}</td>
+                                <td class="text-xs">{% if r.WindSpeed is not None %}{{ r.WindSpeed|floatformat:1 }}{% else %}—{% endif %}</td>
+                                <td class="text-xs">{% if r.WindDirection is not None %}{{ r.WindDirection|floatformat:0 }}{% else %}—{% endif %}</td>
+                                <td class="text-xs">
+                                    {% if r.VoltageBattery is not None %}
+                                    <span class="{% if r.VoltageBattery < 3.5 %}text-danger font-weight-bolder{% else %}text-success{% endif %}">
+                                        {{ r.VoltageBattery|floatformat:2 }}
+                                    </span>
+                                    {% else %}—{% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-secondary py-4">
+                                    <i class="material-icons d-block mb-1" style="font-size:28px;opacity:.3;">sensors_off</i>
+                                    No data for this period.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+{# Render Django data as JSON — keeps the JS block below free of template tags #}
+<script id="ws-data" type="application/json">
+{
+    "lat":       {% if station.Latitude %}{{ station.Latitude }}{% else %}null{% endif %},
+    "lon":       {% if station.Longitude %}{{ station.Longitude }}{% else %}null{% endif %},
+    "name":      "{{ station.StationName|escapejs }}",
+    "filename":  "{{ station.StationName|slugify }}_{{ days }}d",
+    "popup":     {% if latest %}"<div class='popup-title'>{{ station.StationName|escapejs }}</div><div class='popup-row'><span class='popup-label'>🌡 Temp</span><span class='popup-val'>{% if latest.Temperature is not None %}{{ latest.Temperature|floatformat:1 }} °C{% else %}—{% endif %}</span></div><div class='popup-row'><span class='popup-label'>💧 Hum</span><span class='popup-val'>{% if latest.Humidity is not None %}{{ latest.Humidity|floatformat:1 }} %{% else %}—{% endif %}</span></div><p style='color:#7b809a;font-size:10px;margin:5px 0 0'>{{ latest.DateCreate|date:"d/m/Y H:i" }}</p>"{% else %}"<b>{{ station.StationName|escapejs }}</b><br><span style='color:#aaa'>No readings yet</span>"{% endif %},
+    "dates":     {{ chart_dates|safe }},
+    "temp":      {{ chart_temperature|safe }},
+    "hum":       {{ chart_humidity|safe }},
+    "radiation": {{ chart_radiation|safe }},
+    "precip":    {{ chart_precipitation|safe }},
+    "windSpd":   {{ chart_wind_speed|safe }},
+    "windDir":   {{ chart_wind_direction|safe }},
+    "battery":   {{ chart_battery|safe }}
+}
+</script>
+<script>
+(function () {
+    var D = JSON.parse(document.getElementById('ws-data').textContent);
+
+    // ── Mini-Map ──────────────────────────────────────────────────────────────
+    if (D.lat !== null && D.lon !== null) {
+        var detailMap = L.map('detail-map', { zoomControl: false, scrollWheelZoom: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap',
+            maxZoom: 18,
+        }).addTo(detailMap);
+
+        var wsIcon = L.divIcon({
+            className: '',
+            iconSize: [26, 26], iconAnchor: [13, 13],
+            html: '<div style="background:#1a73e8;width:26px;height:26px;border-radius:50%;' +
+                  'border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);' +
+                  'display:flex;align-items:center;justify-content:center;">' +
+                  '<span style="color:#fff;font-size:12px;font-family:\'Material Icons Round\'">sensors</span></div>',
+        });
+
+        L.marker([D.lat, D.lon], { icon: wsIcon })
+            .addTo(detailMap)
+            .bindPopup(D.popup, { maxWidth: 200 })
+            .openPopup();
+        detailMap.setView([D.lat, D.lon], 12);
+    } else {
+        document.getElementById('detail-map').innerHTML =
+            '<div style="height:220px;display:flex;align-items:center;justify-content:center;' +
+            'background:#f0f0f0;border-radius:10px;">' +
+            '<p class="text-secondary text-sm">No location configured</p></div>';
+    }
+
+    // ── Charts ────────────────────────────────────────────────────────────────
+    var cfg = { responsive: true, displayModeBar: false };
+
+    var base = {
+        margin: { t: 20, r: 20, b: 60, l: 50 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor:  'rgba(0,0,0,0)',
+        font: { size: 11 },
+        legend: { orientation: 'h', y: -0.25 },
+    };
+
+    // Dual Y-axis: needs extra right margin so right-axis labels don't get clipped
+    var baseDual = Object.assign({}, base, {
+        margin: { t: 20, r: 55, b: 60, l: 50 },
+    });
+
+    // Temperature & Humidity
+    Plotly.newPlot('chart-temp-hum', [
+        { x: D.dates, y: D.temp, name: 'Temp (°C)',
+          type: 'scatter', mode: 'lines+markers',
+          line: { color: '#F44336', width: 2 }, marker: { size: 4 } },
+        { x: D.dates, y: D.hum,  name: 'Humidity (%)',
+          type: 'scatter', mode: 'lines+markers',
+          line: { color: '#2196F3', width: 2 }, marker: { size: 4 }, yaxis: 'y2' },
+    ], Object.assign({}, baseDual, {
+        yaxis:  { title: '°C', color: '#F44336' },
+        yaxis2: { title: '%',  color: '#2196F3', overlaying: 'y', side: 'right' },
+    }), cfg);
+
+    // Solar Radiation
+    Plotly.newPlot('chart-radiation', [
+        { x: D.dates, y: D.radiation, name: 'W/m²',
+          type: 'scatter', mode: 'lines', fill: 'tozeroy',
+          line: { color: '#FF9800', width: 2 } },
+    ], Object.assign({}, base, {
+        yaxis: { title: 'W/m²' },
+    }), cfg);
+
+    // Precipitation
+    Plotly.newPlot('chart-precipitation', [
+        { x: D.dates, y: D.precip, name: 'mm',
+          type: 'bar', marker: { color: '#00BCD4' } },
+    ], Object.assign({}, base, {
+        yaxis: { title: 'mm' },
+    }), cfg);
+
+    // Wind Speed & Direction
+    Plotly.newPlot('chart-wind', [
+        { x: D.dates, y: D.windSpd, name: 'Speed (m/s)',
+          type: 'scatter', mode: 'lines+markers',
+          line: { color: '#9C27B0', width: 2 }, marker: { size: 4 } },
+        { x: D.dates, y: D.windDir, name: 'Dir (°)',
+          type: 'scatter', mode: 'markers',
+          marker: { color: '#607D8B', size: 6, symbol: 'arrow-up', angleref: 'up', angle: D.windDir },
+          yaxis: 'y2' },
+    ], Object.assign({}, baseDual, {
+        yaxis:  { title: 'm/s', color: '#9C27B0', rangemode: 'tozero' },
+        yaxis2: { title: 'Dir (°)', color: '#607D8B', overlaying: 'y', side: 'right',
+                  range: [0, 360], dtick: 90, ticktext: ['N','E','S','W','N'], tickvals: [0,90,180,270,360] },
+    }), cfg);
+
+    // Battery Voltage
+    Plotly.newPlot('chart-battery', [
+        { x: D.dates, y: D.battery, name: 'Battery (V)',
+          type: 'scatter', mode: 'lines+markers',
+          line: { color: '#4CAF50', width: 2 }, marker: { size: 4 },
+          fill: 'tozeroy', fillcolor: 'rgba(76,175,80,0.1)' },
+        { x: D.dates, y: D.dates.map(function() { return 3.5; }),
+          name: 'Low (3.5 V)', type: 'scatter', mode: 'lines',
+          line: { color: '#F44336', width: 1, dash: 'dash' }, hoverinfo: 'skip' },
+    ], Object.assign({}, base, {
+        yaxis: { title: 'V', rangemode: 'tozero' },
+    }), cfg);
+
+    // ── DataTable + CSV export ────────────────────────────────────────────────
+    var dt = new simpleDatatables.DataTable('#readings-table', {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 15,
+        perPageSelect: [10, 15, 25, 50],
+    });
+
+    document.querySelector('.export[data-type="csv"]').addEventListener('click', function () {
+        dt.export({
+            type: 'csv',
+            filename: D.filename,
+            columnDelimiter: ',',
+        });
+    });
+}());
+</script>
+{% endblock JSscripts %}

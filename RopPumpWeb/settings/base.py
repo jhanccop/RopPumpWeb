@@ -46,6 +46,10 @@ INSTALLED_APPS = [
     'Apps.location',
     'Apps.users',
     
+    # FAUNA apps
+    'Apps.FAUNA.weatherStation',
+    'Apps.FAUNA.camera',
+
     # third apps
     'multiselectfield',
     'rest_framework',

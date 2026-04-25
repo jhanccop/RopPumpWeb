@@ -1,0 +1,311 @@
+{% extends 'FAUNA/camera/base_camera.html' %}
+{% load static %}
+
+{% block title %}{{ station.StationName }}{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock company %}
+{% block appName %}CAMERA TRAPS{% endblock appName %}
+{% block Type %}{{ station.StationName }}{% endblock Type %}
+
+{% block extra_css %}
+<style>
+    #detail-map { height: 240px; border-radius: 10px; }
+    .capture-thumb { height: 70px; width: 100px; object-fit: cover; border-radius: 6px; }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+
+<!-- Header card -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="material-icons me-1">photo_camera</i> {{ station.StationName }}
+                            </h6>
+                            <p class="text-white text-xs mb-0 opacity-8">{{ station.Description|default:"" }}</p>
+                        </div>
+                        <div class="col-auto d-flex gap-2">
+                            <a href="{% url 'camera_app:capture_add' %}?station={{ station.id }}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-plus me-1"></i> Add Capture
+                            </a>
+                            <a href="{% url 'camera_app:station_update' station.id %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-edit me-1"></i> Edit
+                            </a>
+                            <a href="{% url 'camera_app:station_list' %}" class="btn btn-sm btn-white mb-0">Back</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body pt-3">
+                <div class="row">
+                    <!-- Latest capture summary -->
+                    <div class="col-lg-8">
+                        <div class="row">
+                            {% if latest %}
+                            <div class="col-sm-4 mb-3">
+                                {% if latest.Image %}
+                                <img src="{{ latest.Image.url }}" alt="latest" style="width:100%;height:160px;object-fit:cover;border-radius:10px;">
+                                {% else %}
+                                <div style="width:100%;height:160px;border-radius:10px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;">
+                                    <i class="material-icons text-secondary" style="font-size:3rem;">no_photography</i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-8 mb-3">
+                                <div class="mb-1">
+                                    {% for det in latest.detections.all %}
+                                    <span class="badge bg-gradient-success me-1">{{ det.Species }} ×{{ det.Count }}</span>
+                                    {% empty %}
+                                    <span class="text-secondary text-xs">No detections</span>
+                                    {% endfor %}
+                                </div>
+                                <p class="text-sm text-secondary mb-1">{{ latest.DateCapture|date:"d/m/Y H:i" }}</p>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <p class="text-xs mb-1"><b>Temperature:</b> {% if latest.Temperature is not None %}{{ latest.Temperature|floatformat:1 }} °C{% else %}—{% endif %}</p>
+                                        <p class="text-xs mb-1"><b>Humidity:</b> {% if latest.Humidity is not None %}{{ latest.Humidity|floatformat:1 }} %{% else %}—{% endif %}</p>
+                                        <p class="text-xs mb-1"><b>Battery:</b> {% if latest.VoltageBattery is not None %}{{ latest.VoltageBattery|floatformat:2 }} V{% else %}—{% endif %}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p class="text-xs mb-1"><b>Lat:</b> {{ station.Latitude|default:"—" }}</p>
+                                        <p class="text-xs mb-1"><b>Lon:</b> {{ station.Longitude|default:"—" }}</p>
+                                        <p class="text-xs mb-1"><b>Alt:</b> {{ station.Altitude|default:"—" }} m</p>
+                                        <p class="text-xs mb-1"><b>Status:</b>
+                                            <span class="badge badge-sm {% if station.Status == 'Active' %}bg-gradient-success{% elif station.Status == 'Out of service' %}bg-gradient-danger{% else %}bg-gradient-warning{% endif %}">{{ station.Status }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <a href="{% url 'camera_app:capture_detail' latest.id %}" class="btn btn-sm bg-gradient-info mt-1">
+                                    View Latest Capture
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="col-12 text-center text-secondary py-3">
+                                No captures yet. <a href="{% url 'camera_app:capture_add' %}?station={{ station.id }}">Add first capture</a>.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Mini-map -->
+                    <div class="col-lg-4 mb-3">
+                        <div id="detail-map"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Period selector -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card p-3">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-sm font-weight-bolder">Period:</span>
+                <a href="?days=7"  class="btn btn-sm {% if days == 7  %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} mb-0">7 days</a>
+                <a href="?days=15" class="btn btn-sm {% if days == 15 %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} mb-0">15 days</a>
+                <a href="?days=30" class="btn btn-sm {% if days == 30 %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} mb-0">30 days</a>
+                <a href="?days=60" class="btn btn-sm {% if days == 60 %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} mb-0">60 days</a>
+                <a href="?days=90" class="btn btn-sm {% if days == 90 %}bg-gradient-primary{% else %}bg-gradient-secondary{% endif %} mb-0">90 days</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-success shadow-success border-radius-lg pt-2 pb-2 mt-n4 mx-3">
+                    <h6 class="text-white text-center mb-0">Species by Captures</h6>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div id="chart-species" style="min-height:240px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-info shadow-info border-radius-lg pt-2 pb-2 mt-n4 mx-3">
+                    <h6 class="text-white text-center mb-0">Captures Timeline</h6>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div id="chart-timeline" style="min-height:240px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-2 pb-2 mt-n4 mx-3">
+                    <h6 class="text-white text-center mb-0">Temperature & Humidity</h6>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div id="chart-temp-hum" style="min-height:240px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-warning shadow-warning border-radius-lg pt-2 pb-2 mt-n4 mx-3">
+                    <h6 class="text-white text-center mb-0">Battery Voltage</h6>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div id="chart-battery" style="min-height:240px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent captures thumbnails -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-2 pb-2 mt-n4 mx-3">
+                    <div class="row align-items-center px-2">
+                        <div class="col"><h6 class="text-white mb-0">Recent Captures</h6></div>
+                        <div class="col-auto">
+                            <a href="{% url 'camera_app:capture_list' %}?station={{ station.id }}" class="btn btn-sm btn-white mb-0">View All</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3">
+                    {% for c in recent_captures %}
+                    <a href="{% url 'camera_app:capture_detail' c.id %}" class="text-decoration-none">
+                        <div class="text-center">
+                            {% if c.Image %}
+                            <img src="{{ c.Image.url }}" alt="capture" class="capture-thumb">
+                            {% else %}
+                            <div class="capture-thumb d-flex align-items-center justify-content-center bg-gray-200">
+                                <i class="material-icons text-secondary">no_photography</i>
+                            </div>
+                            {% endif %}
+                            <p class="text-xs text-secondary mt-1 mb-0">
+                                {% for det in c.detections.all %}{{ det.Species }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                            </p>
+                            <p class="text-xs text-secondary mb-0">{{ c.DateCapture|date:"d/m H:i" }}</p>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p class="text-secondary text-sm">No recent captures.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    // ── Camera Station Mini-Map (OSM) ─────────────────────────────────────────
+    {% if station.Latitude and station.Longitude %}
+    var dm = L.map('detail-map', { zoomControl: true, scrollWheelZoom: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 18,
+    }).addTo(dm);
+
+    var lat = {{ station.Latitude }}, lon = {{ station.Longitude }};
+
+    var camIcon = L.divIcon({
+        className: '',
+        iconSize: [28, 28], iconAnchor: [14, 14],
+        html: '<div style="background:#4CAF50;width:28px;height:28px;border-radius:50%;' +
+              'border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);' +
+              'display:flex;align-items:center;justify-content:center;">' +
+              '<i class="material-icons" style="color:#fff;font-size:14px;">photo_camera</i></div>',
+    });
+
+    {% if latest %}
+    var camPopup =
+        '<div class="popup-title">{{ station.StationName }}</div>' +
+        {% if latest.Image %}
+        '<img src="{{ latest.Image.url }}" class="popup-thumb" />' +
+        {% endif %}
+        '<div class="popup-row"><span class="popup-label">🦎 Detections</span>' +
+        '<span class="popup-val">{% for det in latest.detections.all %}{{ det.Species }}({{ det.Count }}){% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</span></div>' +
+        '<div class="popup-row"><span class="popup-label">🌡 Temp</span>' +
+        '<span class="popup-val">{% if latest.Temperature is not None %}{{ latest.Temperature|floatformat:1 }} °C{% else %}—{% endif %}</span></div>' +
+        '<div class="popup-row"><span class="popup-label">🔋 Battery</span>' +
+        '<span class="popup-val">{% if latest.VoltageBattery is not None %}{{ latest.VoltageBattery|floatformat:2 }} V{% else %}—{% endif %}</span></div>' +
+        '<p style="color:#7b809a;font-size:10px;margin:5px 0 0">{{ latest.DateCapture|date:"d/m/Y H:i" }}</p>' +
+        '<a href="{% url "camera_app:capture_detail" latest.id %}" ' +
+        'style="display:block;text-align:center;margin-top:6px;font-size:11px;padding:3px 10px;' +
+        'border-radius:6px;background:#4CAF50;color:#fff;text-decoration:none">🖼 View Capture</a>';
+    {% else %}
+    var camPopup = '<b>{{ station.StationName }}</b><br><span style="color:#aaa">No captures yet</span>';
+    {% endif %}
+
+    L.marker([lat, lon], { icon: camIcon })
+        .addTo(dm)
+        .bindPopup(camPopup, { maxWidth: 220 })
+        .openPopup();
+
+    dm.setView([lat, lon], 12);
+    {% else %}
+    document.getElementById('detail-map').innerHTML =
+        '<div style="height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;border-radius:10px;">' +
+        '<p class="text-secondary text-sm p-3">No location configured</p></div>';
+    {% endif %}
+
+    var dates = {{ chart_dates|safe }};
+    var counts  = {{ chart_count|safe }};
+    var temps   = {{ chart_temperature|safe }};
+    var hums    = {{ chart_humidity|safe }};
+    var batt    = {{ chart_battery|safe }};
+    var spNames = {{ chart_sp_names|safe }};
+    var spCaps  = {{ chart_sp_captures|safe }};
+    var spInds  = {{ chart_sp_individuals|safe }};
+
+    var cfg = { responsive: true, displayModeBar: false };
+    var layout = {
+        margin: { t: 10, r: 20, b: 60, l: 50 },
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { size: 11 }, legend: { orientation: 'h', y: -0.3 },
+    };
+
+    // Species bar
+    Plotly.newPlot('chart-species', [
+        { x: spCaps, y: spNames, type: 'bar', orientation: 'h', name: 'Captures', marker: { color: '#4CAF50' } },
+        { x: spInds, y: spNames, type: 'bar', orientation: 'h', name: 'Individuals', marker: { color: '#2196F3' } },
+    ], Object.assign({}, layout, { barmode: 'group', margin: { t: 10, r: 20, b: 40, l: 120 }, xaxis: { title: 'Count' } }), cfg);
+
+    // Timeline scatter
+    Plotly.newPlot('chart-timeline', [
+        { x: dates, y: counts, type: 'scatter', mode: 'markers',
+          marker: { size: 10, color: '#9C27B0', symbol: 'circle' },
+          hovertemplate: '%{x}<br>Count: %{y}<extra></extra>' },
+    ], Object.assign({}, layout, { yaxis: { title: 'Individuals' } }), cfg);
+
+    // Temp & Humidity
+    Plotly.newPlot('chart-temp-hum', [
+        { x: dates, y: temps, name: 'Temp (°C)', type: 'scatter', mode: 'lines+markers', line: { color: '#F44336', width: 2 }, marker: { size: 4 } },
+        { x: dates, y: hums,  name: 'Humidity (%)', type: 'scatter', mode: 'lines+markers', line: { color: '#2196F3', width: 2 }, marker: { size: 4 }, yaxis: 'y2' },
+    ], Object.assign({}, layout, {
+        yaxis:  { title: '°C', color: '#F44336' },
+        yaxis2: { title: '%', overlaying: 'y', side: 'right', color: '#2196F3' },
+    }), cfg);
+
+    // Battery
+    Plotly.newPlot('chart-battery', [
+        { x: dates, y: batt, name: 'Battery (V)', type: 'scatter', mode: 'lines+markers',
+          fill: 'tozeroy', line: { color: '#FF9800', width: 2 }, marker: { size: 4 } },
+    ], Object.assign({}, layout, { yaxis: { title: 'V' } }), cfg);
+</script>
+{% endblock JSscripts %}
