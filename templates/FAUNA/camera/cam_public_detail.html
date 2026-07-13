@@ -1,0 +1,356 @@
+{% extends 'base_home.html' %}
+{% load static %}
+
+{% block title %}{{ station.StationName }} — Historial{% endblock title %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'assets/css/leaflet.css' %}" />
+<script src="{% static 'assets/js/plugins/leaflet.js' %}"></script>
+<script src="{% static 'assets/js/plugins/plotly-2.12.1.min.js' %}"></script>
+<style>
+    .pub-hero { background:linear-gradient(135deg,#1b5e20 0%,#388e3c 60%,#558b2f 100%); padding:40px 0 30px; }
+    .val-chip { display:inline-flex;flex-direction:column;align-items:center;padding:10px 12px;border-radius:10px;border-left:3px solid;min-width:90px; }
+    .val-chip-label { font-size:9px;text-transform:uppercase;font-weight:700;letter-spacing:.4px;opacity:.65;margin-bottom:3px; }
+    .val-chip-val { font-size:1.2rem;font-weight:800;line-height:1; }
+    .val-chip-unit { font-size:9px;opacity:.55;margin-top:2px; }
+    .day-btn { padding:4px 12px;font-size:.75rem;border-radius:20px; }
+    .day-btn.active { background:#344767;color:#fff;border-color:#344767; }
+    #mini-map { height:160px;border-radius:8px; }
+    .capture-thumb-lg { width:100%;height:140px;object-fit:cover;border-radius:8px; }
+    .no-img-lg { width:100%;height:140px;background:#e8f5e9;border-radius:8px;display:flex;align-items:center;justify-content:center; }
+    .sp-pill { display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;background:#e8f5e9;color:#2e7d32;margin:2px; }
+    .cap-card { border:1px solid #e9ecef;border-radius:10px;overflow:hidden;height:100%; }
+    .cap-card-body { padding:8px; }
+</style>
+
+<!-- Hero -->
+<div class="pub-hero">
+    <div class="container">
+        <div class="d-flex align-items-center gap-3 mb-2">
+            <a href="{% url 'camera_app:public_camera' %}" class="btn btn-sm btn-white mb-0" style="font-size:.75rem;">
+                <i class="fas fa-arrow-left me-1"></i>Volver
+            </a>
+            <div>
+                <h3 class="text-white font-weight-bolder mb-0">
+                    <i class="fas fa-camera me-2 opacity-8"></i>{{ station.StationName }}
+                </h3>
+                {% if station.Description %}
+                <p class="text-white mb-0" style="opacity:.75;font-size:.8rem;">{{ station.Description }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-3 align-items-center mt-1">
+            <span class="badge px-3 py-2" style="font-size:.75rem;background:
+                {% if station.Status == 'Active' %}#4CAF50{% elif station.Status == 'Maintenance' %}#FF9800
+                {% elif station.Status == 'Out of service' %}#F44336{% else %}#9E9E9E{% endif %};">
+                {{ station.Status }}
+            </span>
+            {% if station.Altitude %}
+            <span class="text-white text-xs opacity-8"><i class="fas fa-mountain me-1"></i>{{ station.Altitude }} m.s.n.m.</span>
+            {% endif %}
+            <span class="text-white text-xs opacity-8">
+                <i class="fas fa-clock me-1"></i>{{ station.TurnOnTime }} – {{ station.TurnOffTime }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-3 px-lg-4 py-4">
+
+    <!-- Filtro de días -->
+    <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+        <span class="text-xs text-secondary font-weight-bolder">Período:</span>
+        <a href="?days=7"  class="btn btn-sm day-btn {% if days == 7 %}active{% endif %}">7 días</a>
+        <a href="?days=30" class="btn btn-sm day-btn {% if days == 30 %}active{% endif %}">30 días</a>
+        <a href="?days=90" class="btn btn-sm day-btn {% if days == 90 %}active{% endif %}">90 días</a>
+        <span class="text-secondary text-xs ms-auto">
+            <i class="fas fa-clock me-1"></i>
+            {% if latest %}Última captura: {{ latest.DateCapture|date:"d/m/Y H:i" }}{% else %}Sin capturas{% endif %}
+        </span>
+    </div>
+
+    <!-- Última captura + mini-mapa + especies -->
+    {% if latest %}
+    <div class="row g-3 mb-4">
+
+        <!-- Imagen y detecciones -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100">
+                <div class="card-header p-3 pt-2">
+                    <div class="bg-gradient-success shadow-success border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3">
+                        <h6 class="text-white mb-0 text-sm"><i class="fas fa-camera me-1"></i>Última Captura</h6>
+                    </div>
+                </div>
+                <div class="card-body p-2">
+                    {% if latest.Image %}
+                    <img src="{{ latest.Image.url }}" alt="" class="capture-thumb-lg mb-2">
+                    {% else %}
+                    <div class="no-img-lg mb-2">
+                        <i class="fas fa-camera" style="font-size:2rem;color:#a5d6a7;opacity:.6;"></i>
+                    </div>
+                    {% endif %}
+                    <p class="text-xxs text-secondary mb-2"><i class="fas fa-clock me-1"></i>{{ latest.DateCapture|date:"d/m/Y H:i" }}</p>
+                    {% for det in latest.detections.all %}
+                    <span class="sp-pill"><i class="fas fa-leaf" style="font-size:8px;"></i>{{ det.Species }} ×{{ det.Count }}</span>
+                    {% empty %}
+                    <p class="text-xxs text-secondary">Sin detecciones</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- KPIs ambientales -->
+        <div class="col-md-5 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header p-3 pt-2">
+                    <div class="bg-gradient-info shadow-info border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3">
+                        <h6 class="text-white mb-0 text-sm"><i class="fas fa-thermometer-half me-1"></i>Condiciones Ambientales</h6>
+                    </div>
+                </div>
+                <div class="card-body p-3 d-flex flex-wrap gap-2 align-content-start">
+                    {% if latest.Temperature is not None %}
+                    <div class="val-chip" style="background:#fff5f5;border-color:#e53e3e;">
+                        <span class="val-chip-label" style="color:#c53030;">🌡 Temperatura</span>
+                        <span class="val-chip-val text-danger">{{ latest.Temperature|floatformat:1 }}</span>
+                        <span class="val-chip-unit">°C</span>
+                    </div>
+                    {% endif %}
+                    {% if latest.Humidity is not None %}
+                    <div class="val-chip" style="background:#ebf8ff;border-color:#3182ce;">
+                        <span class="val-chip-label" style="color:#2b6cb0;">💧 Humedad</span>
+                        <span class="val-chip-val text-info">{{ latest.Humidity|floatformat:1 }}</span>
+                        <span class="val-chip-unit">%</span>
+                    </div>
+                    {% endif %}
+                    {% if latest.VoltageBattery is not None %}
+                    <div class="val-chip" style="background:#f0fff4;border-color:#2f855a;">
+                        <span class="val-chip-label" style="color:#276749;">🔋 Batería</span>
+                        <span class="val-chip-val {% if latest.VoltageBattery < 3.5 %}text-danger{% else %}text-success{% endif %}">{{ latest.VoltageBattery|floatformat:2 }}</span>
+                        <span class="val-chip-unit">V</span>
+                    </div>
+                    {% endif %}
+                    {% if latest.MemFree is not None %}
+                    <div class="val-chip" style="background:#faf5ff;border-color:#6b46c1;">
+                        <span class="val-chip-label" style="color:#553c9a;">💾 Memoria</span>
+                        <span class="val-chip-val" style="color:#6b46c1;">{{ latest.MemFree|floatformat:0 }}</span>
+                        <span class="val-chip-unit">KB</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Mini-mapa -->
+        <div class="col-md-3 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body p-2">
+                    <div id="mini-map"></div>
+                    {% if station.Latitude and station.Longitude %}
+                    <p class="text-xxs text-secondary mt-1 mb-0 text-center">
+                        {{ station.Latitude|floatformat:4 }}, {{ station.Longitude|floatformat:4 }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Gráficos -->
+    <div class="row g-3 mb-4">
+
+        <!-- Detecciones por captura -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center"
+                         style="background:linear-gradient(195deg,#1b5e20,#388e3c);box-shadow:0 4px 16px rgba(27,94,32,.35);">
+                        <i class="fas fa-chart-bar text-white me-2"></i>
+                        <h6 class="text-white mb-0">Detecciones por captura</h6>
+                    </div>
+                </div>
+                <div class="card-body p-2"><div id="chart-count" style="height:220px;"></div></div>
+            </div>
+        </div>
+
+        <!-- Top Especies -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center"
+                         style="background:linear-gradient(195deg,#276749,#2f855a);box-shadow:0 4px 16px rgba(47,133,90,.35);">
+                        <i class="fas fa-leaf text-white me-2"></i>
+                        <h6 class="text-white mb-0">Top Especies</h6>
+                    </div>
+                </div>
+                <div class="card-body p-2"><div id="chart-species" style="height:220px;"></div></div>
+            </div>
+        </div>
+
+        <!-- Temperatura -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center"
+                         style="background:linear-gradient(195deg,#c53030,#e53e3e);box-shadow:0 4px 16px rgba(197,48,48,.35);">
+                        <i class="fas fa-thermometer-half text-white me-2"></i>
+                        <h6 class="text-white mb-0">Temperatura y Humedad</h6>
+                    </div>
+                </div>
+                <div class="card-body p-2"><div id="chart-temp-hum" style="height:200px;"></div></div>
+            </div>
+        </div>
+
+        <!-- Batería -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center"
+                         style="background:linear-gradient(195deg,#276749,#2f855a);box-shadow:0 4px 16px rgba(47,133,90,.35);">
+                        <i class="fas fa-battery-three-quarters text-white me-2"></i>
+                        <h6 class="text-white mb-0">Batería (V)</h6>
+                    </div>
+                </div>
+                <div class="card-body p-2"><div id="chart-battery" style="height:200px;"></div></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Galería reciente -->
+    {% if recent_captures %}
+    <div class="card mb-4">
+        <div class="card-header p-3 pt-2">
+            <div class="bg-gradient-dark shadow-dark border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center">
+                <i class="fas fa-images text-white me-2"></i>
+                <h6 class="text-white mb-0">Capturas Recientes</h6>
+            </div>
+        </div>
+        <div class="card-body p-3">
+            <div class="row g-2">
+                {% for c in recent_captures %}
+                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                    <div class="cap-card">
+                        {% if c.Image %}
+                        <img src="{{ c.Image.url }}" alt="" class="capture-thumb-lg">
+                        {% else %}
+                        <div class="no-img-lg"><i class="fas fa-camera" style="font-size:1.5rem;color:#a5d6a7;opacity:.6;"></i></div>
+                        {% endif %}
+                        <div class="cap-card-body">
+                            <p class="text-xxs text-secondary mb-1">{{ c.DateCapture|date:"d/m H:i" }}</p>
+                            {% for det in c.detections.all %}
+                            <span class="sp-pill">{{ det.Species }} ×{{ det.Count }}</span>
+                            {% empty %}
+                            <span class="text-xxs text-secondary">—</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="text-center pb-3">
+        <p class="text-xs text-secondary">
+            Datos públicos de solo lectura ·
+            <a href="{% url 'user_app:user-login' %}" class="text-success">Iniciar sesión</a> para gestionar capturas
+        </p>
+    </div>
+
+</div>
+
+<script src="{% static 'assets/js/core/popper.min.js' %}"></script>
+<script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
+<script>
+// ── Mini-mapa ─────────────────────────────────────────────────────────────────
+{% if station.Latitude and station.Longitude %}
+var mm = L.map('mini-map', { zoomControl:false, scrollWheelZoom:false });
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:18, attribution:'&copy; OpenStreetMap' }).addTo(mm);
+L.marker([{{ station.Latitude }}, {{ station.Longitude }}], {
+    icon: L.divIcon({
+        className:'', iconSize:[22,22], iconAnchor:[11,11],
+        html:'<div style="background:#2e7d32;width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;"><i class="fas fa-camera" style="color:#fff;font-size:8px;"></i></div>',
+    })
+}).addTo(mm);
+mm.setView([{{ station.Latitude }}, {{ station.Longitude }}], 12);
+{% else %}
+document.getElementById('mini-map').innerHTML =
+    '<div style="height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;border-radius:8px;"><p class="text-xxs text-secondary mb-0">Sin ubicación</p></div>';
+{% endif %}
+
+// ── Datos ─────────────────────────────────────────────────────────────────────
+var dates    = {{ chart_dates|safe }};
+var count    = {{ chart_count|safe }};
+var temp     = {{ chart_temperature|safe }};
+var hum      = {{ chart_humidity|safe }};
+var battery  = {{ chart_battery|safe }};
+var spNames  = {{ chart_sp_names|safe }};
+var spInd    = {{ chart_sp_individuals|safe }};
+var spCaps   = {{ chart_sp_captures|safe }};
+
+var cfg = { responsive:true, displayModeBar:false };
+
+function baseLayout(yTitle, y2Title) {
+    var l = {
+        margin:{t:10,r:15,b:55,l:45},
+        paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+        font:{family:'inherit',size:10,color:'#7b809a'},
+        legend:{orientation:'h',y:-0.38,font:{size:10}},
+        xaxis:{tickangle:-35,tickfont:{size:9},gridcolor:'#f0f2f5',showgrid:true},
+        yaxis:{title:{text:yTitle,font:{size:10}},gridcolor:'#f0f2f5',zeroline:false},
+    };
+    if(y2Title) l.yaxis2={title:{text:y2Title,font:{size:10}},overlaying:'y',side:'right',gridcolor:'transparent',zeroline:false};
+    return l;
+}
+
+function noData(id) {
+    var el=document.getElementById(id);
+    if(el) el.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;"><p class="text-secondary text-xs">Sin datos para el período</p></div>';
+}
+
+function hasVal(arr){ return arr&&arr.some(function(v){return v!==null&&v!==undefined;}); }
+
+// Detecciones
+if(hasVal(count)){
+    Plotly.newPlot('chart-count',[
+        {x:dates,y:count,name:'Detecciones',type:'bar',marker:{color:'rgba(56,142,60,.7)',line:{color:'#388e3c',width:1}}},
+    ],baseLayout('Individuos'),cfg);
+} else { noData('chart-count'); }
+
+// Top especies
+if(spNames.length){
+    Plotly.newPlot('chart-species',[
+        {x:spInd,y:spNames,type:'bar',orientation:'h',name:'Individuos',marker:{color:'#4CAF50'}},
+        {x:spCaps,y:spNames,type:'bar',orientation:'h',name:'Capturas',marker:{color:'#81C784'}},
+    ],{
+        margin:{t:10,r:20,b:40,l:120},
+        paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
+        barmode:'group',font:{family:'inherit',size:10},
+        legend:{orientation:'h',y:-0.2},
+        xaxis:{title:'Cantidad'},
+    },cfg);
+} else { noData('chart-species'); }
+
+// Temp + Humedad
+if(hasVal(temp)||hasVal(hum)){
+    Plotly.newPlot('chart-temp-hum',[
+        {x:dates,y:temp,name:'Temperatura',type:'scatter',mode:'lines+markers',
+         line:{color:'#e53e3e',width:2},marker:{size:3},connectgaps:false},
+        {x:dates,y:hum,name:'Humedad',type:'scatter',mode:'lines+markers',yaxis:'y2',
+         line:{color:'#3182ce',width:2,dash:'dot'},marker:{size:3},connectgaps:false},
+    ],baseLayout('°C','%'),cfg);
+} else { noData('chart-temp-hum'); }
+
+// Batería
+if(hasVal(battery)){
+    Plotly.newPlot('chart-battery',[
+        {x:dates,y:battery,name:'Batería',type:'scatter',mode:'lines+markers',fill:'tozeroy',
+         line:{color:'#2f855a',width:2},marker:{size:3},
+         fillcolor:'rgba(47,133,90,.1)',connectgaps:false},
+    ],baseLayout('V'),cfg);
+} else { noData('chart-battery'); }
+</script>
+{% endblock content %}

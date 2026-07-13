@@ -1,0 +1,231 @@
+{% extends 'base_home.html' %}
+{% load static %}
+{% load fauna_tags %}
+
+{% block title %}Monitoreo de Mariposas{% endblock title %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'assets/css/leaflet.css' %}" />
+<script src="{% static 'assets/js/plugins/leaflet.js' %}"></script>
+<style>
+    #cam-map { height: 100%; min-height: 420px; border-radius: 0 0 12px 12px; }
+    .pub-hero { background: linear-gradient(135deg,#1b5e20 0%,#388e3c 60%,#558b2f 100%); padding:90px 0 36px; }
+    .kpi-chip { background:rgba(255,255,255,.15); border-radius:12px; padding:12px 18px; text-align:center; }
+    .kpi-chip h3 { color:#fff; font-weight:800; margin-bottom:2px; }
+    .kpi-chip p { color:rgba(255,255,255,.75); font-size:.7rem; text-transform:uppercase; letter-spacing:.5px; margin:0; }
+    /* Leaflet popup */
+    .leaflet-popup-content { font-size:12px; line-height:1.6; min-width:200px; }
+    .popup-title { font-weight:700; font-size:13px; margin-bottom:3px; color:#344767; }
+    .popup-row { display:flex; justify-content:space-between; gap:8px; }
+    .popup-label { color:#7b809a; }
+    .popup-val { font-weight:600; color:#344767; }
+    .popup-status { display:inline-block; padding:1px 8px; border-radius:20px; font-size:11px; font-weight:600; margin-bottom:4px; }
+    /* Capture list */
+    .st-item { padding:10px 14px; border-bottom:1px solid #f0f2f5; }
+    .st-item:last-child { border-bottom:none; }
+    .st-name { font-size:.8rem; font-weight:700; color:#344767; text-decoration:none; }
+    .st-name:hover { color:#2e7d32; text-decoration:underline; }
+    .capture-thumb-sm { width:52px; height:42px; object-fit:cover; border-radius:6px; flex-shrink:0; }
+    .no-img-sm { width:52px; height:42px; background:#e8f5e9; border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .sp-pill { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:20px; font-size:10px; font-weight:600; background:#e8f5e9; color:#2e7d32; margin:1px; }
+    .status-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .map-col { display:flex; flex-direction:column; }
+    .list-col { display:flex; flex-direction:column; max-height:560px; }
+    .list-scroll { overflow-y:auto; flex:1; }
+    @media (max-width:991px) {
+        .list-col { max-height:none; }
+        #cam-map { min-height:320px; }
+    }
+</style>
+
+<!-- Hero -->
+<div class="pub-hero">
+    <div class="container">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-6">
+                <h3 class="text-white font-weight-bolder mb-1">
+                    <i class="fas fa-leaf me-2 opacity-8"></i>Monitoreo de Mariposas
+                </h3>
+                <p class="text-white mb-0" style="opacity:.8;font-size:.875rem;">
+                    Red de cámaras trampa · Detección automatizada con IA · Fauna nativa
+                </p>
+            </div>
+            <div class="col-lg-6">
+                <div class="d-flex gap-3 justify-content-lg-end flex-wrap">
+                    <div class="kpi-chip">
+                        <h3>{{ total_stations }}</h3>
+                        <p>Cámaras</p>
+                    </div>
+                    <div class="kpi-chip">
+                        <h3>{{ total_species }}</h3>
+                        <p>Especies</p>
+                    </div>
+                    <div class="kpi-chip">
+                        <h3>{{ total_captures }}</h3>
+                        <p>Capturas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<div class="container-fluid px-3 px-lg-4 py-4">
+    <div class="row g-3" style="min-height:560px;">
+
+        <!-- Mapa -->
+        <div class="col-lg-7 map-col">
+            <div class="card h-100" style="border-radius:12px;overflow:hidden;">
+                <div class="card-header p-0">
+                    <div class="bg-gradient-dark px-3 py-2 d-flex align-items-center">
+                        <i class="fas fa-map-marked-alt text-white me-2"></i>
+                        <span class="text-white text-sm font-weight-bolder me-auto">Red de Cámaras Trampa</span>
+                        <div class="d-flex gap-3">
+                            <span class="text-white text-xs opacity-8"><span class="status-dot d-inline-block me-1" style="background:#4CAF50;"></span>Activa</span>
+                            <span class="text-white text-xs opacity-8"><span class="status-dot d-inline-block me-1" style="background:#FF9800;"></span>Mant.</span>
+                            <span class="text-white text-xs opacity-8"><span class="status-dot d-inline-block me-1" style="background:#9E9E9E;"></span>Inactiva</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0" style="flex:1;">
+                    <div id="cam-map"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de capturas -->
+        <div class="col-lg-5 list-col">
+            <div class="card h-100" style="border-radius:12px;">
+                <div class="card-header p-0">
+                    <div class="bg-gradient-success px-3 py-2 d-flex align-items-center">
+                        <i class="fas fa-camera text-white me-2"></i>
+                        <span class="text-white text-sm font-weight-bolder me-auto">Última captura por estación</span>
+                        <span class="text-white text-xs opacity-8">{{ latest_captures|length }} cámara{{ latest_captures|length|pluralize:"s" }}</span>
+                    </div>
+                </div>
+                <div class="list-scroll">
+                    {% for c in latest_captures %}
+                    <div class="st-item">
+                        <div class="d-flex gap-2">
+                            <!-- Miniatura -->
+                            {% if c.Image %}
+                            <img src="{{ c.Image.url }}" alt="" class="capture-thumb-sm">
+                            {% else %}
+                            <div class="no-img-sm">
+                                <i class="fas fa-camera" style="font-size:14px;color:#a5d6a7;"></i>
+                            </div>
+                            {% endif %}
+
+                            <div class="flex-grow-1 min-width-0">
+                                <!-- Nombre + fecha -->
+                                <div class="d-flex align-items-center gap-1 mb-1">
+                                    <span class="status-dot" style="background:{% if c.Station.Status == 'Active' %}#4CAF50{% elif c.Station.Status == 'Maintenance' %}#FF9800{% elif c.Station.Status == 'Out of service' %}#F44336{% else %}#9E9E9E{% endif %};"></span>
+                                    <a href="{% url 'camera_app:public_camera_detail' c.Station.id %}" class="st-name text-truncate">{{ c.Station.StationName }}</a>
+                                    <span class="text-xxs text-secondary ms-auto" style="white-space:nowrap;">{{ c.DateCapture|lima_date:"d/m/Y H:i" }}</span>
+                                </div>
+                                <!-- Especies -->
+                                <div class="mb-1">
+                                    {% for det in c.detections.all %}
+                                    <span class="sp-pill"><i class="fas fa-leaf" style="font-size:8px;"></i>{{ det.Species }} ×{{ det.Count }}</span>
+                                    {% empty %}
+                                    <span class="text-xxs text-secondary">Sin detecciones</span>
+                                    {% endfor %}
+                                </div>
+                                <!-- Sensores -->
+                                <div class="d-flex gap-2">
+                                    {% if c.Temperature is not None %}
+                                    <span class="text-xxs text-secondary"><i class="fas fa-thermometer-half me-1 text-danger"></i>{{ c.Temperature|floatformat:1 }}°C</span>
+                                    {% endif %}
+                                    {% if c.Humidity is not None %}
+                                    <span class="text-xxs text-secondary"><i class="fas fa-tint me-1 text-info"></i>{{ c.Humidity|floatformat:1 }}%</span>
+                                    {% endif %}
+                                    {% if c.VoltageBattery is not None %}
+                                    <span class="text-xxs {% if c.VoltageBattery < 3.5 %}text-danger{% else %}text-success{% endif %}"><i class="fas fa-battery-half me-1"></i>{{ c.VoltageBattery|floatformat:2 }}V</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-secondary py-5">
+                        <i class="fas fa-camera d-block mb-2" style="font-size:2.5rem;opacity:.2;"></i>
+                        <p class="text-sm">Sin capturas disponibles.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="card-footer p-2 text-center" style="border-top:1px solid #f0f2f5;">
+                    <p class="text-xxs text-secondary mb-0">
+                        <i class="fas fa-lock me-1"></i>
+                        <a href="{% url 'user_app:user-login' %}" class="text-success">Iniciar sesión</a> para gestionar el sistema
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="{% static 'assets/js/core/popper.min.js' %}"></script>
+<script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
+<script>
+(function () {
+    var camMap = L.map('cam-map', { zoomControl:true, scrollWheelZoom:false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:18,
+    }).addTo(camMap);
+
+    var statusColor = {
+        'Active':'#4CAF50','Inactive':'#9E9E9E','Maintenance':'#FF9800','Out of service':'#F44336',
+    };
+
+    function makeIcon(color) {
+        return L.divIcon({
+            className:'', iconSize:[28,28], iconAnchor:[14,14],
+            html:'<div style="background:'+color+';width:28px;height:28px;border-radius:50%;'+
+                 'border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);'+
+                 'display:flex;align-items:center;justify-content:center;">'+
+                 '<i class="fas fa-camera" style="color:#fff;font-size:10px;"></i></div>',
+        });
+    }
+
+    function v(val,unit){
+        return val!==null&&val!==undefined
+            ?'<span style="font-weight:600;color:#344767">'+val+(unit?' '+unit:'')+'</span>'
+            :'<span style="color:#aaa">—</span>';
+    }
+
+    var geojson = {{ stations_geojson|safe }};
+    var markers = [];
+
+    geojson.features.forEach(function(f){
+        var c=f.geometry.coordinates, p=f.properties;
+        var color=statusColor[p.status]||'#9E9E9E';
+        var detailUrl='{% url "camera_app:public_camera_detail" 0 %}'.replace('/0/','/'+p.id+'/');
+
+        var imgHtml = p.img_url
+            ?'<img src="'+p.img_url+'" style="width:100%;height:60px;object-fit:cover;border-radius:6px;margin-bottom:5px;"/>'
+            :'<div style="width:100%;height:36px;background:#e8f5e9;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:5px;"><span style="color:#81c784;font-size:10px">Sin imagen</span></div>';
+
+        var popup =
+            '<div class="popup-title">'+p.name+'</div>'+
+            '<span class="popup-status" style="background:'+color+';color:#fff">'+p.status+'</span>'+
+            (p.date?'<p style="color:#7b809a;font-size:10px;margin:4px 0 5px"><i class="fas fa-clock me-1"></i>'+p.date+'</p>':'<p style="height:4px"></p>')+
+            (p.capture_id?imgHtml:'')+
+            (p.detections?'<div class="popup-row"><span class="popup-label">🦋 Detecciones</span>'+v(p.detections)+'</div>':'')+
+            '<div class="popup-row"><span class="popup-label">🌡 Temp</span>'+v(p.temp,'°C')+'</div>'+
+            '<div class="popup-row"><span class="popup-label">💧 Hum</span>'+v(p.hum,'%')+'</div>'+
+            '<a href="'+detailUrl+'" style="display:block;margin-top:8px;font-size:11px;padding:5px;border-radius:6px;'+
+            'background:#2e7d32;color:#fff;text-decoration:none;text-align:center;">'+
+            '<i class="fas fa-chart-bar me-1"></i>Ver historial</a>';
+
+        var marker=L.marker([c[1],c[0]],{icon:makeIcon(color)})
+            .addTo(camMap).bindPopup(popup,{maxWidth:235});
+        markers.push(marker);
+    });
+
+    if(markers.length) camMap.fitBounds(L.featureGroup(markers).getBounds().pad(0.3));
+    else camMap.setView([-9.19,-75.01],5);
+}());
+</script>
+{% endblock content %}

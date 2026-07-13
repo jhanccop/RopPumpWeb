@@ -4,6 +4,10 @@ from . import views
 app_name = 'camera_app'
 
 urlpatterns = [
+    # Public (no login required)
+    path('fauna/camera/', views.PublicCameraView.as_view(), name='public_camera'),
+    path('fauna/camera/<int:pk>/', views.PublicCameraDetailView.as_view(), name='public_camera_detail'),
+
     # Dashboard
     path('camera/', views.DashboardView.as_view(), name='dashboard'),
 

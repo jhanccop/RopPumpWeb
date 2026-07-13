@@ -1,0 +1,339 @@
+{% extends 'base_home.html' %}
+{% load static %}
+{% load fauna_tags %}
+
+{% block title %}Estaciones Meteorológicas{% endblock title %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'assets/css/leaflet.css' %}" />
+<script src="{% static 'assets/js/plugins/leaflet.js' %}"></script>
+<style>
+    /* ── Hero: padding-top compensa el navbar position:absolute ── */
+    .ws-hero {
+        background: linear-gradient(195deg, #1565c0, #0288d1);
+        padding: 100px 0 60px;       /* 60px extra para que las cards suban sobre él */
+    }
+
+    /* ── Card headers simples (sin mt-n4 que choca con overflow:hidden) ── */
+    .card-hdr {
+        border-radius: 10px 10px 0 0;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    .card-hdr h6 { margin: 0; color: #fff; font-size: .82rem; font-weight: 700; }
+
+    /* ── Mapa ── */
+    #ws-map { width: 100%; height: 100%; min-height: 420px; display: block; }
+    .map-body { flex: 1; min-height: 0; padding: 0; overflow: hidden; }
+
+    /* ── Tabla estaciones ── */
+    .st-badge { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+    /* ── Popup Leaflet ── */
+    .leaflet-popup-content { font-size: 12px; line-height: 1.6; min-width: 190px; }
+    .p-title  { font-weight: 700; font-size: 13px; color: #344767; margin-bottom: 3px; }
+    .p-row    { display: flex; justify-content: space-between; gap: 8px; }
+    .p-label  { color: #7b809a; }
+    .p-val    { font-weight: 600; color: #344767; }
+    .p-badge  { display: inline-block; padding: 1px 8px; border-radius: 20px;
+                font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+</style>
+
+<!-- ═══ HERO ══════════════════════════════════════════════════════════════ -->
+<div class="ws-hero">
+    <div class="container">
+        <div class="row align-items-end g-3">
+            <!-- Título + breadcrumb -->
+            <div class="col-lg-7">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-dark mb-1">
+                        <li class="breadcrumb-item text-white opacity-7 text-xs">
+                            <a href="/" class="text-white opacity-7">Inicio</a>
+                        </li>
+                        <li class="breadcrumb-item text-white text-xs active">Estaciones Meteorológicas</li>
+                    </ol>
+                </nav>
+                <h3 class="text-white font-weight-bolder mb-1">
+                    <i class="fas fa-broadcast-tower me-2"></i>Red de Estaciones Meteorológicas
+                </h3>
+                <p class="text-white mb-0" style="opacity:.8; font-size:.85rem;">
+                    Monitoreo ambiental en tiempo real &middot; Temperatura &middot; Humedad &middot; Precipitación &middot; Radiación &middot; Viento
+                </p>
+            </div>
+            <!-- KPI chips -->
+            <div class="col-lg-5">
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body py-2 px-2">
+                                <h4 class="mb-0 font-weight-bolder text-gradient text-primary">{{ total_stations }}</h4>
+                                <p class="text-secondary text-xs mb-0 text-uppercase">Total</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body py-2 px-2">
+                                <h4 class="mb-0 font-weight-bolder text-gradient text-success">{{ active_stations }}</h4>
+                                <p class="text-secondary text-xs mb-0 text-uppercase">Activas</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body py-2 px-2">
+                                <h4 class="mb-0 font-weight-bolder text-gradient text-info">{{ stations_with_reading }}</h4>
+                                <p class="text-secondary text-xs mb-0 text-uppercase">Con datos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ CONTENIDO (sube sobre el hero con mt-n5) ═════════════════════════ -->
+<div class="container-fluid px-3 px-lg-4 mt-n5">
+    <div class="row g-3" style="min-height: 520px;">
+
+        <!-- ── MAPA col-lg-7 ──────────────────────────────────────────────── -->
+        <div class="col-lg-7 d-flex flex-column">
+            <div class="card shadow h-100 d-flex flex-column" style="border-radius:12px; overflow:hidden;">
+                <!-- Header simple dentro del card (no mt-n4) -->
+                <div class="card-hdr" style="background:linear-gradient(195deg,#00695c,#0288d1);">
+                    <i class="fas fa-map-marked-alt text-white"></i>
+                    <h6>Mapa de Estaciones</h6>
+                    <div class="d-none d-sm-flex gap-3 ms-auto">
+                        <span class="text-white text-xs opacity-8">
+                            <span class="st-badge me-1" style="background:#4CAF50;"></span>Activa
+                        </span>
+                        <span class="text-white text-xs opacity-8">
+                            <span class="st-badge me-1" style="background:#FF9800;"></span>Mant.
+                        </span>
+                        <span class="text-white text-xs opacity-8">
+                            <span class="st-badge me-1" style="background:#9E9E9E;"></span>Inactiva
+                        </span>
+                    </div>
+                </div>
+                <!-- Mapa ocupa todo el alto restante -->
+                <div class="map-body flex-grow-1">
+                    <div id="ws-map"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TABLA ESTACIONES col-lg-5 ─────────────────────────────────── -->
+        <div class="col-lg-5 d-flex flex-column">
+            <div class="card shadow h-100 d-flex flex-column" style="border-radius:12px; overflow:hidden;">
+                <!-- Header -->
+                <div class="card-hdr" style="background:linear-gradient(195deg,#344767,#1565c0);">
+                    <i class="fas fa-table text-white"></i>
+                    <h6>Últimas Lecturas</h6>
+                    <span class="ms-auto badge"
+                          style="background:rgba(255,255,255,.22); font-size:.68rem; font-weight:600;">
+                        {{ latest_readings|length }} estación{{ latest_readings|length|pluralize:"es" }}
+                    </span>
+                </div>
+
+                <!-- Tabla con scroll -->
+                <div class="flex-grow-1 overflow-hidden" style="min-height:0;">
+                    <div class="table-responsive h-100" style="overflow-y:auto;">
+                        <table class="table align-middle mb-0" style="font-size:.78rem;">
+                            <thead style="position:sticky; top:0; z-index:2; background:#fff; box-shadow:0 1px 0 #f0f2f5;">
+                                <tr>
+                                    <th class="text-uppercase text-secondary font-weight-bolder ps-3"
+                                        style="font-size:.62rem; letter-spacing:.4px; padding:8px 10px; white-space:nowrap;">
+                                        Estación
+                                    </th>
+                                    <th class="text-uppercase text-secondary font-weight-bolder text-center"
+                                        style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px;" title="Temperatura">🌡</th>
+                                    <th class="text-uppercase text-secondary font-weight-bolder text-center"
+                                        style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px;" title="Humedad">💧</th>
+                                    <th class="text-uppercase text-secondary font-weight-bolder text-center"
+                                        style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px;" title="Precipitación">🌧</th>
+                                    <th class="text-uppercase text-secondary font-weight-bolder text-center"
+                                        style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px;" title="Radiación">☀️</th>
+                                    <th class="text-uppercase text-secondary font-weight-bolder text-center"
+                                        style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px;" title="Viento">🌬</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for r in latest_readings %}
+                            <tr style="border-bottom:1px solid #f0f2f5;">
+                                <!-- Nombre + dot estado + fecha -->
+                                <td class="ps-3" style="min-width:140px; max-width:180px;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="st-badge flex-shrink-0" style="background:
+                                            {% if r.Station.Status == 'Active' %}#4CAF50
+                                            {% elif r.Station.Status == 'Maintenance' %}#FF9800
+                                            {% elif r.Station.Status == 'Out of service' %}#F44336
+                                            {% else %}#9E9E9E{% endif %};"></span>
+                                        <div>
+                                            <a href="{% url 'weather_app:public_weather_detail' r.Station.id %}"
+                                               class="font-weight-bold text-dark d-block"
+                                               style="font-size:.78rem; line-height:1.2; text-decoration:none;"
+                                               onmouseover="this.style.textDecoration='underline'"
+                                               onmouseout="this.style.textDecoration='none'">
+                                                {{ r.Station.StationName }}
+                                            </a>
+                                            <span class="text-secondary" style="font-size:.65rem; white-space:nowrap;">
+                                                {{ r.DateCreate|lima_date:"d/m/Y H:i" }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <!-- Temperatura -->
+                                <td class="text-center">
+                                    {% if r.Temperature is not None %}
+                                    <span class="font-weight-bold
+                                        {% if r.Temperature > 35 %}text-danger
+                                        {% elif r.Temperature > 28 %}text-warning
+                                        {% else %}text-primary{% endif %}">
+                                        {{ r.Temperature|floatformat:1 }}°
+                                    </span>
+                                    {% else %}<span style="color:#ccc;">—</span>{% endif %}
+                                </td>
+                                <!-- Humedad -->
+                                <td class="text-center">
+                                    {% if r.Humidity is not None %}
+                                    <span class="font-weight-bold text-info">{{ r.Humidity|floatformat:1 }}%</span>
+                                    {% else %}<span style="color:#ccc;">—</span>{% endif %}
+                                </td>
+                                <!-- Precipitación -->
+                                <td class="text-center">
+                                    {% if r.Precipitation is not None %}
+                                    <span class="font-weight-bold" style="color:#2c7a7b;">
+                                        {{ r.Precipitation|floatformat:1 }}<span style="font-size:.6rem;opacity:.6;">mm</span>
+                                    </span>
+                                    {% else %}<span style="color:#ccc;">—</span>{% endif %}
+                                </td>
+                                <!-- Radiación -->
+                                <td class="text-center">
+                                    {% if r.SolarRadiation is not None %}
+                                    <span class="font-weight-bold" style="color:#dd6b20;">
+                                        {{ r.SolarRadiation|floatformat:0 }}<span style="font-size:.6rem;opacity:.6;">W</span>
+                                    </span>
+                                    {% else %}<span style="color:#ccc;">—</span>{% endif %}
+                                </td>
+                                <!-- Viento -->
+                                <td class="text-center">
+                                    {% if r.WindSpeed is not None %}
+                                    <span class="font-weight-bold text-dark">
+                                        {{ r.WindSpeed|floatformat:1 }}<span style="font-size:.6rem;opacity:.6;">m/s</span>
+                                    </span>
+                                    {% else %}<span style="color:#ccc;">—</span>{% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-secondary py-5">
+                                    <i class="fas fa-broadcast-tower d-block mb-2" style="font-size:2.5rem;opacity:.15;"></i>
+                                    <p class="text-sm mb-0">Sin lecturas disponibles.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-3 py-2 text-center border-top" style="border-color:#f0f2f5; flex-shrink:0;">
+                    <p class="text-xxs text-secondary mb-0">
+                        <i class="fas fa-lock me-1 opacity-5"></i>
+                        <a href="{% url 'user_app:user-login' %}" class="text-primary font-weight-bold">
+                            Iniciar sesión</a> para gestionar estaciones
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /row -->
+
+    <!-- Footer de la página -->
+    <div class="row mt-3 mb-4">
+        <div class="col-12 text-center">
+            <p class="text-secondary text-xs mb-0">
+                Datos públicos de solo lectura &middot;
+                <a href="{% url 'weather_app:public_weather' %}" class="text-primary">Estaciones</a> &middot;
+                <a href="{% url 'camera_app:public_camera' %}" class="text-success">Monitoreo de mariposas</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var statusColor = {
+        'Active': '#4CAF50', 'Inactive': '#9E9E9E',
+        'Maintenance': '#FF9800', 'Out of service': '#F44336',
+    };
+
+    function makeIcon(color) {
+        return L.divIcon({
+            className: '',
+            iconSize: [28, 28], iconAnchor: [14, 14],
+            html: '<div style="background:' + color + ';width:28px;height:28px;border-radius:50%;' +
+                  'border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);' +
+                  'display:flex;align-items:center;justify-content:center;">' +
+                  '<i class="fas fa-broadcast-tower" style="color:#fff;font-size:10px;"></i></div>',
+        });
+    }
+
+    function v(val, unit) {
+        return (val !== null && val !== undefined)
+            ? '<span class="p-val">' + val + (unit ? ' ' + unit : '') + '</span>'
+            : '<span style="color:#bbb;">—</span>';
+    }
+
+    /* Inicializar mapa DESPUÉS de que el layout ya está pintado */
+    var wsMap = L.map('ws-map', { zoomControl: true, scrollWheelZoom: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 18,
+    }).addTo(wsMap);
+
+    var geojson = {{ stations_geojson|safe }};
+    var markers = [];
+
+    geojson.features.forEach(function (f) {
+        var c = f.geometry.coordinates, p = f.properties;
+        var color = statusColor[p.status] || '#9E9E9E';
+        var detailUrl = '{% url "weather_app:public_weather_detail" 0 %}'.replace('/0/', '/' + p.id + '/');
+
+        var popup =
+            '<div class="p-title">' + p.name + '</div>' +
+            '<span class="p-badge" style="background:' + color + ';color:#fff">' + p.status + '</span>' +
+            (p.date ? '<p style="color:#7b809a;font-size:10px;margin:4px 0 6px">' +
+                      '<i class="fas fa-clock me-1"></i>' + p.date + '</p>'
+                    : '<p style="height:5px"></p>') +
+            '<div class="p-row"><span class="p-label">🌡 Temperatura</span>' + v(p.temp, '°C') + '</div>' +
+            '<div class="p-row"><span class="p-label">💧 Humedad</span>'     + v(p.hum,  '%')  + '</div>' +
+            '<div class="p-row"><span class="p-label">🌧 Lluvia</span>'      + v(p.rain, 'mm') + '</div>' +
+            '<div class="p-row"><span class="p-label">☀️ Radiación</span>'  + v(p.rad,  'W/m²') + '</div>' +
+            '<div class="p-row"><span class="p-label">🌬 Viento</span>'      + v(p.wind, 'm/s') + '</div>' +
+            '<a href="' + detailUrl + '" style="display:block;margin-top:8px;font-size:11px;' +
+            'padding:5px 8px;border-radius:6px;background:#344767;color:#fff;' +
+            'text-decoration:none;text-align:center;">' +
+            '<i class="fas fa-chart-line me-1"></i>Ver historial</a>';
+
+        var mk = L.marker([c[1], c[0]], { icon: makeIcon(color) })
+            .addTo(wsMap).bindPopup(popup, { maxWidth: 230 });
+        markers.push(mk);
+    });
+
+    if (markers.length) {
+        wsMap.fitBounds(L.featureGroup(markers).getBounds().pad(0.3));
+    } else {
+        wsMap.setView([-9.19, -75.01], 5);
+    }
+
+    /* Forzar recálculo de tamaño del mapa una vez que el DOM está estable */
+    setTimeout(function () { wsMap.invalidateSize(); }, 200);
+}());
+</script>
+{% endblock content %}

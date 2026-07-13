@@ -17,7 +17,7 @@ class WeatherStationAdmin(ImportExportModelAdmin):
     resource_class = WeatherStationResource
 
     def DateCreatedFormat(self, obj):
-        return obj.DateCreate.strftime("%Y-%m-%d %H:%M:%S")
+        from django.utils.timezone import localtime; return localtime(obj.DateCreate).strftime("%Y-%m-%d %H:%M:%S")
     DateCreatedFormat.admin_order_field = 'DateCreate'
     DateCreatedFormat.short_description = 'Date Create'
 

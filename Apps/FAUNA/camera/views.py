@@ -1,6 +1,20 @@
 import json
 import csv
-from datetime import date, timedelta
+from datetime import timedelta, timezone as dt_utc, datetime
+from zoneinfo import ZoneInfo
+
+_LIMA_TZ = ZoneInfo('America/Lima')
+
+def _today_lima():
+    return datetime.now(tz=_LIMA_TZ).date()
+
+def _to_lima(dt):
+    """Convierte datetime naive (asumido UTC) o aware a hora Lima sin usar Django localtime."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=dt_utc.utc)
+    return dt.astimezone(_LIMA_TZ)
 
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
@@ -43,6 +57,141 @@ class CompanyMixin(object):
             self.request.user)[0]["CompanyId__CompanyName"]
 
 
+# =================== PUBLIC VIEW ===========================
+class PublicCameraView(TemplateView):
+    """Vista pública de monitoreo de mariposas — sin autenticación."""
+    template_name = 'FAUNA/camera/cam_public.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        from django.db.models import Max, Count, Sum
+
+        stations = list(
+            CameraStation.objects.filter(Status='Active')
+            .values('id', 'StationName', 'Description', 'Latitude', 'Longitude', 'Status')
+        )
+
+        latest_ids = (
+            CameraCapture.objects
+            .filter(Station__Status='Active')
+            .values('Station')
+            .annotate(last_id=Max('id'))
+            .values('last_id')
+        )
+        latest_captures = list(
+            CameraCapture.objects
+            .filter(id__in=latest_ids)
+            .select_related('Station')
+            .prefetch_related('detections')
+            .order_by('Station__StationName')
+        )
+        latest_by_station = {c.Station.id: c for c in latest_captures}
+
+        species_summary = list(
+            CaptureDetection.objects
+            .values('Species')
+            .annotate(captures=Count('Capture', distinct=True), total_individuals=Sum('Count'))
+            .order_by('-captures')[:10]
+        )
+
+        features = []
+        for st in stations:
+            if st['Latitude'] and st['Longitude']:
+                c = latest_by_station.get(st['id'])
+                dets = list(c.detections.all()) if c else []
+                det_summary = ', '.join(f'{d.Species}×{d.Count}' for d in dets)
+                features.append({
+                    'type': 'Feature',
+                    'geometry': {'type': 'Point', 'coordinates': [st['Longitude'], st['Latitude']]},
+                    'properties': {
+                        'id': st['id'],
+                        'name': st['StationName'],
+                        'status': st['Status'],
+                        'detections': det_summary,
+                        'count': sum(d.Count for d in dets) if dets else None,
+                        'temp': round(c.Temperature, 1) if c and c.Temperature is not None else None,
+                        'hum': round(c.Humidity, 1) if c and c.Humidity is not None else None,
+                        'battery': round(c.VoltageBattery, 2) if c and c.VoltageBattery is not None else None,
+                        'date': _to_lima(c.DateCapture).strftime('%d/%m/%Y %H:%M') if c else None,
+                        'img_url': c.Image.url if c and c.Image else None,
+                        'capture_id': c.id if c else None,
+                    },
+                })
+
+        context['stations_geojson'] = json.dumps({'type': 'FeatureCollection', 'features': features})
+        context['latest_captures'] = latest_captures
+        context['stations'] = stations
+        context['species_summary'] = species_summary
+        context['total_stations'] = CameraStation.objects.count()
+        context['active_stations'] = CameraStation.objects.filter(Status='Active').count()
+        context['total_species'] = CaptureDetection.objects.values('Species').distinct().count()
+        context['total_captures'] = CameraCapture.objects.count()
+        context['chart_species'] = json.dumps([s['Species'] for s in species_summary])
+        context['chart_captures'] = json.dumps([s['captures'] for s in species_summary])
+        context['chart_individuals'] = json.dumps([s['total_individuals'] for s in species_summary])
+        return context
+
+
+class PublicCameraDetailView(TemplateView):
+    """Vista pública de historial de una cámara — sin autenticación."""
+    template_name = 'FAUNA/camera/cam_public_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from django.shortcuts import get_object_or_404
+        from datetime import timedelta
+        from django.db.models import Sum, Count
+        from django.db.models.functions import Coalesce
+
+        station = get_object_or_404(CameraStation, pk=kwargs['pk'])
+        days = int(self.request.GET.get('days', 30))
+        date_from = _today_lima() - timedelta(days=days)
+        date_to = _today_lima()
+
+        captures = list(
+            CameraCapture.objects.filter(
+                Station=station,
+                DateCapture__date__gte=date_from,
+                DateCapture__date__lte=date_to,
+            )
+            .annotate(total_count=Coalesce(Sum('detections__Count'), 0))
+            .order_by('DateCapture')
+            .values('DateCapture', 'Temperature', 'Humidity', 'VoltageBattery', 'total_count')
+        )
+
+        species_agg = list(
+            CaptureDetection.objects.filter(Capture__Station=station)
+            .values('Species')
+            .annotate(individuals=Sum('Count'), captures=Count('Capture', distinct=True))
+            .order_by('-individuals')
+        )
+
+        recent = list(
+            CameraCapture.objects.filter(Station=station)
+            .prefetch_related('detections')
+            .order_by('-DateCapture')[:12]
+        )
+
+        dates = [_to_lima(c["DateCapture"]).strftime('%d/%m/%Y %H:%M') for c in captures]
+        context.update({
+            'station': station,
+            'days': days,
+            'latest': CameraCapture.objects.filter(Station=station).prefetch_related('detections').order_by('-DateCapture').first(),
+            'recent_captures': recent,
+            'species_summary': species_agg,
+            'chart_dates': json.dumps(dates),
+            'chart_count': json.dumps([c['total_count'] for c in captures]),
+            'chart_temperature': json.dumps([c['Temperature'] for c in captures]),
+            'chart_humidity': json.dumps([c['Humidity'] for c in captures]),
+            'chart_battery': json.dumps([c['VoltageBattery'] for c in captures]),
+            'chart_sp_names': json.dumps([s['Species'] for s in species_agg]),
+            'chart_sp_individuals': json.dumps([s['individuals'] for s in species_agg]),
+            'chart_sp_captures': json.dumps([s['captures'] for s in species_agg]),
+        })
+        return context
+
+
 # =================== DASHBOARD ===========================
 class DashboardView(FaunaAccessMixin, CompanyMixin, TemplateView):
     template_name = 'FAUNA/camera/cam_dashboard.html'
@@ -83,7 +232,7 @@ class DashboardView(FaunaAccessMixin, CompanyMixin, TemplateView):
                         'temp': round(c.Temperature, 1) if c and c.Temperature is not None else None,
                         'hum': round(c.Humidity, 1) if c and c.Humidity is not None else None,
                         'battery': round(c.VoltageBattery, 2) if c and c.VoltageBattery is not None else None,
-                        'date': c.DateCapture.strftime('%d/%m/%Y %H:%M') if c else None,
+                        'date': _to_lima(c.DateCapture).strftime('%d/%m/%Y %H:%M') if c else None,
                         'img_url': c.Image.url if c and c.Image else None,
                         'capture_id': c.id if c else None,
                     },
@@ -155,8 +304,8 @@ class StationDetailView(FaunaAccessMixin, CompanyMixin, DetailView):
         context = super().get_context_data(**kwargs)
         station = self.object
         days = int(self.request.GET.get('days', 30))
-        date_from = date.today() - timedelta(days=days)
-        date_to = date.today()
+        date_from = _today_lima() - timedelta(days=days)
+        date_to = _today_lima()
 
         captures = list(
             CameraCapture.objects.filter(
@@ -169,7 +318,7 @@ class StationDetailView(FaunaAccessMixin, CompanyMixin, DetailView):
             .values('DateCapture', 'Temperature', 'Humidity', 'VoltageBattery', 'total_count')
         )
 
-        dates = [c['DateCapture'].strftime('%Y-%m-%d %H:%M') for c in captures]
+        dates = [_to_lima(c["DateCapture"]).strftime('%d/%m/%Y %H:%M') for c in captures]
         context['chart_dates'] = json.dumps(dates)
         context['chart_count'] = json.dumps([c['total_count'] for c in captures])
         context['chart_temperature'] = json.dumps([c['Temperature'] for c in captures])
@@ -332,8 +481,8 @@ class ReportView(FaunaAccessMixin, CompanyMixin, FormView):
 
     def get_initial(self):
         return {
-            'date_from': date.today() - timedelta(days=30),
-            'date_to': date.today(),
+            'date_from': _today_lima() - timedelta(days=30),
+            'date_to': _today_lima(),
         }
 
     def get_context_data(self, **kwargs):

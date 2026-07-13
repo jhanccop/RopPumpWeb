@@ -278,9 +278,17 @@
                             <li><i class="fas fa-chart-bar text-success"></i>Reportes y tendencias</li>
                             <li><i class="fas fa-bell text-danger"></i>Sistema de alertas</li>
                         </ul>
-                        <a href="{% url 'user_app:user-login' %}" class="btn bg-gradient-success text-white btn-module w-100">
-                            <i class="fas fa-sign-in-alt me-2"></i>Acceder
-                        </a>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'weather_app:public_weather' %}" class="btn btn-outline-success btn-module">
+                                <i class="fas fa-broadcast-tower me-2"></i>Estaciones Meteorológicas
+                            </a>
+                            <a href="{% url 'camera_app:public_camera' %}" class="btn btn-outline-success btn-module">
+                                <i class="fas fa-leaf me-2"></i>Monitoreo de Mariposas
+                            </a>
+                            <a href="{% url 'user_app:user-login' %}" class="btn bg-gradient-success text-white btn-module">
+                                <i class="fas fa-sign-in-alt me-2"></i>Acceder (gestión)
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

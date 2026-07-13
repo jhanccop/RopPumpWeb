@@ -1,0 +1,569 @@
+{% extends 'base_home.html' %}
+{% load static %}
+{% load fauna_tags %}
+
+{% block title %}{{ station.StationName }} — Historial{% endblock title %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'assets/css/leaflet.css' %}" />
+<script src="{% static 'assets/js/plugins/leaflet.js' %}"></script>
+<script src="{% static 'assets/js/plugins/plotly-2.12.1.min.js' %}"></script>
+<style>
+    .pub-hero-ws {
+        background: linear-gradient(135deg, #1565c0 0%, #0288d1 60%, #00838f 100%);
+        padding: 100px 0 32px;
+        min-height: 200px;
+    }
+    .val-chip {
+        display: inline-flex; flex-direction: column; align-items: center;
+        padding: 10px 14px; border-radius: 10px; border-left: 3px solid;
+        min-width: 88px; background: #fff;
+    }
+    .val-chip-label { font-size: 9px; text-transform: uppercase; font-weight: 700;
+                      letter-spacing: .4px; opacity: .65; margin-bottom: 3px; }
+    .val-chip-val   { font-size: 1.15rem; font-weight: 800; line-height: 1; }
+    .val-chip-unit  { font-size: 9px; opacity: .55; margin-top: 2px; }
+
+    .period-btn {
+        padding: 5px 14px; font-size: .75rem; border-radius: 20px;
+        border: 1px solid #dee2e6; color: #7b809a; text-decoration: none; transition: all .15s;
+    }
+    .period-btn:hover  { border-color: #344767; color: #344767; }
+    .period-btn.active { background: #344767; color: #fff; border-color: #344767; }
+
+    #mini-map { height: 160px; border-radius: 8px; overflow: hidden; }
+
+    .chart-card { overflow: visible; }
+    .chart-card .card-body { padding: 4px 8px 12px; }
+
+    /* Tabla de datos */
+    .data-table thead th {
+        font-size: .65rem; text-transform: uppercase; font-weight: 700;
+        color: #7b809a; letter-spacing: .4px; white-space: nowrap;
+        padding: 8px 10px; border-bottom: 1px solid #f0f2f5;
+        position: sticky; top: 0; background: #fff; z-index: 1;
+    }
+    .data-table tbody td { font-size: .78rem; padding: 6px 10px; vertical-align: middle; }
+    .data-table tbody tr:hover { background: #f8f9fe; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .tbl-null { color: #c8c8c8; }
+
+    @media (max-width:767px) { .val-chip { min-width: 72px; } }
+</style>
+
+<!-- ═══ HERO ══════════════════════════════════════════════════════════════ -->
+<div class="pub-hero-ws">
+    <div class="container">
+        <div class="d-flex align-items-start gap-3 mb-3">
+            <a href="{% url 'weather_app:public_weather' %}"
+               class="btn btn-sm btn-white mb-0 flex-shrink-0 shadow-sm" style="font-size:.73rem;">
+                <i class="fas fa-arrow-left me-1"></i>Volver
+            </a>
+            <div>
+                <h4 class="text-white font-weight-bolder mb-0">
+                    <i class="fas fa-broadcast-tower me-2 opacity-8"></i>{{ station.StationName }}
+                </h4>
+                {% if station.Description %}
+                <p class="text-white mb-0" style="opacity:.75; font-size:.8rem;">{{ station.Description }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="badge px-3 py-1" style="font-size:.73rem; background:
+                {% if station.Status == 'Active' %}#4CAF50
+                {% elif station.Status == 'Maintenance' %}#FF9800
+                {% elif station.Status == 'Out of service' %}#F44336
+                {% else %}#9E9E9E{% endif %};">{{ station.Status }}</span>
+            {% if station.Altitude %}
+            <span class="text-white text-xs opacity-8">
+                <i class="fas fa-mountain me-1"></i>{{ station.Altitude }} m.s.n.m.
+            </span>
+            {% endif %}
+            {% if station.get_TimeSleep_display %}
+            <span class="text-white text-xs opacity-8">
+                <i class="fas fa-sync-alt me-1"></i>{{ station.get_TimeSleep_display }}
+            </span>
+            {% endif %}
+            {% if total_readings %}
+            <span class="text-white text-xs opacity-8 ms-auto">
+                <i class="fas fa-database me-1"></i>{{ total_readings }} lectura{{ total_readings|pluralize:"s" }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ═══ CONTENIDO ════════════════════════════════════════════════════════ -->
+<div class="container-fluid px-3 px-lg-4 py-3">
+
+    <!-- ── Barra de período ─────────────────────────────────────────────── -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2 px-3">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-xs text-secondary font-weight-bolder me-1">Período:</span>
+                <a href="?days=7"  class="period-btn {% if days == 7  and not show_all %}active{% endif %}">7 días</a>
+                <a href="?days=14" class="period-btn {% if days == 14 %}active{% endif %}">14 días</a>
+                <a href="?days=30" class="period-btn {% if days == 30 %}active{% endif %}">30 días</a>
+                <a href="?days=90" class="period-btn {% if days == 90 %}active{% endif %}">90 días</a>
+                <a href="?days=0"  class="period-btn {% if show_all %}active{% endif %}">
+                    <i class="fas fa-infinity me-1" style="font-size:.6rem;"></i>Ver todo
+                </a>
+                {% if latest %}
+                <span class="text-secondary text-xs ms-auto">
+                    <i class="fas fa-clock me-1 opacity-6"></i>Última: {{ latest.DateCreate|lima_date:"d/m/Y H:i" }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── KPIs última lectura + mini-mapa ─────────────────────────────── -->
+    {% if latest %}
+    <div class="row g-3 mb-3">
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="bg-gradient-info shadow-info border-radius-lg py-2 px-3">
+                        <h6 class="text-white mb-0 text-sm">
+                            <i class="fas fa-chart-line me-2"></i>Última Lectura &mdash; {{ latest.DateCreate|lima_date:"d/m/Y H:i" }}
+                        </h6>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if latest.Temperature is not None %}
+                        <div class="val-chip" style="border-color:#e53e3e;">
+                            <span class="val-chip-label" style="color:#c53030;">🌡 Temp</span>
+                            <span class="val-chip-val {% if latest.Temperature > 35 %}text-danger{% elif latest.Temperature > 28 %}text-warning{% else %}text-primary{% endif %}">
+                                {{ latest.Temperature|floatformat:1 }}</span>
+                            <span class="val-chip-unit">°C</span>
+                        </div>
+                        {% endif %}
+                        {% if latest.Humidity is not None %}
+                        <div class="val-chip" style="border-color:#3182ce;">
+                            <span class="val-chip-label" style="color:#2b6cb0;">💧 Humedad</span>
+                            <span class="val-chip-val text-info">{{ latest.Humidity|floatformat:1 }}</span>
+                            <span class="val-chip-unit">%</span>
+                        </div>
+                        {% endif %}
+                        {% if latest.Precipitation is not None %}
+                        <div class="val-chip" style="border-color:#2c7a7b;">
+                            <span class="val-chip-label" style="color:#2c7a7b;">🌧 Lluvia</span>
+                            <span class="val-chip-val" style="color:#2c7a7b;">{{ latest.Precipitation|floatformat:1 }}</span>
+                            <span class="val-chip-unit">mm</span>
+                        </div>
+                        {% endif %}
+                        {% if latest.SolarRadiation is not None %}
+                        <div class="val-chip" style="border-color:#dd6b20;">
+                            <span class="val-chip-label" style="color:#c05621;">☀️ Radiación</span>
+                            <span class="val-chip-val" style="color:#dd6b20;">{{ latest.SolarRadiation|floatformat:0 }}</span>
+                            <span class="val-chip-unit">W/m²</span>
+                        </div>
+                        {% endif %}
+                        {% if latest.WindSpeed is not None %}
+                        <div class="val-chip" style="border-color:#718096;">
+                            <span class="val-chip-label" style="color:#4a5568;">🌬 Viento</span>
+                            <span class="val-chip-val text-dark">{{ latest.WindSpeed|floatformat:1 }}</span>
+                            <span class="val-chip-unit">m/s</span>
+                        </div>
+                        {% endif %}
+                        {% if latest.WindDirection is not None %}
+                        <div class="val-chip" style="border-color:#a0aec0;">
+                            <span class="val-chip-label" style="color:#718096;">🧭 Dirección</span>
+                            <span class="val-chip-val text-dark">{{ latest.WindDirection|floatformat:0 }}</span>
+                            <span class="val-chip-unit">°</span>
+                        </div>
+                        {% endif %}
+                        {% if latest.VoltageBattery is not None %}
+                        <div class="val-chip" style="border-color:#2f855a;">
+                            <span class="val-chip-label" style="color:#276749;">🔋 Batería</span>
+                            <span class="val-chip-val {% if latest.VoltageBattery < 3.5 %}text-danger{% else %}text-success{% endif %}">
+                                {{ latest.VoltageBattery|floatformat:2 }}</span>
+                            <span class="val-chip-unit">V</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body p-2">
+                    <div id="mini-map"></div>
+                    {% if station.Latitude and station.Longitude %}
+                    <p class="text-xxs text-secondary mt-1 mb-0 text-center">
+                        {{ station.Latitude|floatformat:4 }}, {{ station.Longitude|floatformat:4 }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── GRÁFICOS ─────────────────────────────────────────────────────── -->
+    <div class="row g-3 mb-3">
+
+        <!-- Temperatura + Humedad -->
+        <div class="col-lg-6">
+            <div class="card chart-card shadow-sm">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="border-radius-lg py-2 px-3"
+                         style="background:linear-gradient(195deg,#b71c1c,#e53e3e); box-shadow:0 4px 16px rgba(183,28,28,.4);">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-thermometer-half text-white me-2"></i>
+                            <h6 class="text-white mb-0 text-sm">Temperatura y Humedad</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="chart-temp-hum" style="height:250px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Precipitación -->
+        <div class="col-lg-6">
+            <div class="card chart-card shadow-sm">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="border-radius-lg py-2 px-3"
+                         style="background:linear-gradient(195deg,#1a5276,#2980b9); box-shadow:0 4px 16px rgba(26,82,118,.4);">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-cloud-rain text-white me-2"></i>
+                            <h6 class="text-white mb-0 text-sm">Precipitación</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="chart-rain" style="height:250px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Radiación Solar -->
+        <div class="col-lg-6">
+            <div class="card chart-card shadow-sm">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="border-radius-lg py-2 px-3"
+                         style="background:linear-gradient(195deg,#7d3c00,#dd6b20); box-shadow:0 4px 16px rgba(125,60,0,.4);">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-sun text-white me-2"></i>
+                            <h6 class="text-white mb-0 text-sm">Radiación Solar</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="chart-rad" style="height:250px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Viento + Batería -->
+        <div class="col-lg-6">
+            <div class="card chart-card shadow-sm">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="border-radius-lg py-2 px-3"
+                         style="background:linear-gradient(195deg,#1c2833,#4a5568); box-shadow:0 4px 16px rgba(28,40,51,.4);">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-wind text-white me-2"></i>
+                            <h6 class="text-white mb-0 text-sm">Viento y Batería</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="chart-wind-bat" style="height:250px;"></div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /row charts -->
+
+    <!-- ── TABLA DE DATOS ────────────────────────────────────────────────── -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+            <div class="bg-gradient-dark shadow-dark border-radius-lg py-2 px-3 d-flex align-items-center">
+                <i class="fas fa-table text-white me-2"></i>
+                <h6 class="text-white mb-0 me-auto text-sm">
+                    Registros del período
+                    {% if show_all %}(todos){% else %}(últimos {{ days }} días){% endif %}
+                </h6>
+                <!-- Botón descarga CSV (único) -->
+                <button class="btn btn-sm mb-0 ms-3"
+                        style="background:rgba(255,255,255,.18); color:#fff;
+                               border:1px solid rgba(255,255,255,.35); font-size:.72rem;
+                               padding:4px 12px; border-radius:20px;"
+                        onclick="downloadCSV()">
+                    <i class="fas fa-file-csv me-1"></i>Descargar CSV
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body px-0 pt-0 pb-0">
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table data-table mb-0" id="readings-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Fecha / Hora</th>
+                            <th>🌡 Temp (°C)</th>
+                            <th>💧 Hum (%)</th>
+                            <th>🌧 Lluvia (mm)</th>
+                            <th>☀️ Rad. (W/m²)</th>
+                            <th>🌬 Viento (m/s)</th>
+                            <th>🔋 Batería (V)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Relleno por JS desde los datos del gráfico -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer py-2 px-3 d-flex align-items-center border-top" style="border-color:#f0f2f5 !important;">
+                <span class="text-xxs text-secondary" id="row-count"></span>
+                <span class="ms-auto text-xxs text-secondary">
+                    <i class="fas fa-lock me-1 opacity-5"></i>
+                    <a href="{% url 'user_app:user-login' %}" class="text-primary">Iniciar sesión</a> para gestionar lecturas
+                </span>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /container -->
+
+<script>
+// ── Mini-mapa ────────────────────────────────────────────────────────────────
+{% if station.Latitude and station.Longitude %}
+(function () {
+    var mm = L.map('mini-map', { zoomControl: false, scrollWheelZoom: false, dragging: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(mm);
+    L.marker([{{ station.Latitude }}, {{ station.Longitude }}], {
+        icon: L.divIcon({
+            className: '', iconSize: [22, 22], iconAnchor: [11, 11],
+            html: '<div style="background:#1565c0;width:22px;height:22px;border-radius:50%;' +
+                  'border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4);' +
+                  'display:flex;align-items:center;justify-content:center;">' +
+                  '<i class="fas fa-broadcast-tower" style="color:#fff;font-size:9px;"></i></div>',
+        })
+    }).addTo(mm);
+    mm.setView([{{ station.Latitude }}, {{ station.Longitude }}], 12);
+}());
+{% else %}
+document.getElementById('mini-map').innerHTML =
+    '<div style="height:100%;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:8px;">' +
+    '<p class="text-xxs text-secondary mb-0"><i class="fas fa-map-marker-slash me-1"></i>Sin ubicación</p></div>';
+{% endif %}
+
+// ── Datos ────────────────────────────────────────────────────────────────────
+var STATION_NAME = '{{ station.StationName|escapejs }}';
+var DAYS         = {{ days }};
+var SHOW_ALL     = {{ show_all|yesno:"true,false" }};
+
+// dates: ISO "YYYY-MM-DD HH:MM:SS" — Plotly los interpreta como línea de tiempo
+// displayDates: "dd/mm/YYYY HH:MM" — para la tabla y hover tooltip
+var dates        = {{ chart_dates|safe }};
+var displayDates = {{ display_dates|safe }};
+var temp  = {{ chart_temperature|safe }};
+var hum   = {{ chart_humidity|safe }};
+var rain  = {{ chart_precipitation|safe }};
+var rad   = {{ chart_radiation|safe }};
+var wind  = {{ chart_wind|safe }};
+var bat   = {{ chart_battery|safe }};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function hasVal(arr) {
+    return arr && arr.length > 0 && arr.some(function (v) { return v !== null && v !== undefined; });
+}
+
+function fmt(v, dec) {
+    if (v === null || v === undefined) return '<span class="tbl-null">—</span>';
+    return parseFloat(v).toFixed(dec !== undefined ? dec : 1);
+}
+
+function noData(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML =
+        '<div style="height:100%;display:flex;align-items:center;justify-content:center;">' +
+        '<div class="text-center py-3">' +
+        '<i class="fas fa-chart-line d-block mb-2 text-secondary" style="font-size:2rem;opacity:.18;"></i>' +
+        '<p class="text-secondary text-xs mb-1">Sin datos para este período</p>' +
+        '<a href="?days=0" class="text-primary text-xs font-weight-bold">' +
+        '<i class="fas fa-infinity me-1"></i>Ver todos los datos</a>' +
+        '</div></div>';
+}
+
+// ── Layout Plotly con eje X tipo 'date' ───────────────────────────────────────
+function mkLayout(opts) {
+    var l = {
+        margin: { t: 12, r: opts && opts.y2 ? 52 : 20, b: 60, l: 52 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor:  'rgba(0,0,0,0)',
+        font: { family: 'inherit', size: 10, color: '#7b809a' },
+        legend: { orientation: 'h', y: -0.22, x: 0.01, font: { size: 10 } },
+        hovermode: 'x unified',
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#e0e0e0', font: { size: 11 }, namelength: -1 },
+        xaxis: {
+            type: 'date',
+            tickformat: '%d/%m\n%H:%M',
+            tickangle: 0,
+            tickfont: { size: 9 },
+            gridcolor: '#f0f2f5',
+            showgrid: true,
+            zeroline: false,
+            automargin: true,
+        },
+        yaxis: {
+            title: { text: opts && opts.y1 ? opts.y1 : '', font: { size: 10 }, standoff: 8 },
+            gridcolor: '#f0f2f5', zeroline: true, zerolinecolor: '#e8e8e8',
+            tickfont: { size: 9 }, automargin: true,
+        },
+    };
+    if (opts && opts.y2) {
+        l.yaxis2 = {
+            title: { text: opts.y2, font: { size: 10 }, standoff: 8 },
+            overlaying: 'y', side: 'right',
+            gridcolor: 'transparent', zeroline: false,
+            tickfont: { size: 9 }, automargin: true,
+        };
+    }
+    return l;
+}
+
+var cfg = {
+    responsive: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d', 'hoverCompareCartesian'],
+    toImageButtonOptions: {
+        format: 'png',
+        filename: STATION_NAME + (SHOW_ALL ? '_todo' : '_' + DAYS + 'd'),
+        height: 480, width: 900, scale: 2,
+    },
+};
+
+// ── Temperatura + Humedad ─────────────────────────────────────────────────────
+if (hasVal(temp) || hasVal(hum)) {
+    Plotly.newPlot('chart-temp-hum', [
+        { x: dates, y: temp, customdata: displayDates, name: 'Temperatura (°C)',
+          type: 'scatter', mode: 'lines+markers',
+          line: { color: '#e53e3e', width: 2, shape: 'spline' }, marker: { size: 3, color: '#e53e3e' },
+          connectgaps: false,
+          hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} °C<extra>Temperatura</extra>' },
+        { x: dates, y: hum, customdata: displayDates, name: 'Humedad (%)',
+          type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
+          line: { color: '#3182ce', width: 2, dash: 'dot', shape: 'spline' },
+          marker: { size: 3, color: '#3182ce', symbol: 'diamond' },
+          connectgaps: false,
+          hovertemplate: '%{y:.1f} %<extra>Humedad</extra>' },
+    ], mkLayout({ y1: '°C', y2: '%' }), cfg);
+} else { noData('chart-temp-hum'); }
+
+// ── Precipitación ─────────────────────────────────────────────────────────────
+if (hasVal(rain)) {
+    var rainColors = rain.map(function (v) {
+        if (!v) return 'rgba(0,0,0,0)';
+        return v > 20 ? 'rgba(0,80,158,.85)' : v > 5 ? 'rgba(44,122,123,.78)' : 'rgba(100,185,182,.65)';
+    });
+    Plotly.newPlot('chart-rain', [
+        { x: dates, y: rain, customdata: displayDates, name: 'Precipitación', type: 'bar',
+          marker: { color: rainColors, line: { color: '#2c7a7b', width: 0.4 } },
+          hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} mm<extra>Precipitación</extra>' },
+    ], mkLayout({ y1: 'mm' }), cfg);
+} else { noData('chart-rain'); }
+
+// ── Radiación Solar ───────────────────────────────────────────────────────────
+if (hasVal(rad)) {
+    Plotly.newPlot('chart-rad', [
+        { x: dates, y: rad, customdata: displayDates, name: 'Radiación Solar',
+          type: 'scatter', mode: 'lines',
+          fill: 'tozeroy', line: { color: '#dd6b20', width: 2, shape: 'spline' },
+          fillcolor: 'rgba(221,107,32,.13)', connectgaps: false,
+          hovertemplate: '<b>%{customdata}</b><br>%{y:.0f} W/m²<extra>Radiación</extra>' },
+    ], mkLayout({ y1: 'W/m²' }), cfg);
+} else { noData('chart-rad'); }
+
+// ── Viento + Batería ──────────────────────────────────────────────────────────
+if (hasVal(wind) || hasVal(bat)) {
+    Plotly.newPlot('chart-wind-bat', [
+        { x: dates, y: wind, customdata: displayDates, name: 'Viento (m/s)',
+          type: 'scatter', mode: 'lines+markers',
+          line: { color: '#4a5568', width: 2, shape: 'spline' }, marker: { size: 3, color: '#4a5568' },
+          connectgaps: false,
+          hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} m/s<extra>Viento</extra>' },
+        { x: dates, y: bat, customdata: displayDates, name: 'Batería (V)',
+          type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
+          line: { color: '#2f855a', width: 2, dash: 'dash', shape: 'spline' },
+          marker: { size: 3, color: '#2f855a', symbol: 'triangle-up' },
+          connectgaps: false,
+          hovertemplate: '%{y:.2f} V<extra>Batería</extra>' },
+    ], mkLayout({ y1: 'm/s', y2: 'V' }), cfg);
+} else { noData('chart-wind-bat'); }
+
+// ── Tabla de datos (generada desde los arrays del gráfico) ────────────────────
+(function buildTable() {
+    var tbody = document.getElementById('table-body');
+    var count = document.getElementById('row-count');
+    if (!dates || dates.length === 0) {
+        tbody.innerHTML =
+            '<tr><td colspan="8" class="text-center text-secondary py-4 text-xs">' +
+            '<i class="fas fa-inbox d-block mb-1" style="font-size:1.5rem;opacity:.2;"></i>' +
+            'Sin registros para el período seleccionado</td></tr>';
+        if (count) count.textContent = '0 registros';
+        return;
+    }
+    var rows = '';
+    /* Los datos del gráfico vienen ordenados ASC; la tabla muestra DESC (más reciente primero) */
+    for (var i = dates.length - 1; i >= 0; i--) {
+        var n = dates.length - i;
+        rows +=
+            '<tr>' +
+            '<td class="text-xxs text-secondary">' + n + '</td>' +
+            '<td class="font-weight-bold text-xs" style="white-space:nowrap;">' + displayDates[i] + '</td>' +
+            '<td class="text-center ' +
+                (temp[i] > 35 ? 'text-danger' : temp[i] > 28 ? 'text-warning' : 'text-primary') +
+                ' font-weight-bold">' + fmt(temp[i]) + '</td>' +
+            '<td class="text-center text-info font-weight-bold">'  + fmt(hum[i])  + '</td>' +
+            '<td class="text-center font-weight-bold" style="color:#2c7a7b;">' + fmt(rain[i]) + '</td>' +
+            '<td class="text-center font-weight-bold" style="color:#dd6b20;">'  + fmt(rad[i], 0) + '</td>' +
+            '<td class="text-center text-dark font-weight-bold">'   + fmt(wind[i]) + '</td>' +
+            '<td class="text-center font-weight-bold ' +
+                (bat[i] !== null && bat[i] < 3.5 ? 'text-danger' : 'text-success') +
+                '">' + fmt(bat[i], 2) + '</td>' +
+            '</tr>';
+    }
+    tbody.innerHTML = rows;
+    if (count) count.textContent = dates.length + ' registro' + (dates.length !== 1 ? 's' : '');
+}());
+
+// ── Descarga CSV ──────────────────────────────────────────────────────────────
+function triggerDownload(csv, filename) {
+    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = filename; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 300);
+}
+
+function downloadCSV() {
+    var header = ['Fecha', 'Temperatura_C', 'Humedad_pct', 'Precipitacion_mm',
+                  'Radiacion_Wm2', 'Viento_ms', 'Bateria_V'];
+    var rows   = [header.join(',')];
+    /* CSV en orden ASC (cronológico) */
+    for (var i = 0; i < dates.length; i++) {
+        rows.push([
+            '"' + displayDates[i] + '"',
+            temp[i] !== null && temp[i] !== undefined ? temp[i] : '',
+            hum[i]  !== null && hum[i]  !== undefined ? hum[i]  : '',
+            rain[i] !== null && rain[i] !== undefined ? rain[i] : '',
+            rad[i]  !== null && rad[i]  !== undefined ? rad[i]  : '',
+            wind[i] !== null && wind[i] !== undefined ? wind[i] : '',
+            bat[i]  !== null && bat[i]  !== undefined ? bat[i]  : '',
+        ].join(','));
+    }
+    var suffix   = SHOW_ALL ? 'todo' : DAYS + 'd';
+    var filename = STATION_NAME.replace(/\s+/g, '_') + '_' + suffix + '.csv';
+    triggerDownload(rows.join('\r\n'), filename);
+}
+</script>
+{% endblock content %}

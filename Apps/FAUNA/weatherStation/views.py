@@ -1,6 +1,20 @@
 import json
 import csv
-from datetime import date, timedelta
+from datetime import timedelta, timezone as dt_utc, datetime
+from zoneinfo import ZoneInfo
+
+_LIMA_TZ = ZoneInfo('America/Lima')
+
+def _today_lima():
+    return datetime.now(tz=_LIMA_TZ).date()
+
+def _to_lima(dt):
+    """Convierte datetime naive (asumido UTC) o aware a hora Lima sin usar Django localtime."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=dt_utc.utc)
+    return dt.astimezone(_LIMA_TZ)
 
 from django.http import HttpResponse
 from django.urls import reverse_lazy
@@ -8,6 +22,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from Apps.users.mixins import AppAccessMixin
 from django.views.generic import (
     TemplateView,
+    View,
     ListView,
     CreateView,
     UpdateView,
@@ -38,6 +53,115 @@ class CompanyMixin(object):
     def get_company_name(self):
         return User.objects.get_company_name(
             self.request.user)[0]["CompanyId__CompanyName"]
+
+
+# =================== PUBLIC VIEWS ===========================
+class PublicWeatherView(TemplateView):
+    """Vista pública de estaciones meteorológicas — sin autenticación."""
+    template_name = 'FAUNA/weatherStation/ws_public.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        stations = list(
+            WeatherStation.objects.filter(Status='Active')
+            .values('id', 'StationName', 'Description', 'Latitude', 'Longitude',
+                    'Altitude', 'Status', 'HasTempHumidity', 'HasSolarRadiation',
+                    'HasPrecipitation', 'HasWind')
+        )
+
+        from django.db.models import Max
+        latest_ids = (
+            WeatherReading.objects
+            .filter(Station__Status='Active')
+            .values('Station')
+            .annotate(last_id=Max('id'))
+            .values('last_id')
+        )
+        latest_readings = (
+            WeatherReading.objects
+            .filter(id__in=latest_ids)
+            .select_related('Station')
+            .order_by('Station__StationName')
+        )
+        latest_by_station = {r.Station.id: r for r in latest_readings}
+
+        features = []
+        for st in stations:
+            if st['Latitude'] and st['Longitude']:
+                r = latest_by_station.get(st['id'])
+                features.append({
+                    'type': 'Feature',
+                    'geometry': {'type': 'Point', 'coordinates': [st['Longitude'], st['Latitude']]},
+                    'properties': {
+                        'id': st['id'],
+                        'name': st['StationName'],
+                        'status': st['Status'],
+                        'temp': round(r.Temperature, 1) if r and r.Temperature is not None else None,
+                        'hum': round(r.Humidity, 1) if r and r.Humidity is not None else None,
+                        'rain': round(r.Precipitation, 1) if r and r.Precipitation is not None else None,
+                        'rad': round(r.SolarRadiation, 0) if r and r.SolarRadiation is not None else None,
+                        'wind': round(r.WindSpeed, 1) if r and r.WindSpeed is not None else None,
+                        'date': _to_lima(r.DateCreate).strftime('%d/%m/%Y %H:%M') if r else None,
+                    },
+                })
+
+        context['stations_geojson'] = json.dumps({'type': 'FeatureCollection', 'features': features})
+        context['latest_readings'] = list(latest_readings)
+        context['stations'] = stations
+        context['total_stations'] = WeatherStation.objects.count()
+        context['active_stations'] = WeatherStation.objects.filter(Status='Active').count()
+        context['stations_with_reading'] = len(latest_by_station)
+        return context
+
+
+class PublicWeatherDetailView(TemplateView):
+    """Vista pública de historial de una estación — sin autenticación."""
+    template_name = 'FAUNA/weatherStation/ws_public_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from django.shortcuts import get_object_or_404
+        station = get_object_or_404(WeatherStation, pk=kwargs['pk'])
+        days_param = self.request.GET.get('days', '7')
+        show_all = (days_param == '0')
+        days = 0 if show_all else int(days_param)
+
+        if show_all:
+            readings = list(
+                WeatherReading.objects.filter(Station__id=station.id)
+                .order_by('DateCreate')
+                .values('DateCreate', 'Temperature', 'Humidity',
+                        'SolarRadiation', 'Precipitation', 'WindSpeed', 'VoltageBattery')
+            )
+        else:
+            date_from = _today_lima() - timedelta(days=days)
+            date_to = _today_lima()
+            readings = list(WeatherReading.objects.get_range_by_station(
+                station.id, date_from, date_to
+            ).order_by('DateCreate')
+             .values('DateCreate', 'Temperature', 'Humidity',
+                     'SolarRadiation', 'Precipitation', 'WindSpeed', 'VoltageBattery'))
+
+        # ISO para Plotly (type:'date'), formato legible para la tabla
+        chart_dates   = [_to_lima(r['DateCreate']).strftime('%Y-%m-%d %H:%M:%S') for r in readings]
+        display_dates = [_to_lima(r['DateCreate']).strftime('%d/%m/%Y %H:%M') for r in readings]
+        context.update({
+            'station': station,
+            'days': days,
+            'show_all': show_all,
+            'total_readings': len(readings),
+            'latest': WeatherReading.objects.get_latest_by_station(station.id),
+            'chart_dates': json.dumps(chart_dates),
+            'display_dates': json.dumps(display_dates),
+            'chart_temperature': json.dumps([r['Temperature'] for r in readings]),
+            'chart_humidity': json.dumps([r['Humidity'] for r in readings]),
+            'chart_radiation': json.dumps([r['SolarRadiation'] for r in readings]),
+            'chart_precipitation': json.dumps([r['Precipitation'] for r in readings]),
+            'chart_wind': json.dumps([r['WindSpeed'] for r in readings]),
+            'chart_battery': json.dumps([r['VoltageBattery'] for r in readings]),
+        })
+        return context
 
 
 # =================== DASHBOARD ===========================
@@ -75,7 +199,7 @@ class DashboardView(FaunaAccessMixin, CompanyMixin, TemplateView):
                         'rain': round(r.Precipitation, 1) if r and r.Precipitation is not None else None,
                         'rad': round(r.SolarRadiation, 0) if r and r.SolarRadiation is not None else None,
                         'wind': round(r.WindSpeed, 1) if r and r.WindSpeed is not None else None,
-                        'date': r.DateCreate.strftime('%d/%m/%Y %H:%M') if r else None,
+                        'date': _to_lima(r.DateCreate).strftime('%d/%m/%Y %H:%M') if r else None,
                     },
                 })
         context['stations_geojson'] = json.dumps({'type': 'FeatureCollection', 'features': features})
@@ -139,8 +263,8 @@ class StationDetailView(FaunaAccessMixin, CompanyMixin, DetailView):
         context = super().get_context_data(**kwargs)
         station = self.object
         days = int(self.request.GET.get('days', 7))
-        date_from = date.today() - timedelta(days=days)
-        date_to = date.today()
+        date_from = _today_lima() - timedelta(days=days)
+        date_to = _today_lima()
 
         readings = list(WeatherReading.objects.get_range_by_station(
             station.id, date_from, date_to
@@ -153,7 +277,7 @@ class StationDetailView(FaunaAccessMixin, CompanyMixin, DetailView):
         ))
 
         dates = [
-            r['DateCreate'].strftime('%Y-%m-%d %H:%M') if r['DateCreate'] else ''
+            _to_lima(r['DateCreate']).strftime('%d/%m/%Y %H:%M') if r['DateCreate'] else ''
             for r in readings
         ]
         context['chart_dates'] = json.dumps(dates)
@@ -226,8 +350,8 @@ class ReportView(FaunaAccessMixin, CompanyMixin, FormView):
 
     def get_initial(self):
         return {
-            'date_from': date.today() - timedelta(days=30),
-            'date_to': date.today(),
+            'date_from': _today_lima() - timedelta(days=30),
+            'date_to': _today_lima(),
         }
 
     def get_context_data(self, **kwargs):

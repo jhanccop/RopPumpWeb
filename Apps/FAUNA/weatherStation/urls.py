@@ -4,6 +4,10 @@ from . import views
 app_name = 'weather_app'
 
 urlpatterns = [
+    # Public (no login required)
+    path('fauna/weather/', views.PublicWeatherView.as_view(), name='public_weather'),
+    path('fauna/weather/<int:pk>/', views.PublicWeatherDetailView.as_view(), name='public_weather_detail'),
+
     # Dashboard
     path('weather/', views.DashboardView.as_view(), name='dashboard'),
 

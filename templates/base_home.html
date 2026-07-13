@@ -48,15 +48,25 @@
                         <div class="collapse navbar-collapse" id="navigation">
                             <ul class="navbar-nav mx-auto">
                                 <li class="nav-item">
-                                    <a class="nav-link d-flex align-items-center me-2 active" aria-current="page"
-                                        href="#">
+                                    <a class="nav-link d-flex align-items-center me-2 active" aria-current="page" href="#">
                                         <i class="fa fa-chart-pie opacity-6 text-dark me-1"></i>
                                         About Us
                                     </a>
                                 </li>
-                                
                                 <li class="nav-item">
-                                    <a class="nav-link me-2" type="button" href="{% url 'user_app:user-login'%}">
+                                    <a class="nav-link d-flex align-items-center me-2" href="{% url 'weather_app:public_weather' %}">
+                                        <i class="fas fa-broadcast-tower opacity-6 text-dark me-1"></i>
+                                        Estaciones Meteorológicas
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex align-items-center me-2" href="{% url 'camera_app:public_camera' %}">
+                                        <i class="fas fa-leaf opacity-6 text-dark me-1"></i>
+                                        Monitoreo de Mariposas
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link me-2" href="{% url 'user_app:user-login' %}">
                                         <i class="fas fa-key opacity-6 text-dark me-1"></i>
                                         Sign In
                                     </a>
