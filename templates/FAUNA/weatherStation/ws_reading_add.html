@@ -4,96 +4,106 @@
 {% block title %}Add Reading{% endblock title %}
 {% block company %}{{ CompanyName }}{% endblock company %}
 {% block appName %}WEATHER STATIONS{% endblock appName %}
-{% block Type %}NEW READING{% endblock Type %}
+{% block Type %}NUEVA LECTURA{% endblock Type %}
 
 {% block content %}
 
-<div class="row min-vh-80">
-    <div class="col-lg-8 col-md-10 col-12 m-auto">
-        <div class="card">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2">
-                    <h6 class="text-center text-white">REGISTER WEATHER READING</h6>
-                </div>
-            </div>
-            <div class="card-body">
-                <form method="POST">{% csrf_token %}
-
-                    <!-- Station & Date -->
-                    <h6 class="font-weight-bolder mb-3">Station & Date</h6>
-                    <div class="row">
-                        <div class="col-12 col-sm-7">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Station *</label>
-                                {{ form.Station }}
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-5">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Date / Time *</label>
-                                {{ form.DateCreate }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Variables -->
-                    <h6 class="font-weight-bolder mb-3 mt-2">Meteorological Variables</h6>
-                    <div class="row">
-                        <div class="col-6 col-sm-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Temperature (°C)</label>
-                                {{ form.Temperature }}
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Humidity (%)</label>
-                                {{ form.Humidity }}
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Solar Radiation (W/m²)</label>
-                                {{ form.SolarRadiation }}
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Precipitation (mm)</label>
-                                {{ form.Precipitation }}
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Wind Speed (m/s)</label>
-                                {{ form.WindSpeed }}
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Wind Direction (°)</label>
-                                {{ form.WindDirection }}
-                            </div>
-                        </div>
-                    </div>
-
-                    {% if form.errors %}
-                    <div class="alert alert-danger alert-dismissible text-sm" role="alert">
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}<p class="mb-0">{{ field }}: {{ error }}</p>{% endfor %}
-                        {% endfor %}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                    {% endif %}
-
-                    <div class="button-row d-flex pt-3 mt-2">
-                        <a class="btn bg-gradient-dark" href="{% url 'weather_app:dashboard' %}">Back</a>
-                        <button class="btn bg-gradient-success ms-auto" type="submit">Save Reading</button>
-                    </div>
-                </form>
-            </div>
+<div class="row justify-content-center">
+  <div class="col-lg-9 col-md-11 col-12">
+    <div class="card mt-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+          <i class="fas fa-plus text-white me-2"></i>
+          <h6 class="text-white mb-0">REGISTRAR LECTURA METEOROLÓGICA</h6>
         </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">{% csrf_token %}
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-broadcast-tower me-1"></i> Estación y Fecha
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-7">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Station *</label>
+                {{ form.Station }}
+              </div>
+              {% if form.Station.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Station.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-5">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Date / Time *</label>
+                {{ form.DateCreate }}
+              </div>
+              {% if form.DateCreate.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.DateCreate.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-cloud-sun-rain me-1"></i> Variables Meteorológicas
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Temperature (°C)</label>
+                {{ form.Temperature }}
+              </div>
+              {% if form.Temperature.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Temperature.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Humidity (%)</label>
+                {{ form.Humidity }}
+              </div>
+              {% if form.Humidity.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Humidity.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Solar Radiation (W/m²)</label>
+                {{ form.SolarRadiation }}
+              </div>
+              {% if form.SolarRadiation.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.SolarRadiation.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Precipitation (mm)</label>
+                {{ form.Precipitation }}
+              </div>
+              {% if form.Precipitation.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Precipitation.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Wind Speed (m/s)</label>
+                {{ form.WindSpeed }}
+              </div>
+              {% if form.WindSpeed.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.WindSpeed.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Wind Direction (°)</label>
+                {{ form.WindDirection }}
+              </div>
+              {% if form.WindDirection.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.WindDirection.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between pt-3 mt-3 border-top">
+            <a class="btn btn-outline-secondary" href="{% url 'weather_app:dashboard' %}">
+              <i class="fas fa-arrow-left me-1"></i> Volver
+            </a>
+            <button class="btn bg-gradient-success" type="submit">
+              <i class="fas fa-save me-1"></i> Guardar
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 
 {% endblock content %}

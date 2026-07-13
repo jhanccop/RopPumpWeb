@@ -39,7 +39,7 @@
                     <div class="row align-items-center px-3">
                         <div class="col">
                             <h6 class="text-white mb-0">
-                                <i class="material-icons me-1">image</i> Capture Image
+                                <i class="fas fa-image me-1"></i> Capture Image
                             </h6>
                         </div>
                         <div class="col-auto d-flex gap-2">
@@ -65,7 +65,7 @@
                 <p class="text-xs text-secondary mt-2">Click to open full size</p>
                 {% else %}
                 <div class="capture-no-image">
-                    <i class="material-icons text-secondary" style="font-size:4rem;">no_photography</i>
+                    <i class="fas fa-ban text-secondary" style="font-size:4rem;"></i>
                     <p class="text-secondary mt-2">No image for this capture</p>
                     <a href="{% url 'camera_app:capture_update' capture.id %}" class="btn btn-sm bg-gradient-warning mt-1">Upload Image</a>
                 </div>
@@ -80,7 +80,7 @@
             <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                 <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2">
                     <h6 class="text-white text-center mb-0">
-                        <i class="material-icons me-1">info</i> Capture Details
+                        <i class="fas fa-info-circle me-1"></i> Capture Details
                     </h6>
                 </div>
             </div>
@@ -91,7 +91,7 @@
                     <div class="d-flex align-items-center mb-2">
                         <div class="icon icon-shape bg-gradient-success shadow-success border-radius-md me-3"
                             style="width:36px;height:36px;min-width:36px;">
-                            <i class="material-icons text-white d-flex align-items-center justify-content-center h-100" style="font-size:1.1rem;">pets</i>
+                            <i class="fas fa-paw text-white d-flex align-items-center justify-content-center h-100" style="font-size:1.1rem;"></i>
                         </div>
                         <p class="text-xs text-secondary mb-0 font-weight-bolder text-uppercase">Detections</p>
                     </div>
@@ -126,21 +126,21 @@
                 <div class="row text-center mb-3 pb-3 border-bottom">
                     <div class="col-4">
                         <div class="card bg-gradient-primary text-white py-2">
-                            <i class="material-icons" style="font-size:1.4rem;">thermostat</i>
+                            <i class="fas fa-thermometer-half" style="font-size:1.4rem;"></i>
                             <h6 class="mb-0 mt-1 text-white">{% if capture.Temperature is not None %}{{ capture.Temperature|floatformat:1 }}°C{% else %}—{% endif %}</h6>
                             <small style="font-size:0.65rem;">Temperature</small>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="card bg-gradient-info text-white py-2">
-                            <i class="material-icons" style="font-size:1.4rem;">water_drop</i>
+                            <i class="fas fa-tint" style="font-size:1.4rem;"></i>
                             <h6 class="mb-0 mt-1 text-white">{% if capture.Humidity is not None %}{{ capture.Humidity|floatformat:1 }}%{% else %}—{% endif %}</h6>
                             <small style="font-size:0.65rem;">Humidity</small>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="card {% if capture.VoltageBattery is not None and capture.VoltageBattery < 3.5 %}bg-gradient-danger{% else %}bg-gradient-warning{% endif %} text-white py-2">
-                            <i class="material-icons" style="font-size:1.4rem;">battery_charging_full</i>
+                            <i class="fas fa-battery-full" style="font-size:1.4rem;"></i>
                             <h6 class="mb-0 mt-1 text-white">{% if capture.VoltageBattery is not None %}{{ capture.VoltageBattery|floatformat:2 }}V{% else %}—{% endif %}</h6>
                             <small style="font-size:0.65rem;">Battery</small>
                         </div>

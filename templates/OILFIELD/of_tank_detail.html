@@ -1,0 +1,295 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static %}
+
+{% block title %}{{ tank.Code }} — Detalle{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock %}
+{% block appName %}OILFIELD{% endblock %}
+{% block Type %}Detalle de Tanque{% endblock %}
+
+{% block content %}
+
+<!-- Top Info Card -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-database me-1"></i> {{ tank.Name }}
+                                <span class="ms-2 text-xs opacity-8">[{{ tank.Code }}]</span>
+                            </h6>
+                        </div>
+                        <div class="col-auto d-flex gap-2 flex-wrap">
+                            <a href="{% url 'oilfield_app:tank_update' tank.id %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-edit me-1"></i> Editar
+                            </a>
+                            <a href="{% url 'oilfield_app:tank_list' %}" class="btn btn-sm btn-white mb-0">Volver</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body pt-3">
+                <div class="row">
+                    <div class="col-sm-2 mb-2">
+                        <p class="text-xs text-secondary mb-1">Batería</p>
+                        <p class="text-sm font-weight-bold mb-0">{{ tank.Battery.Name|default:"—" }}</p>
+                    </div>
+                    <div class="col-sm-2 mb-2">
+                        <p class="text-xs text-secondary mb-1">Tipo</p>
+                        <p class="text-sm font-weight-bold mb-0">{{ tank.get_Type_display|default:tank.Type }}</p>
+                    </div>
+                    <div class="col-sm-2 mb-2">
+                        <p class="text-xs text-secondary mb-1">Cap. Nominal</p>
+                        <p class="text-sm font-weight-bold mb-0">{{ tank.NominalCapacity|default:"—" }} bbl</p>
+                    </div>
+                    <div class="col-sm-2 mb-2">
+                        <p class="text-xs text-secondary mb-1">Cap. Operativa</p>
+                        <p class="text-sm font-weight-bold mb-0">{{ tank.WorkingCapacity|default:"—" }} bbl</p>
+                    </div>
+                    <div class="col-sm-2 mb-2">
+                        <p class="text-xs text-secondary mb-1">Material</p>
+                        <p class="text-sm font-weight-bold mb-0">{{ tank.Material|default:"—" }}</p>
+                    </div>
+                    <div class="col-sm-2 mb-2">
+                        <p class="text-xs text-secondary mb-1">Estado</p>
+                        {% if tank.Status == 'operational' or tank.Status == 'active' %}
+                        <span class="badge badge-sm bg-gradient-success">Operativo</span>
+                        {% elif tank.Status == 'maintenance' %}
+                        <span class="badge badge-sm bg-gradient-warning">Mantenimiento</span>
+                        {% else %}
+                        <span class="badge badge-sm bg-gradient-secondary">{{ tank.get_Status_display|default:tank.Status }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Latest Reading + Active Alerts -->
+<div class="row mb-4">
+
+    <!-- Última lectura -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-info shadow-info border-radius-lg pt-3 pb-2 mt-n4 mx-3">
+                    <h6 class="text-white text-center mb-0">
+                        <i class="fas fa-chart-line me-1"></i> Última Lectura
+                        {% if latest_reading %}<small class="opacity-8 ms-1 text-xs">{{ latest_reading.DateCreate|date:"d/m/Y H:i" }}</small>{% endif %}
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                {% if latest_reading %}
+                <div class="row g-3 text-center">
+                    <div class="col-6">
+                        <p class="text-xs text-secondary mb-1">Nivel (cm)</p>
+                        <h4 class="mb-0 text-info">{{ latest_reading.Level|floatformat:1|default:"—" }}</h4>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-xs text-secondary mb-1">Temperatura (°C)</p>
+                        <h4 class="mb-0 text-warning">{{ latest_reading.Temperature|floatformat:1|default:"—" }}</h4>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-xs text-secondary mb-1">Volumen (bbl)</p>
+                        <h4 class="mb-0 text-success">{{ latest_reading.Volume|floatformat:1|default:"—" }}</h4>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-xs text-secondary mb-1">Nivel %</p>
+                        {% if latest_reading.LevelPercent is not None %}
+                            {% if latest_reading.LevelPercent > 90 %}
+                            <h4 class="mb-0 text-danger">{{ latest_reading.LevelPercent|floatformat:1 }}%</h4>
+                            {% elif latest_reading.LevelPercent < 10 %}
+                            <h4 class="mb-0 text-warning">{{ latest_reading.LevelPercent|floatformat:1 }}%</h4>
+                            {% else %}
+                            <h4 class="mb-0 text-success">{{ latest_reading.LevelPercent|floatformat:1 }}%</h4>
+                            {% endif %}
+                        {% else %}
+                        <h4 class="mb-0 text-secondary">—</h4>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center text-secondary py-4">
+                    <i class="fas fa-chart-line d-block mb-2" style="font-size:2.5rem;opacity:.3;"></i>
+                    Sin lecturas registradas.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas activas -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-danger shadow-danger border-radius-lg pt-3 pb-2 mt-n4 mx-3">
+                    <h6 class="text-white text-center mb-0">
+                        <i class="fas fa-bell me-1"></i> Alertas Activas
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Severidad</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in active_alerts %}
+                            <tr>
+                                <td class="ps-3 text-xs font-weight-bold">{{ alert.AlertType|default:alert.Variable }}</td>
+                                <td>
+                                    {% if alert.Severity == 'low' %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Baja</span>
+                                    {% elif alert.Severity == 'medium' %}
+                                    <span class="badge badge-sm bg-gradient-warning text-dark">Media</span>
+                                    {% elif alert.Severity == 'high' %}
+                                    <span class="badge badge-sm bg-gradient-danger">Alta</span>
+                                    {% elif alert.Severity == 'critical' %}
+                                    <span class="badge badge-sm" style="background:#212529;color:#fff;">Crítica</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ alert.Severity }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-xs text-secondary">{{ alert.DateCreate|date:"d/m H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-secondary py-3">
+                                    <i class="fas fa-check-circle d-block mb-1" style="font-size:1.5rem;opacity:.3;color:green;"></i>
+                                    Sin alertas activas
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Chart: Level % and Temperature -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-info shadow-info border-radius-lg pt-2 pb-2 mt-n4 mx-3">
+                    <h6 class="text-white text-center mb-0">Nivel (%) y Temperatura (°C) — Histórico</h6>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div id="chart-tank-level" style="min-height:280px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Last 20 Readings Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <h6 class="text-white px-3 mb-0">
+                        <i class="fas fa-list me-1"></i> Últimas 20 Lecturas
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Fecha</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nivel (cm)</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Temp °C</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nivel Agua</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Volumen (bbl)</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Origen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reading in readings %}
+                            <tr>
+                                <td class="ps-3 text-xs font-weight-bold">{{ reading.DateCreate|date:"d/m/Y H:i" }}</td>
+                                <td class="text-xs">{{ reading.Level|floatformat:1|default:"—" }}</td>
+                                <td class="text-xs">{{ reading.Temperature|floatformat:1|default:"—" }}</td>
+                                <td class="text-xs">{{ reading.WaterLevel|floatformat:1|default:"—" }}</td>
+                                <td class="text-xs font-weight-bold">{{ reading.Volume|floatformat:1|default:"—" }}</td>
+                                <td>
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ reading.get_Source_display|default:reading.Source|default:"Manual" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-secondary py-3">Sin lecturas registradas</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="row mb-4">
+    <div class="col-12 d-flex gap-2 flex-wrap">
+        <a href="{% url 'oilfield_app:tank_update' tank.id %}" class="btn bg-gradient-warning">
+            <i class="fas fa-edit me-1"></i> Editar Tanque
+        </a>
+        <a href="{% url 'oilfield_app:tank_reading_add' %}?tank={{ tank.id }}" class="btn bg-gradient-success">
+            <i class="fas fa-plus me-1"></i> Agregar Lectura
+        </a>
+        <a href="{% url 'oilfield_app:tank_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Volver a Tanques
+        </a>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+var chartDates   = {{ chart_dates|safe }};
+var chartLevel   = {{ chart_level|safe }};
+var chartTemp    = {{ chart_temp|safe }};
+
+var cfg = { responsive: true, displayModeBar: false };
+var baseLayout = {
+    margin: { t: 10, r: 60, b: 60, l: 50 },
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { size: 11 }, legend: { orientation: 'h', y: -0.35 },
+};
+
+Plotly.newPlot('chart-tank-level', [
+    {
+        x: chartDates, y: chartLevel,
+        name: 'Nivel (%)', type: 'scatter', mode: 'lines+markers', fill: 'tozeroy',
+        line: { color: '#2196F3', width: 2 }, marker: { size: 4 },
+        fillcolor: 'rgba(33,150,243,0.1)',
+        yaxis: 'y1',
+    },
+    {
+        x: chartDates, y: chartTemp,
+        name: 'Temp (°C)', type: 'scatter', mode: 'lines+markers',
+        line: { color: '#FF9800', width: 2, dash: 'dot' }, marker: { size: 4 },
+        yaxis: 'y2',
+    },
+], Object.assign({}, baseLayout, {
+    yaxis:  { title: 'Nivel %', range: [0, 110] },
+    yaxis2: { title: 'Temp °C', side: 'right', overlaying: 'y' },
+}), cfg);
+</script>
+{% endblock JSscripts %}

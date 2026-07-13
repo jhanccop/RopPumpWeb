@@ -1,0 +1,308 @@
+{% extends 'users/admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock title %}
+
+{% block content %}
+
+<!-- Welcome banner -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card card-background card-background-mask-dark"
+             style="background: linear-gradient(195deg, #42424a, #191919); border-radius: 1rem; overflow: hidden;">
+            <div class="full-background"
+                 style="background-image: url('{% static "assets/img/oil_monitoring.png" %}');
+                        background-size: cover; background-position: center;
+                        opacity: .15; position: absolute; inset: 0;"></div>
+            <div class="card-body p-4 position-relative">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                    <div>
+                        <h4 class="text-white font-weight-bolder mb-1">
+                            Bienvenido, {{ request.user.Name|default:request.user.UserName }}
+                        </h4>
+                        <p class="text-white opacity-8 mb-3" style="font-size:.9rem;">
+                            Panel de administración — SmartIO Platform
+                        </p>
+                        <div class="d-flex gap-2 flex-wrap">
+                            {% for app in applications %}
+                            {% if app.IsActive %}
+                            <a href="{{ app.DashboardUrl }}"
+                               class="badge px-3 py-2 text-white text-decoration-none"
+                               style="background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+                                      border-radius: 50px; font-size: .72rem; font-weight: 600;">
+                                <i class="{{ app.Icon }} me-1"></i>{{ app.Name }}
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="text-end text-white opacity-8" style="font-size:.8rem; min-width: 130px;">
+                        <p class="mb-0 font-weight-bold" id="clock-date" style="font-size:.85rem;"></p>
+                        <p class="mb-0" id="clock-time" style="font-size:1.5rem; font-weight:700; letter-spacing:1px;"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row mb-4">
+
+    <!-- Total usuarios -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center">
+                    <i class="fas fa-users text-white" style="font-size:1.4rem;"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Total Usuarios</p>
+                    <h4 class="mb-0 font-weight-bolder">{{ total_users|default:"0" }}</h4>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-success font-weight-bolder">{{ active_users|default:"0" }}</span>
+                    <span class="text-secondary"> activos en el sistema</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usuarios activos -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center">
+                    <i class="fas fa-user-check text-white" style="font-size:1.4rem;"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Usuarios Activos</p>
+                    <h4 class="mb-0 font-weight-bolder">{{ active_users|default:"0" }}</h4>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-3">
+                <p class="mb-0 text-sm text-secondary">Con acceso habilitado</p>
+            </div>
+        </div>
+    </div>
+
+    {% if request.user.is_superadmin %}
+    <!-- Compañías -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center">
+                    <i class="fas fa-building text-white" style="font-size:1.4rem;"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Compañías</p>
+                    <h4 class="mb-0 font-weight-bolder">{{ total_companies|default:"0" }}</h4>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-3">
+                <p class="mb-0 text-sm text-secondary">Registradas en el sistema</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Aplicaciones -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center">
+                    <i class="fas fa-th text-white" style="font-size:1.4rem;"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Aplicaciones</p>
+                    <h4 class="mb-0 font-weight-bolder">{{ applications|length }}</h4>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-3">
+                <p class="mb-0 text-sm text-secondary">Módulos disponibles</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Middle row: Apps table + Quick actions -->
+<div class="row mb-4">
+
+    <!-- Applications table -->
+    <div class="col-lg-8 mb-4 mb-lg-0">
+        <div class="card h-100">
+            <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="font-weight-bolder mb-0">Aplicaciones del sistema</h6>
+                    <p class="text-xs text-secondary mb-0">Módulos habilitados</p>
+                </div>
+                <span class="badge bg-gradient-dark px-3 py-2" style="font-size:.72rem;">{{ applications|length }} módulo{{ applications|length|pluralize:"s" }}</span>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Aplicación</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">URL</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in applications %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-3 py-2 align-items-center">
+                                        <div class="icon icon-sm icon-shape me-3 d-flex align-items-center justify-content-center
+                                            {% if app.Code == 'fauna' %}bg-gradient-success{% elif app.Code == 'oilfield' %}bg-gradient-info{% else %}bg-gradient-warning{% endif %}
+                                            shadow border-radius-md">
+                                            <i class="{{ app.Icon }} text-white" style="font-size:.8rem;"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 text-sm font-weight-bold">{{ app.Name }}</h6>
+                                            <p class="mb-0 text-xs text-secondary">{{ app.Code }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs text-secondary mb-0 font-weight-bold">{{ app.DashboardUrl|default:"—" }}</p>
+                                </td>
+                                <td class="align-middle text-center">
+                                    {% if app.IsActive %}
+                                    <span class="badge badge-sm bg-gradient-success">Activo</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-danger">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-secondary py-4">No hay aplicaciones registradas.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <h6 class="font-weight-bolder mb-0">Acciones rápidas</h6>
+                <p class="text-xs text-secondary mb-0">Gestión del sistema</p>
+            </div>
+            <div class="card-body d-flex flex-column gap-2 pt-3">
+
+                <a href="{% url 'user_app:user_create' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#42424a,#191919); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape bg-gradient-dark d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0">
+                        <i class="fas fa-user-plus text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Nuevo usuario</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Crear cuenta de acceso</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+
+                <a href="{% url 'user_app:user_list' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#66bb6a,#43a047); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape bg-gradient-success d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0">
+                        <i class="fas fa-users text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Ver usuarios</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Gestionar cuentas</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+
+                {% if request.user.is_superadmin %}
+                <a href="{% url 'user_app:company_create' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#49a3f1,#1a73e8); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape bg-gradient-info d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0">
+                        <i class="fas fa-plus text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Nueva compañía</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Registrar organización</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+
+                <a href="{% url 'user_app:company_list' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#ffa726,#fb8c00); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape bg-gradient-warning d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0">
+                        <i class="fas fa-building text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Ver compañías</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Gestionar organizaciones</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+                {% endif %}
+
+                <a href="{{ request.user.get_first_app_url }}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#868caf,#546e7a); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0"
+                         style="background: linear-gradient(195deg,#868caf,#546e7a);">
+                        <i class="fas fa-th-large text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Ir a la app</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Abrir módulo principal</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+(function () {
+    var days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    var months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    function tick() {
+        var now = new Date();
+        var dateEl = document.getElementById('clock-date');
+        var timeEl = document.getElementById('clock-time');
+        if (dateEl) dateEl.textContent = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+        if (timeEl) {
+            var h = String(now.getHours()).padStart(2,'0');
+            var m = String(now.getMinutes()).padStart(2,'0');
+            var s = String(now.getSeconds()).padStart(2,'0');
+            timeEl.textContent = h + ':' + m + ':' + s;
+        }
+    }
+    tick();
+    setInterval(tick, 1000);
+})();
+</script>
+{% endblock JSscripts %}

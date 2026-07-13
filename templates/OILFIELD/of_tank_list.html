@@ -1,0 +1,148 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static %}
+
+{% block title %}Tanques{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock %}
+{% block appName %}OILFIELD{% endblock %}
+{% block Type %}Tanques{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-database me-1"></i> TANQUES
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'oilfield_app:tank_add' %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-plus me-1"></i> Nuevo Tanque
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="dt-tanks">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Código</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Nombre</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Batería</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Tipo</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Capacidad (bbl)</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Nivel Actual %</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Temp °C</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Estado</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2 text-end pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tank in tanks %}
+                            <tr>
+                                <td class="ps-3">
+                                    <p class="text-xs font-weight-bold mb-0">{{ tank.Code }}</p>
+                                </td>
+                                <td>
+                                    <div class="d-flex px-2 py-1 align-items-center">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ tank.Name }}</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs mb-0">{{ tank.Battery.Name|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    {% if tank.Type == 'oil' %}
+                                    <span class="badge badge-sm bg-gradient-warning text-dark">Petróleo</span>
+                                    {% elif tank.Type == 'water' %}
+                                    <span class="badge badge-sm bg-gradient-info">Agua</span>
+                                    {% elif tank.Type == 'slop' %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Slop</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ tank.get_Type_display|default:tank.Type }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ tank.NominalCapacity|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    {% with r=tank.latest_reading %}
+                                    {% if r and r.LevelPercent is not None %}
+                                        {% if r.LevelPercent > 90 %}
+                                        <span class="text-danger font-weight-bolder text-xs">{{ r.LevelPercent|floatformat:1 }}%</span>
+                                        {% elif r.LevelPercent < 10 %}
+                                        <span class="text-warning font-weight-bolder text-xs">{{ r.LevelPercent|floatformat:1 }}%</span>
+                                        {% else %}
+                                        <span class="text-success text-xs">{{ r.LevelPercent|floatformat:1 }}%</span>
+                                        {% endif %}
+                                    {% else %}
+                                    <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with r=tank.latest_reading %}
+                                    {% if r and r.Temperature is not None %}
+                                    <span class="text-xs">{{ r.Temperature|floatformat:1 }}</span>
+                                    {% else %}
+                                    <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% if tank.Status == 'operational' or tank.Status == 'active' %}
+                                    <span class="badge badge-sm bg-gradient-success">Operativo</span>
+                                    {% elif tank.Status == 'maintenance' %}
+                                    <span class="badge badge-sm bg-gradient-warning">Mantenimiento</span>
+                                    {% elif tank.Status == 'fault' %}
+                                    <span class="badge badge-sm bg-gradient-danger">Falla</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ tank.get_Status_display|default:tank.Status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-3">
+                                    <a href="{% url 'oilfield_app:tank_detail' tank.id %}" class="btn btn-sm btn-info mb-0 me-1" title="Detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'oilfield_app:tank_update' tank.id %}" class="btn btn-sm btn-warning mb-0 me-1" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'oilfield_app:tank_remove' tank.id %}" class="btn btn-sm btn-danger mb-0" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center text-secondary py-4">
+                                    <i class="fas fa-database d-block mb-1" style="font-size:2rem;opacity:.3;"></i>
+                                    No hay tanques registrados.
+                                    <a href="{% url 'oilfield_app:tank_add' %}">Agregar el primero</a>.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    if (document.getElementById('dt-tanks')) {
+        new simpleDatatables.DataTable('#dt-tanks', { searchable: true, fixedHeight: false, perPage: 20 });
+    }
+</script>
+{% endblock JSscripts %}

@@ -1,0 +1,349 @@
+{% extends 'TRANSFORMADOR/base_transformer.html' %}
+{% load static %}
+
+{% block title %}Lecturas Eléctricas{% endblock title %}
+
+{% block content %}
+
+<!-- Filters -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body py-2">
+                <form method="GET" class="d-flex flex-wrap gap-2 align-items-end">
+                    <div style="min-width:220px;">
+                        <label class="text-xs text-secondary mb-1 fw-bold">
+                            <i class="fas fa-bolt me-1 text-warning"></i>Transformador
+                        </label>
+                        <select name="transformer" class="form-control form-control-sm">
+                            <option value="">Todos los transformadores</option>
+                            {% for tr in transformer_choices %}
+                            <option value="{{ tr.id }}" {% if filter_transformer == tr.id|stringformat:"s" %}selected{% endif %}>
+                                {{ tr.StationName }} ({{ tr.Code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="min-width:150px;">
+                        <label class="text-xs text-secondary mb-1 fw-bold">
+                            <i class="fas fa-calendar-alt me-1"></i>Desde
+                        </label>
+                        <input type="date" name="date_from" class="form-control form-control-sm"
+                               value="{{ filter_date_from|default:'' }}">
+                    </div>
+                    <div style="min-width:150px;">
+                        <label class="text-xs text-secondary mb-1 fw-bold">
+                            <i class="fas fa-calendar-alt me-1"></i>Hasta
+                        </label>
+                        <input type="date" name="date_to" class="form-control form-control-sm"
+                               value="{{ filter_date_to|default:'' }}">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm bg-gradient-primary mb-0" type="submit">
+                            <i class="fas fa-search me-1"></i> Filtrar
+                        </button>
+                        <a href="{% url 'transformer_app:reading_list' %}" class="btn btn-sm bg-gradient-secondary mb-0">
+                            <i class="fas fa-times me-1"></i> Limpiar
+                        </a>
+                    </div>
+                    <div class="ms-auto">
+                        <a href="{% url 'transformer_app:reading_add' %}" class="btn btn-sm bg-gradient-success mb-0">
+                            <i class="fas fa-plus me-1"></i> Nueva Lectura
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Readings table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2 px-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-chart-line me-2"></i>LECTURAS — VARIABLES DE MONITOREO
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge badge-sm bg-gradient-info">
+                                {% if is_paginated %}{{ page_obj.paginator.count }}{% else %}{{ readings|length }}{% endif %} registro(s)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-middle mb-0" style="min-width:900px;">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder ps-3"
+                                    style="border-bottom:2px solid #dee2e6;min-width:155px;">
+                                    Transformador
+                                </th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder"
+                                    style="border-bottom:2px solid #dee2e6;white-space:nowrap;">
+                                    Fecha / Hora
+                                </th>
+
+                                <!-- Hot Spot -->
+                                <th class="text-center text-xxs font-weight-bolder"
+                                    style="border-bottom:2px solid #e53e3e;background:#fff5f5;color:#c53030;white-space:nowrap;">
+                                    <i class="fas fa-thermometer-full me-1"></i>Hot Spot<br>
+                                    <span class="text-secondary" style="font-weight:400;">(°C)</span>
+                                </th>
+
+                                <!-- OTI -->
+                                <th class="text-center text-xxs font-weight-bolder"
+                                    style="border-bottom:2px solid #dd6b20;background:#fffaf0;color:#c05621;white-space:nowrap;">
+                                    <i class="fas fa-thermometer-three-quarters me-1"></i>OTI Aceite<br>
+                                    <span class="text-secondary" style="font-weight:400;">(°C)</span>
+                                </th>
+
+                                <!-- Presión / PRD -->
+                                <th class="text-center text-xxs font-weight-bolder"
+                                    style="border-bottom:2px solid #3182ce;background:#ebf8ff;color:#2b6cb0;white-space:nowrap;">
+                                    <i class="fas fa-tachometer-alt me-1"></i>Presión PRD<br>
+                                    <span class="text-secondary" style="font-weight:400;">(kPa)</span>
+                                </th>
+
+                                <!-- Nivel Aceite -->
+                                <th class="text-center text-xxs font-weight-bolder"
+                                    style="border-bottom:2px solid #2f855a;background:#f0fff4;color:#276749;white-space:nowrap;">
+                                    <i class="fas fa-fill-drip me-1"></i>Nivel Aceite<br>
+                                    <span class="text-secondary" style="font-weight:400;">(%)</span>
+                                </th>
+
+                                <!-- Vibración -->
+                                <th class="text-center text-xxs font-weight-bolder"
+                                    style="border-bottom:2px solid #6b46c1;background:#faf5ff;color:#553c9a;white-space:nowrap;">
+                                    <i class="fas fa-wave-square me-1"></i>Vibración<br>
+                                    <span class="text-secondary" style="font-weight:400;">(mm/s)</span>
+                                </th>
+
+                                <!-- Humedad Aceite -->
+                                <th class="text-center text-xxs font-weight-bolder"
+                                    style="border-bottom:2px solid #2c7a7b;background:#e6fffa;color:#234e52;white-space:nowrap;">
+                                    <i class="fas fa-tint me-1"></i>Humedad Aceite<br>
+                                    <span class="text-secondary" style="font-weight:400;">(ppm)</span>
+                                </th>
+
+                                <!-- Carga % -->
+                                <th class="text-center text-xxs font-weight-bolder text-secondary"
+                                    style="border-bottom:2px solid #dee2e6;white-space:nowrap;">
+                                    Carga %
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in readings %}
+                            <tr>
+                                <!-- Transformador -->
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="icon icon-shape icon-sm bg-gradient-dark shadow text-center border-radius-sm flex-shrink-0">
+                                            <i class="fas fa-bolt text-white opacity-10" style="font-size:0.65rem;"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-weight-bold mb-0">{{ r.Transformer.StationName }}</p>
+                                            <p class="text-xxs text-secondary mb-0">{{ r.Transformer.Code }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Fecha -->
+                                <td style="white-space:nowrap;">
+                                    <p class="text-xs font-weight-bold mb-0">{{ r.DateCreate|date:"d/m/Y" }}</p>
+                                    <p class="text-xxs text-secondary mb-0"><i class="fas fa-clock me-1"></i>{{ r.DateCreate|date:"H:i" }}</p>
+                                </td>
+
+                                <!-- Hot Spot -->
+                                <td class="text-center" style="background:#fff5f5;">
+                                    {% if r.HotSpotTemperature is not None %}
+                                        {% if r.HotSpotTemperature > 120 %}
+                                            <span class="badge bg-gradient-danger text-xs">{{ r.HotSpotTemperature|floatformat:1 }}°</span>
+                                        {% elif r.HotSpotTemperature > 98 %}
+                                            <span class="text-danger fw-bold text-xs">{{ r.HotSpotTemperature|floatformat:1 }}°</span>
+                                        {% else %}
+                                            <span class="text-dark text-xs">{{ r.HotSpotTemperature|floatformat:1 }}°</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- OTI -->
+                                <td class="text-center" style="background:#fffaf0;">
+                                    {% if r.OilTemperature is not None %}
+                                        {% if r.OilTemperature > 90 %}
+                                            <span class="badge bg-gradient-danger text-xs">{{ r.OilTemperature|floatformat:1 }}°</span>
+                                        {% elif r.OilTemperature > 75 %}
+                                            <span class="text-warning fw-bold text-xs">{{ r.OilTemperature|floatformat:1 }}°</span>
+                                        {% else %}
+                                            <span class="text-dark text-xs">{{ r.OilTemperature|floatformat:1 }}°</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Presión PRD -->
+                                <td class="text-center" style="background:#ebf8ff;">
+                                    {% if r.InternalPressure is not None %}
+                                        {% if r.InternalPressure > 70 %}
+                                            <span class="badge bg-gradient-danger text-xs">{{ r.InternalPressure|floatformat:1 }}</span>
+                                        {% elif r.InternalPressure > 50 %}
+                                            <span class="text-warning fw-bold text-xs">{{ r.InternalPressure|floatformat:1 }}</span>
+                                        {% else %}
+                                            <span class="text-dark text-xs">{{ r.InternalPressure|floatformat:1 }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Nivel Aceite -->
+                                <td class="text-center" style="background:#f0fff4;">
+                                    {% if r.OilLevel is not None %}
+                                        {% if r.OilLevel < 25 %}
+                                            <span class="badge bg-gradient-danger text-xs">{{ r.OilLevel|floatformat:1 }}%</span>
+                                        {% elif r.OilLevel < 40 %}
+                                            <span class="text-warning fw-bold text-xs">{{ r.OilLevel|floatformat:1 }}%</span>
+                                        {% else %}
+                                            <span class="text-dark text-xs">{{ r.OilLevel|floatformat:1 }}%</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Vibración -->
+                                <td class="text-center" style="background:#faf5ff;">
+                                    {% if r.Vibration is not None %}
+                                        {% if r.Vibration > 7.1 %}
+                                            <span class="badge bg-gradient-danger text-xs">{{ r.Vibration|floatformat:2 }}</span>
+                                        {% elif r.Vibration > 4.5 %}
+                                            <span class="text-warning fw-bold text-xs">{{ r.Vibration|floatformat:2 }}</span>
+                                        {% else %}
+                                            <span class="text-dark text-xs">{{ r.Vibration|floatformat:2 }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Humedad Aceite -->
+                                <td class="text-center" style="background:#e6fffa;">
+                                    {% if r.OilHumidity is not None %}
+                                        {% if r.OilHumidity > 35 %}
+                                            <span class="badge bg-gradient-danger text-xs">{{ r.OilHumidity|floatformat:1 }}</span>
+                                        {% elif r.OilHumidity > 20 %}
+                                            <span class="text-warning fw-bold text-xs">{{ r.OilHumidity|floatformat:1 }}</span>
+                                        {% else %}
+                                            <span class="text-dark text-xs">{{ r.OilHumidity|floatformat:1 }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Carga % -->
+                                <td class="text-center">
+                                    {% with load=r.LoadPercent %}
+                                    {% if load is not None %}
+                                        {% if load > 100 %}
+                                            <span class="badge badge-sm bg-gradient-danger">{{ load|floatformat:1 }}%</span>
+                                        {% elif load > 80 %}
+                                            <span class="badge badge-sm bg-gradient-warning">{{ load|floatformat:1 }}%</span>
+                                        {% elif load > 50 %}
+                                            <span class="badge badge-sm bg-gradient-info">{{ load|floatformat:1 }}%</span>
+                                        {% else %}
+                                            <span class="badge badge-sm bg-gradient-success">{{ load|floatformat:1 }}%</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+                                    <div class="py-3">
+                                        <i class="fas fa-chart-line d-block mb-2 text-secondary" style="font-size:2.5rem;opacity:.25;"></i>
+                                        <p class="text-secondary text-sm mb-1">No hay lecturas registradas para los filtros aplicados.</p>
+                                        <a href="{% url 'transformer_app:reading_add' %}" class="btn btn-sm bg-gradient-primary mt-2">
+                                            <i class="fas fa-plus me-1"></i>Agregar primera lectura
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Leyenda umbrales -->
+                {% if readings %}
+                <div class="px-3 pt-2 pb-1 d-flex flex-wrap gap-3 border-top" style="font-size:0.68rem;color:#888;">
+                    <span class="fw-bold text-secondary">Umbrales:</span>
+                    <span><i class="fas fa-circle text-danger me-1"></i>Hot Spot &gt;120°C</span>
+                    <span><i class="fas fa-circle" style="color:#e67e22;"></i> OTI &gt;90°C</span>
+                    <span><i class="fas fa-circle text-danger me-1"></i>PRD &gt;70 kPa</span>
+                    <span><i class="fas fa-circle text-danger me-1"></i>Nivel &lt;25%</span>
+                    <span><i class="fas fa-circle text-danger me-1"></i>Vibr. &gt;7.1 mm/s</span>
+                    <span><i class="fas fa-circle text-danger me-1"></i>H₂O &gt;35 ppm</span>
+                    <span class="ms-2 badge badge-sm bg-gradient-warning text-dark">Advertencia</span>
+                    <span class="badge badge-sm bg-gradient-danger">Crítico</span>
+                </div>
+                {% endif %}
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top">
+                    <small class="text-secondary">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </small>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if filter_transformer %}transformer={{ filter_transformer }}&{% endif %}{% if filter_date_from %}date_from={{ filter_date_from }}&{% endif %}{% if filter_date_to %}date_to={{ filter_date_to }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if filter_transformer %}transformer={{ filter_transformer }}&{% endif %}{% if filter_date_from %}date_from={{ filter_date_from }}&{% endif %}{% if filter_date_to %}date_to={{ filter_date_to }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if filter_transformer %}transformer={{ filter_transformer }}&{% endif %}{% if filter_date_from %}date_from={{ filter_date_from }}&{% endif %}{% if filter_date_to %}date_to={{ filter_date_to }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

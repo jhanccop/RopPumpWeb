@@ -1,0 +1,407 @@
+{% extends 'TRANSFORMADOR/base_transformer.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock title %}
+
+{% block extra_css %}
+<style>
+    #map-transformer { height: 100%; min-height: 460px; }
+    .progress { height: 4px; border-radius: 4px; }
+    .stat-divider { border-left: 1px solid rgba(255,255,255,.3); }
+    .countup-val { font-variant-numeric: tabular-nums; }
+    /* ── Mapa popup ── */
+    .tr-popup { font-family: inherit; min-width: 230px; }
+    .tr-popup-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .tr-popup-name { font-weight:700; font-size:13px; color:#344767; line-height:1.2; }
+    .tr-popup-code { font-size:10px; color:#7b809a; }
+    .tr-popup-badge { font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px; color:#fff; white-space:nowrap; }
+    .tr-popup-divider { border:none; border-top:1px solid #e9ecef; margin:8px 0; }
+    .tr-popup-vars { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+    .tr-popup-var { display:flex; flex-direction:column; align-items:center; padding:5px 4px; border-radius:8px; }
+    .tr-popup-var-label { font-size:9px; text-transform:uppercase; font-weight:600; opacity:.7; letter-spacing:.4px; margin-bottom:2px; }
+    .tr-popup-var-val { font-size:13px; font-weight:700; }
+    .tr-popup-var-unit { font-size:9px; opacity:.6; }
+    .tr-popup-no-reading { font-size:11px; color:#aaa; text-align:center; padding:8px 0; }
+    .tr-popup-footer { margin-top:8px; }
+    .tr-popup-footer a { display:block; font-size:11px; padding:5px; border-radius:6px; background:#344767; color:#fff; text-decoration:none; text-align:center; }
+    .tr-popup-footer a:hover { background:#1a237e; }
+    .leaflet-popup-content { margin: 12px 14px; }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+
+<!-- Row 0: Welcome Banner -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4" style="background:linear-gradient(195deg,#1a237e,#283593);overflow:hidden;">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <h5 class="text-white font-weight-bolder mb-1">
+                            <i class="fas fa-bolt me-2 opacity-7"></i>{{ CompanyName }} — TRANSFORMADORES
+                        </h5>
+                        <p class="text-white opacity-7 text-sm mb-0">Red Eléctrica · Monitoreo continuo</p>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ total_transformers }}">{{ total_transformers }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Total</p>
+                            </div>
+                            <div class="col-3 stat-divider">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ operational_count }}">{{ operational_count }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Operativos</p>
+                            </div>
+                            <div class="col-3 stat-divider">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ fault_count }}">{{ fault_count }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Con Falla</p>
+                            </div>
+                            <div class="col-3 stat-divider">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ active_alerts_count }}">{{ active_alerts_count }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Alertas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mapa + paneles derechos -->
+<div class="row g-3" style="min-height:560px;">
+
+    <!-- ── MAPA col-8 ── -->
+    <div class="col-lg-8 d-flex flex-column">
+        <div class="card flex-grow-1 overflow-hidden" style="border-radius:12px;">
+            <div class="card-header p-0">
+                <div class="bg-gradient-dark border-radius-top-lg pt-3 pb-2 px-3 d-flex align-items-center">
+                    <h6 class="text-white mb-0 me-auto">
+                        <i class="fas fa-map-marked-alt me-1"></i> Red de Transformadores
+                        <span class="text-white opacity-7 text-xs ms-1">{{ total_transformers }} unidad{{ total_transformers|pluralize:"es" }}</span>
+                    </h6>
+                    <a href="{% url 'transformer_app:transformer_add' %}" class="btn btn-sm btn-white mb-0">
+                        <i class="fas fa-plus me-1"></i> Nuevo
+                    </a>
+                </div>
+                <div class="d-flex gap-3 px-3 py-1" style="background:#344767;">
+                    <span class="text-white text-xs opacity-7"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4CAF50;margin-right:4px;"></span>Operativo</span>
+                    <span class="text-white text-xs opacity-7"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FF9800;margin-right:4px;"></span>Mantenimiento</span>
+                    <span class="text-white text-xs opacity-7"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F44336;margin-right:4px;"></span>Falla</span>
+                    <span class="text-white text-xs opacity-7"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#9E9E9E;margin-right:4px;"></span>Inactivo</span>
+                </div>
+            </div>
+            <div class="card-body p-0" style="height:520px;">
+                <div id="map-transformer" style="height:100%;border-radius:0 0 12px 12px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PANEL DERECHO col-4 ── -->
+    <div class="col-lg-4 d-flex flex-column gap-3">
+
+        <!-- Tabla de transformadores -->
+        <div class="card">
+            <div class="card-header p-3 d-flex align-items-center" style="background:linear-gradient(195deg,#2d3748,#4a5568);border-radius:12px 12px 0 0;">
+                <i class="fas fa-bolt text-white me-2"></i>
+                <h6 class="text-white mb-0 text-sm">Transformadores</h6>
+            </div>
+            <div class="card-body px-0 pt-0 pb-1">
+                <div class="table-responsive p-0">
+                    <table class="table align-middle mb-0" id="dt-dash-transformers">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder ps-3">Nombre</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">OTI</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Hot Spot</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Aceite</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Vibr.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tr in transformers %}
+                            {% with r=tr.latest_reading %}
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span title="{% if tr.Status == 'operational' %}Operativo{% elif tr.Status == 'maintenance' %}Mantenimiento{% elif tr.Status == 'fault' %}Falla{% else %}Inactivo{% endif %}"
+                                              style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:{% if tr.Status == 'operational' %}#4CAF50{% elif tr.Status == 'maintenance' %}#FF9800{% elif tr.Status == 'fault' %}#F44336{% else %}#9E9E9E{% endif %};"></span>
+                                        <div>
+                                            <a href="{% url 'transformer_app:transformer_detail' tr.id %}" class="text-xs font-weight-bold mb-0 d-block text-dark">{{ tr.StationName }}</a>
+                                            <p class="text-xxs text-secondary mb-0">{{ tr.Code }} · {{ tr.NominalPower }} kVA</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-xs">
+                                    {% if r and r.OilTemperature is not None %}
+                                    <span class="{% if r.OilTemperature > 90 %}text-danger fw-bold{% elif r.OilTemperature > 75 %}text-warning fw-bold{% else %}text-success{% endif %}">
+                                        {{ r.OilTemperature|floatformat:1 }}°C
+                                    </span>
+                                    {% else %}<span class="text-secondary">—</span>{% endif %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if r and r.HotSpotTemperature is not None %}
+                                    <span class="{% if r.HotSpotTemperature > 120 %}text-danger fw-bold{% elif r.HotSpotTemperature > 98 %}text-warning fw-bold{% else %}text-success{% endif %}">
+                                        {{ r.HotSpotTemperature|floatformat:1 }}°C
+                                    </span>
+                                    {% else %}<span class="text-secondary">—</span>{% endif %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if r and r.OilLevel is not None %}
+                                    <span class="{% if r.OilLevel < 25 %}text-danger fw-bold{% elif r.OilLevel < 40 %}text-warning fw-bold{% else %}text-success{% endif %}">
+                                        {{ r.OilLevel|floatformat:0 }}%
+                                    </span>
+                                    {% else %}<span class="text-secondary">—</span>{% endif %}
+                                </td>
+                                <td class="text-xs">
+                                    {% if r and r.Vibration is not None %}
+                                    <span class="{% if r.Vibration > 7.1 %}text-danger fw-bold{% elif r.Vibration > 4.5 %}text-warning fw-bold{% else %}text-success{% endif %}">
+                                        {{ r.Vibration|floatformat:1 }}
+                                    </span>
+                                    {% else %}<span class="text-secondary">—</span>{% endif %}
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-secondary py-3">
+                                    <p class="text-xs mb-1">Sin transformadores</p>
+                                    <a href="{% url 'transformer_app:transformer_add' %}" class="btn btn-xs bg-gradient-success">Agregar</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de alertas recientes -->
+        <div class="card">
+            <div class="card-header p-3 d-flex align-items-center" style="background:linear-gradient(195deg,#c0392b,#e74c3c);border-radius:12px 12px 0 0;">
+                <i class="fas fa-bell text-white me-2"></i>
+                <h6 class="text-white mb-0 text-sm me-auto">Alertas Recientes</h6>
+                <a href="{% url 'transformer_app:alert_list' %}" class="btn btn-sm btn-white mb-0" style="font-size:10px;padding:3px 8px;">Ver todas</a>
+            </div>
+            <div class="card-body px-0 pt-0 pb-1">
+                <div class="table-responsive p-0">
+                    <table class="table align-middle mb-0" id="dt-dash-alerts">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder ps-3">Transformador</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Variable</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Valor</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in recent_alerts %}
+                            <tr>
+                                <td class="ps-3">
+                                    <div style="display:flex;align-items:center;gap:6px;">
+                                        <div style="width:5px;height:5px;border-radius:50%;flex-shrink:0;background:
+                                            {% if alert.Severity == 'emergency' %}#F44336
+                                            {% elif alert.Severity == 'critical' %}#FF5722
+                                            {% else %}#FF9800{% endif %};"></div>
+                                        <span class="text-xs font-weight-bold">{{ alert.Transformer.StationName }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-xxs text-secondary">{{ alert.Variable }}</td>
+                                <td class="text-xs font-weight-bold">
+                                    {{ alert.DetectedValue|floatformat:2 }}
+                                    <span class="text-secondary text-xxs">/ {{ alert.ThresholdValue|floatformat:2 }}</span>
+                                </td>
+                                <td class="text-xxs text-secondary" style="white-space:nowrap;">{{ alert.DateCreate|date:"d/m H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary py-3">
+                                    <i class="fas fa-check-circle d-block mb-1" style="font-size:1.5rem;opacity:.3;color:#4CAF50;"></i>
+                                    <p class="text-xs mb-0">Sin alertas activas</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /col-4 -->
+</div><!-- /row -->
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+// ── DataTables ────────────────────────────────────────────────────────────────
+if (document.getElementById('dt-dash-transformers')) {
+    new simpleDatatables.DataTable('#dt-dash-transformers', {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 5,
+        perPageSelect: [5, 10, 20],
+        labels: { placeholder: 'Buscar…', noRows: 'Sin transformadores', info: '{start}-{end} de {rows}' },
+    });
+}
+if (document.getElementById('dt-dash-alerts')) {
+    new simpleDatatables.DataTable('#dt-dash-alerts', {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 5,
+        perPageSelect: [5, 10, 20],
+        labels: { placeholder: 'Buscar…', noRows: 'Sin alertas', info: '{start}-{end} de {rows}' },
+    });
+}
+
+// ── Mapa ──────────────────────────────────────────────────────────────────────
+(function () {
+    var statusColor = {
+        'operational': '#4CAF50',
+        'maintenance':  '#FF9800',
+        'fault':        '#F44336',
+        'inactive':     '#9E9E9E',
+    };
+
+    function makeIcon(color) {
+        return L.divIcon({
+            className: '',
+            iconSize:  [26, 26],
+            iconAnchor:[13, 13],
+            html: '<div style="background:' + color + ';width:26px;height:26px;' +
+                  'border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);' +
+                  'display:flex;align-items:center;justify-content:center;">' +
+                  '<i class="fas fa-bolt" style="color:#fff;font-size:11px;"></i></div>',
+        });
+    }
+
+    function val(v, unit) {
+        return (v !== null && v !== undefined && v !== '')
+            ? '<span class="popup-val">' + v + (unit ? ' ' + unit : '') + '</span>'
+            : '<span class="popup-val" style="color:#aaa">—</span>';
+    }
+
+    var STATUS_LABEL = {
+        'operational': 'Operativo',
+        'maintenance': 'Mantenimiento',
+        'fault': 'Falla',
+        'inactive': 'Inactivo',
+    };
+
+    // Returns colored HTML for a monitoring value given thresholds
+    // direction: 'high' = bad when high, 'low' = bad when low
+    function coloredVal(v, unit, warnHigh, critHigh, warnLow, critLow) {
+        if (v === null || v === undefined) {
+            return '<span class="tr-popup-var-val" style="color:#ccc;">—</span>';
+        }
+        var color = '#344767';
+        if (critHigh !== undefined && v > critHigh) color = '#F44336';
+        else if (warnHigh !== undefined && v > warnHigh) color = '#FF9800';
+        else if (critLow !== undefined && v < critLow) color = '#F44336';
+        else if (warnLow !== undefined && v < warnLow) color = '#FF9800';
+        else color = '#2e7d32';
+        return '<span class="tr-popup-var-val" style="color:' + color + ';">' +
+               parseFloat(v).toFixed(1) +
+               '</span><span class="tr-popup-var-unit"> ' + unit + '</span>';
+    }
+
+    function varCard(bg, icon, label, valHtml) {
+        return '<div class="tr-popup-var" style="background:' + bg + ';">' +
+               '<span class="tr-popup-var-label">' + icon + ' ' + label + '</span>' +
+               valHtml +
+               '</div>';
+    }
+
+    function buildPopup(p, color) {
+        var statusLabel = STATUS_LABEL[p.status] || p.status;
+        var r = p.reading;
+
+        var html = '<div class="tr-popup">';
+
+        // Header
+        html += '<div class="tr-popup-header">' +
+                '<div style="width:32px;height:32px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+                '<i class="fas fa-bolt" style="color:#fff;font-size:13px;"></i></div>' +
+                '<div><div class="tr-popup-name">' + p.name + '</div>' +
+                '<div class="tr-popup-code">' + p.code + ' · ' + p.power + ' kVA</div></div>' +
+                '</div>';
+
+        html += '<span class="tr-popup-badge" style="background:' + color + ';">' + statusLabel + '</span>';
+
+        if (p.address) {
+            html += '<div style="font-size:10px;color:#7b809a;margin-top:4px;"><i class="fas fa-map-marker-alt me-1"></i>' + p.address + '</div>';
+        }
+
+        html += '<hr class="tr-popup-divider">';
+
+        if (r) {
+            html += '<div style="font-size:9px;color:#aaa;margin-bottom:6px;text-align:right;">' +
+                    '<i class="fas fa-clock me-1"></i>Lectura: ' + r.date + '</div>';
+
+            html += '<div class="tr-popup-vars">';
+            html += varCard('#fff5f5', '🌡', 'Hot Spot', coloredVal(r.hotspot, '°C', 98, 120));
+            html += varCard('#fffaf0', '🌡', 'OTI Aceite', coloredVal(r.oil_temp, '°C', 75, 90));
+            html += varCard('#ebf8ff', '⏲', 'Presión PRD', coloredVal(r.pressure, 'kPa', 50, 70));
+            html += varCard('#f0fff4', '💧', 'Nivel Aceite', coloredVal(r.oil_level, '%', undefined, undefined, 40, 25));
+            html += varCard('#faf5ff', '〰', 'Vibración', coloredVal(r.vibration, 'mm/s', 4.5, 7.1));
+            html += varCard('#e6fffa', '💧', 'H₂O Aceite', coloredVal(r.oil_humidity, 'ppm', 20, 35));
+            html += '</div>';
+        } else {
+            html += '<div class="tr-popup-no-reading"><i class="fas fa-info-circle me-1"></i>Sin lecturas registradas</div>';
+        }
+
+        html += '<div class="tr-popup-footer"><a href="{% url "transformer_app:transformer_detail" 0 %}".replace("/0/", "/" + p.id + "/")>' +
+                '<i class="fas fa-eye me-1"></i>Ver detalle</a></div>';
+
+        html += '</div>';
+        return html;
+    }
+
+    var geojson = {{ stations_geojson|safe }};
+    var trMap = L.map('map-transformer', { zoomControl: true, scrollWheelZoom: false });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18,
+    }).addTo(trMap);
+
+    var markers = [];
+
+    geojson.features.forEach(function (f) {
+        var coords = f.geometry.coordinates;
+        if (!coords || (coords[0] === 0 && coords[1] === 0)) return;
+        var p = f.properties;
+        var color = statusColor[p.status] || '#9E9E9E';
+        var latlng = [coords[1], coords[0]];
+
+        var marker = L.marker(latlng, { icon: makeIcon(color) })
+            .addTo(trMap)
+            .bindPopup(buildPopup(p, color), { maxWidth: 270, className: 'tr-map-popup' });
+
+        markers.push(marker);
+    });
+
+    if (markers.length > 0) {
+        trMap.fitBounds(L.featureGroup(markers).getBounds().pad(0.3));
+    } else {
+        trMap.setView([0, 0], 2);
+    }
+}());
+
+// CountUp animation
+document.querySelectorAll('.countup-val').forEach(function(el) {
+    var target = parseFloat(el.dataset.target) || 0;
+    var duration = 1500;
+    var startTime = null;
+    function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        var progress = Math.min((timestamp - startTime) / duration, 1);
+        el.textContent = Math.floor(progress * target);
+        if (progress < 1) requestAnimationFrame(animate);
+        else el.textContent = target;
+    }
+    requestAnimationFrame(animate);
+});
+</script>
+{% endblock JSscripts %}

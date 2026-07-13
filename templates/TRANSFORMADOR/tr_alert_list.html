@@ -1,0 +1,212 @@
+{% extends 'TRANSFORMADOR/base_transformer.html' %}
+{% load static %}
+
+{% block title %}Alertas{% endblock title %}
+
+{% block content %}
+
+<!-- Filters -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card p-3">
+            <form method="GET" class="d-flex flex-wrap gap-2 align-items-end">
+                <div style="min-width:200px;">
+                    <label class="text-xs text-secondary mb-1">Transformador</label>
+                    <select name="transformer" class="form-control form-control-sm">
+                        <option value="">Todos</option>
+                        {% for tr in transformer_choices %}
+                        <option value="{{ tr.id }}" {% if request.GET.transformer == tr.id|stringformat:"s" %}selected{% endif %}>
+                            {{ tr.StationName }} ({{ tr.Code }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="min-width:140px;">
+                    <label class="text-xs text-secondary mb-1">Severidad</label>
+                    <select name="severity" class="form-control form-control-sm">
+                        <option value="">Todas</option>
+                        <option value="warning" {% if request.GET.severity == 'warning' %}selected{% endif %}>Advertencia</option>
+                        <option value="critical" {% if request.GET.severity == 'critical' %}selected{% endif %}>Crítica</option>
+                        <option value="emergency" {% if request.GET.severity == 'emergency' %}selected{% endif %}>Emergencia</option>
+                    </select>
+                </div>
+                <div style="min-width:140px;">
+                    <label class="text-xs text-secondary mb-1">Estado</label>
+                    <select name="status" class="form-control form-control-sm">
+                        <option value="">Todos</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Activa</option>
+                        <option value="acknowledged" {% if request.GET.status == 'acknowledged' %}selected{% endif %}>Atendida</option>
+                        <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>Cerrada</option>
+                    </select>
+                </div>
+                <div style="min-width:150px;">
+                    <label class="text-xs text-secondary mb-1">Fecha desde</label>
+                    <input type="date" name="date_from" class="form-control form-control-sm"
+                           value="{{ request.GET.date_from|default:'' }}">
+                </div>
+                <div style="min-width:150px;">
+                    <label class="text-xs text-secondary mb-1">Fecha hasta</label>
+                    <input type="date" name="date_to" class="form-control form-control-sm"
+                           value="{{ request.GET.date_to|default:'' }}">
+                </div>
+                <button class="btn btn-sm bg-gradient-primary mb-0" type="submit">
+                    <i class="fas fa-search me-1"></i> Filtrar
+                </button>
+                <a href="{% url 'transformer_app:alert_list' %}" class="btn btn-sm bg-gradient-secondary mb-0">
+                    <i class="fas fa-times me-1"></i> Limpiar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-bell me-1"></i> ALERTAS
+                                {% if alerts_count %}
+                                <span class="badge bg-danger ms-2">{{ alerts_count }}</span>
+                                {% endif %}
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <span class="text-white text-xs opacity-8">
+                                {% if is_paginated %}{{ page_obj.paginator.count }}{% else %}{{ alerts|length }}{% endif %} alerta(s)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-3">Transformador</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Variable</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Valor Detectado</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Límite</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Severidad</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Estado</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Fecha</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2 text-end pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in alerts %}
+                            <tr>
+                                <td class="ps-3">
+                                    <p class="text-xs font-weight-bold mb-0">{{ alert.Transformer.StationName }}</p>
+                                    <p class="text-xs text-secondary mb-0">{{ alert.Transformer.Code }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs mb-0">{{ alert.Variable|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ alert.DetectedValue|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs mb-0">{{ alert.Threshold|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    {% if alert.Severity == 'warning' %}
+                                    <span class="badge badge-sm bg-warning text-dark">Advertencia</span>
+                                    {% elif alert.Severity == 'critical' %}
+                                    <span class="badge badge-sm bg-danger">Crítica</span>
+                                    {% elif alert.Severity == 'emergency' %}
+                                    <span class="badge badge-sm bg-dark">Emergencia</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-secondary">{{ alert.Severity }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if alert.Status == 'active' %}
+                                    <span class="badge badge-sm bg-danger">Activa</span>
+                                    {% elif alert.Status == 'acknowledged' %}
+                                    <span class="badge badge-sm bg-warning text-dark">Atendida</span>
+                                    {% elif alert.Status == 'closed' %}
+                                    <span class="badge badge-sm bg-success">Cerrada</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-secondary">{{ alert.Status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-xs text-secondary" style="white-space:nowrap;">
+                                    {{ alert.CreatedAt|date:"d/m/Y H:i" }}
+                                </td>
+                                <td class="text-end pe-3" style="white-space:nowrap;">
+                                    {% if alert.Status == 'active' %}
+                                    <form method="post" action="{% url 'transformer_app:alert_acknowledge' alert.pk %}" style="display:inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-xs bg-gradient-warning mb-0" title="Atender">
+                                            <i class="fas fa-check me-1"></i> Atender
+                                        </button>
+                                    </form>
+                                    {% elif alert.Status == 'acknowledged' %}
+                                    <form method="post" action="{% url 'transformer_app:alert_close' alert.pk %}" style="display:inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-xs bg-gradient-success mb-0" title="Cerrar">
+                                            <i class="fas fa-times me-1"></i> Cerrar
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-secondary py-4">
+                                    <i class="fas fa-bell-slash d-block mb-1" style="font-size:2rem;opacity:.3;"></i>
+                                    No hay alertas registradas para los filtros aplicados.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div class="d-flex justify-content-center py-3">
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.transformer %}transformer={{ request.GET.transformer }}&{% endif %}{% if request.GET.severity %}severity={{ request.GET.severity }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.transformer %}transformer={{ request.GET.transformer }}&{% endif %}{% if request.GET.severity %}severity={{ request.GET.severity }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.transformer %}transformer={{ request.GET.transformer }}&{% endif %}{% if request.GET.severity %}severity={{ request.GET.severity }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

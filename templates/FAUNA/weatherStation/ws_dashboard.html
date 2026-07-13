@@ -22,7 +22,7 @@
         <div class="card">
             <div class="card-header p-3 pt-2">
                 <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="material-icons opacity-10">sensors</i>
+                    <i class="fas fa-broadcast-tower opacity-10"></i>
                 </div>
                 <div class="text-end pt-1">
                     <p class="text-sm mb-0 text-capitalize">Total Stations</p>
@@ -38,7 +38,7 @@
         <div class="card">
             <div class="card-header p-3 pt-2">
                 <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="material-icons opacity-10">check_circle</i>
+                    <i class="fas fa-check-circle opacity-10"></i>
                 </div>
                 <div class="text-end pt-1">
                     <p class="text-sm mb-0 text-capitalize">Active Stations</p>
@@ -59,7 +59,7 @@
         <div class="card">
             <div class="card-header p-3 pt-2">
                 <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="material-icons opacity-10">table_chart</i>
+                    <i class="fas fa-chart-bar opacity-10"></i>
                 </div>
                 <div class="text-end pt-1">
                     <p class="text-sm mb-0 text-capitalize">Latest Readings</p>
@@ -75,7 +75,7 @@
         <div class="card">
             <div class="card-header p-3 pt-2">
                 <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="material-icons opacity-10">add_circle</i>
+                    <i class="fas fa-plus-circle opacity-10"></i>
                 </div>
                 <div class="text-end pt-1">
                     <p class="text-sm mb-0 text-capitalize">Quick Actions</p>
@@ -102,7 +102,7 @@
                     <div class="row align-items-center px-2">
                         <div class="col">
                             <h6 class="text-white mb-0">
-                                <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">map</i>
+                                <i class="fas fa-map-marked-alt me-1" style="vertical-align:middle;font-size:16px;"></i>
                                 Station Network Map
                             </h6>
                         </div>
@@ -132,7 +132,7 @@
                     <div class="row align-items-center px-2">
                         <div class="col">
                             <h6 class="text-white mb-0">
-                                <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">table_chart</i>
+                                <i class="fas fa-chart-bar me-1" style="vertical-align:middle;font-size:16px;"></i>
                                 Latest Readings
                             </h6>
                         </div>
@@ -149,16 +149,16 @@
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Station</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                    <i class="material-icons" style="font-size:12px;vertical-align:middle;">thermostat</i>
+                                    <i class="fas fa-thermometer-half" style="font-size:12px;vertical-align:middle;"></i>
                                 </th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                    <i class="material-icons" style="font-size:12px;vertical-align:middle;">water_drop</i>
+                                    <i class="fas fa-tint" style="font-size:12px;vertical-align:middle;"></i>
                                 </th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                    <i class="material-icons" style="font-size:12px;vertical-align:middle;">grain</i>
+                                    <i class="fas fa-umbrella" style="font-size:12px;vertical-align:middle;"></i>
                                 </th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                    <i class="material-icons" style="font-size:12px;vertical-align:middle;">air</i>
+                                    <i class="fas fa-snowflake" style="font-size:12px;vertical-align:middle;"></i>
                                 </th>
                                 <th></th>
                             </tr>
@@ -190,17 +190,17 @@
                                 </td>
                                 <td class="text-center">
                                     <a href="{% url 'weather_app:station_detail' r.Station.id %}" class="btn btn-link btn-sm p-0" title="Detail">
-                                        <i class="material-icons text-lg me-2">table_rows</i>
+                                        <i class="fas fa-table text-lg me-2"></i>
                                     </a>
                                     <a href="{% url 'weather_app:reading_add' %}?station={{ r.Station.id }}" class="btn btn-link btn-sm p-0 ms-1 text-success" title="Add reading">
-                                        <i class="material-icons text-lg">add_chart</i>
+                                        <i class="fas fa-chart-line text-lg"></i>
                                     </a>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
                                 <td colspan="6" class="text-center text-secondary py-4">
-                                    <i class="material-icons d-block mb-1" style="font-size:32px;opacity:.3;">sensors_off</i>
+                                    <i class="fas fa-broadcast-tower d-block mb-1" style="font-size:32px;opacity:.3;"></i>
                                     No readings yet.
                                 </td>
                             </tr>

@@ -1,0 +1,109 @@
+{% extends 'TRANSFORMADOR/base_transformer.html' %}
+{% load static %}
+
+{% block title %}Reglas de Alerta{% endblock title %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-cogs me-1"></i> REGLAS DE ALERTA
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'transformer_app:rule_add' %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-plus me-1"></i> Nueva Regla
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="dt-rules">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-3">Transformador</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Variable</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Condición</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Umbral</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Severidad</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Activa</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2 text-end pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rule in rules %}
+                            <tr>
+                                <td class="ps-3">
+                                    <p class="text-xs font-weight-bold mb-0">{{ rule.Transformer.StationName }}</p>
+                                    <p class="text-xs text-secondary mb-0">{{ rule.Transformer.Code }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs mb-0">{{ rule.Variable|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs mb-0">{{ rule.get_Condition_display|default:rule.Condition }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ rule.Threshold }}</p>
+                                </td>
+                                <td>
+                                    {% if rule.Severity == 'warning' %}
+                                    <span class="badge badge-sm bg-warning text-dark">Advertencia</span>
+                                    {% elif rule.Severity == 'critical' %}
+                                    <span class="badge badge-sm bg-danger">Crítica</span>
+                                    {% elif rule.Severity == 'emergency' %}
+                                    <span class="badge badge-sm bg-dark">Emergencia</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-secondary">{{ rule.Severity }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if rule.IsActive %}
+                                    <i class="fas fa-check-circle text-success" title="Activa"></i>
+                                    {% else %}
+                                    <i class="fas fa-times-circle text-secondary" title="Inactiva"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-3">
+                                    <a href="{% url 'transformer_app:rule_update' rule.id %}" class="btn btn-sm btn-warning mb-0 me-1" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'transformer_app:rule_remove' rule.id %}" class="btn btn-sm btn-danger mb-0" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-secondary py-4">
+                                    <i class="fas fa-cogs d-block mb-1" style="font-size:2rem;opacity:.3;"></i>
+                                    No hay reglas de alerta configuradas.
+                                    <a href="{% url 'transformer_app:rule_add' %}">Agregar la primera</a>.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    if (document.getElementById('dt-rules')) {
+        new simpleDatatables.DataTable('#dt-rules', { searchable: true, fixedHeight: false, perPage: 25 });
+    }
+</script>
+{% endblock JSscripts %}

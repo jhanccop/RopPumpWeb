@@ -4,109 +4,170 @@
 {% block title %}Edit Capture{% endblock title %}
 {% block company %}{{ CompanyName }}{% endblock company %}
 {% block appName %}CAMERA TRAPS{% endblock appName %}
-{% block Type %}EDIT CAPTURE{% endblock Type %}
+{% block Type %}EDITAR CAPTURA{% endblock Type %}
 
 {% block content %}
 
-<div class="row min-vh-80">
-    <div class="col-lg-8 col-md-10 col-12 m-auto">
-        <div class="card">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-warning shadow-warning border-radius-lg pt-3 pb-2">
-                    <h6 class="text-center text-white">EDIT CAPTURE</h6>
-                </div>
-            </div>
-            <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">{% csrf_token %}
-
-                    {% if object.Image %}
-                    <div class="mb-3 text-center">
-                        <p class="text-xs text-secondary mb-1">Current image</p>
-                        <img src="{{ object.Image.url }}" alt="current" style="max-height:160px;border-radius:8px;">
-                    </div>
-                    {% endif %}
-
-                    <div class="row">
-                        <div class="col-12 col-sm-7">
-                            <div class="input-group input-group-outline is-focused mb-3">
-                                <label class="form-label">Station *</label>
-                                {{ form.Station }}
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-5">
-                            <div class="input-group input-group-outline is-focused mb-3">
-                                <label class="form-label">Date / Time *</label>
-                                {{ form.DateCapture }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Detections -->
-                    <h6 class="font-weight-bolder mb-2 mt-2">Detections</h6>
-                    {{ det_formset.management_form }}
-                    <div id="detection-rows">
-                        {% for det_form in det_formset %}
-                        <div class="detection-row d-flex align-items-center gap-2 mb-2">
-                            {{ det_form.id }}
-                            <div class="flex-grow-1">
-                                {{ det_form.Species }}
-                            </div>
-                            <div style="width:90px;">
-                                {{ det_form.Count }}
-                            </div>
-                            <div class="d-none">
-                                {{ det_form.DELETE }}
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger mb-0 btn-remove-det px-2 py-1">×</button>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <button type="button" class="btn btn-sm bg-gradient-info mb-3" id="add-detection">
-                        + Add Detection
-                    </button>
-
-                    <div class="col-12 mb-3">
-                        {{ form.Image }}
-                    </div>
-
-                    <div class="row">
-                        <div class="col-6 col-sm-4">
-                            <div class="input-group input-group-outline is-focused mb-3">
-                                <label class="form-label">Temperature (°C)</label>
-                                {{ form.Temperature }}
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="input-group input-group-outline is-focused mb-3">
-                                <label class="form-label">Humidity (%)</label>
-                                {{ form.Humidity }}
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="input-group input-group-outline is-focused mb-3">
-                                <label class="form-label">Battery (V)</label>
-                                {{ form.VoltageBattery }}
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="input-group input-group-outline is-focused mb-3">
-                                <label class="form-label">Notes</label>
-                                {{ form.Notes }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="button-row d-flex pt-3 mt-2">
-                        <a class="btn bg-gradient-dark" href="{% url 'camera_app:capture_detail' object.id %}">Back</a>
-                        <button class="btn bg-gradient-warning ms-auto" type="submit">Update Capture</button>
-                    </div>
-                </form>
-            </div>
+<div class="row justify-content-center">
+  <div class="col-lg-9 col-md-11 col-12">
+    <div class="card mt-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-warning shadow-warning border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+          <i class="fas fa-edit text-white me-2"></i>
+          <h6 class="text-white mb-0">EDITAR CAPTURA</h6>
         </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">{% csrf_token %}
+
+          <!-- ── Estación y fecha ─────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-0">
+            <i class="fas fa-camera me-1"></i> Estación y Fecha
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-7">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Estación *</label>
+                {{ form.Station }}
+              </div>
+              {% if form.Station.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Station.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-5">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Fecha / Hora *</label>
+                {{ form.DateCapture }}
+              </div>
+              {% if form.DateCapture.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.DateCapture.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- ── Detecciones ─────────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-2 mb-0">
+            <i class="fas fa-paw me-1"></i> Detecciones
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          {{ det_formset.management_form }}
+          <div id="detection-rows">
+            {% for det_form in det_formset %}
+            <div class="detection-row d-flex align-items-center gap-2 mb-2">
+              {{ det_form.id }}
+              <div class="flex-grow-1">
+                {{ det_form.Species }}
+              </div>
+              <div style="width:90px;">
+                {{ det_form.Count }}
+              </div>
+              <div class="d-none">{{ det_form.DELETE }}</div>
+              <button type="button"
+                      class="btn btn-sm btn-outline-danger mb-0 btn-remove-det px-2 py-1"
+                      title="Eliminar">×</button>
+            </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="btn btn-sm bg-gradient-info mb-4" id="add-detection">
+            <i class="fas fa-plus me-1"></i> Agregar Detección
+          </button>
+
+          <!-- ── Imagen ──────────────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-2 mb-0">
+            <i class="fas fa-image me-1"></i> Imagen de Captura
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          {% if object.Image %}
+          <div class="d-flex align-items-center gap-3 mb-3 p-3 border border-1 border-secondary rounded-3"
+               style="background:#f8f9fa;">
+            <img src="{{ object.Image.url }}" alt="actual"
+                 style="height:72px;width:72px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+            <div class="flex-grow-1">
+              <p class="mb-0 text-xs text-secondary">Imagen actual</p>
+              <p class="mb-0 text-sm font-weight-bold text-dark text-truncate"
+                 style="max-width:280px;">{{ object.Image.name }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="mb-4">
+            <label class="form-label text-xs text-secondary font-weight-bold mb-1 d-block">
+              {% if object.Image %}Reemplazar imagen (opcional){% else %}Subir imagen{% endif %}
+            </label>
+            {{ form.Image }}
+            {% if form.Image.errors %}<p class="text-danger text-xs mt-1">{{ form.Image.errors.0 }}</p>{% endif %}
+          </div>
+
+          <!-- ── Variables ambientales ───────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-2 mb-0">
+            <i class="fas fa-thermometer-half me-1"></i> Variables Ambientales
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline {% if form.Temperature.value %}is-filled{% endif %} mb-3">
+                <label class="form-label">Temperatura (°C)</label>
+                {{ form.Temperature }}
+              </div>
+              {% if form.Temperature.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Temperature.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline {% if form.Humidity.value %}is-filled{% endif %} mb-3">
+                <label class="form-label">Humedad (%)</label>
+                {{ form.Humidity }}
+              </div>
+              {% if form.Humidity.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Humidity.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline {% if form.VoltageBattery.value %}is-filled{% endif %} mb-3">
+                <label class="form-label">Batería (V)</label>
+                {{ form.VoltageBattery }}
+              </div>
+              {% if form.VoltageBattery.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.VoltageBattery.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12">
+              <div class="input-group input-group-outline {% if form.Notes.value %}is-filled{% endif %} mb-3">
+                <label class="form-label">Notas</label>
+                {{ form.Notes }}
+              </div>
+              {% if form.Notes.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Notes.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between pt-3 mt-2 border-top">
+            <a class="btn btn-outline-secondary" href="{% url 'camera_app:capture_detail' object.id %}">
+              <i class="fas fa-arrow-left me-1"></i> Volver
+            </a>
+            <button class="btn bg-gradient-warning" type="submit">
+              <i class="fas fa-save me-1"></i> Actualizar
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 
 {% endblock content %}
+
+{% block extra_css %}
+<style>
+  /* File input: reset Material Dashboard interference */
+  .capture-file-wrap input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: .45rem .75rem;
+    font-size: .875rem;
+    border: 1px solid #d2d6da;
+    border-radius: .5rem;
+    background: #fff;
+    cursor: pointer;
+  }
+  /* Make the Django ClearableFileInput checkbox row readable */
+  input[type="checkbox"]#image-clear_id { width:1rem; height:1rem; margin-right:.4rem; }
+</style>
+{% endblock extra_css %}
 
 {% block JSscripts %}
 <script>
@@ -150,10 +211,28 @@
         newRow.querySelectorAll('input[type=checkbox]').forEach(function(el) { el.checked = false; });
 
         var btn = newRow.querySelector('.btn-remove-det');
-        if (btn) { btn.textContent = '×'; btn.className = 'btn btn-sm btn-outline-danger mb-0 btn-remove-det px-2 py-1'; btn.onclick = null; }
+        if (btn) {
+            btn.textContent = '×';
+            btn.className = 'btn btn-sm btn-outline-danger mb-0 btn-remove-det px-2 py-1';
+            btn.onclick = null;
+        }
 
         rows.appendChild(newRow);
         totalForms.value = count + 1;
+    });
+
+    /* Auto-add is-filled when a number input already has a value on load */
+    document.querySelectorAll('.input-group-outline input, .input-group-outline textarea').forEach(function(el) {
+        var wrap = el.closest('.input-group-outline');
+        if (!wrap) return;
+        if (el.value && el.value.trim() !== '') wrap.classList.add('is-filled');
+        el.addEventListener('input', function() {
+            if (el.value && el.value.trim() !== '') {
+                wrap.classList.add('is-filled');
+            } else {
+                wrap.classList.remove('is-filled');
+            }
+        });
     });
 </script>
 {% endblock JSscripts %}

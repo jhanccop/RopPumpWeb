@@ -1,0 +1,140 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static %}
+
+{% block title %}Agregar Lectura de Tanque{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock %}
+{% block appName %}OILFIELD{% endblock %}
+{% block Type %}Nueva Lectura{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-md-10 col-12">
+    <div class="card mt-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+          <i class="fas fa-plus-square text-white me-2"></i>
+          <h6 class="text-white mb-0">AGREGAR LECTURA DE TANQUE</h6>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">{% csrf_token %}
+
+          <!-- ── Tanque y Fecha ───────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-0">
+            <i class="fas fa-database me-1"></i> Tanque y Fecha
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-7">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Tanque *</label>
+                {{ form.Tank }}
+              </div>
+              {% if form.Tank.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Tank.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-5">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Fecha / Hora *</label>
+                {{ form.ReadingDate }}
+              </div>
+              {% if form.ReadingDate.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.ReadingDate.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- ── Mediciones ──────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-2 mb-0">
+            <i class="fas fa-chart-line me-1"></i> Mediciones
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Nivel (cm)</label>
+                {{ form.Level }}
+              </div>
+              {% if form.Level.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Level.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Nivel Agua (cm)</label>
+                {{ form.WaterLevel }}
+              </div>
+              {% if form.WaterLevel.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.WaterLevel.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Volumen (bbl)</label>
+                {{ form.Volume }}
+              </div>
+              {% if form.Volume.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Volume.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Temperatura (°C)</label>
+                {{ form.Temperature }}
+              </div>
+              {% if form.Temperature.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Temperature.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- ── Fuente y Notas ──────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-2 mb-0">
+            <i class="fas fa-info-circle me-1"></i> Fuente y Notas
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Fuente</label>
+                {{ form.Source }}
+              </div>
+              {% if form.Source.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Source.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-8">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Notas</label>
+                {{ form.Notes }}
+              </div>
+              {% if form.Notes.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Notes.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between pt-3 mt-2 border-top">
+            <a class="btn btn-outline-secondary" href="{% url 'oilfield_app:tank_list' %}">
+              <i class="fas fa-arrow-left me-1"></i> Volver
+            </a>
+            <button class="btn bg-gradient-success" type="submit">
+              <i class="fas fa-save me-1"></i> Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+// Pre-select tank from URL param and set datetime to now
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    var tankId = params.get('tank');
+    if (tankId) {
+        var sel = document.getElementById('id_Tank');
+        if (sel) sel.value = tankId;
+    }
+    var dt = document.getElementById('id_ReadingDate');
+    if (dt && !dt.value) {
+        var now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        dt.value = now.toISOString().slice(0, 16);
+    }
+})();
+</script>
+{% endblock JSscripts %}

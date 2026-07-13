@@ -107,7 +107,7 @@ class CameraCaptureForm(forms.ModelForm):
                 'class': 'input-group-field form-control',
                 'type': 'datetime-local',
             }),
-            'Image': forms.ClearableFileInput(attrs={
+            'Image': forms.FileInput(attrs={
                 'class': 'form-control',
                 'accept': 'image/*',
             }),

@@ -1,0 +1,118 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static %}
+
+{% block title %}Unidades de Bombeo{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock %}
+{% block appName %}OILFIELD{% endblock %}
+{% block Type %}Unidades de Bombeo{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-cogs me-1"></i> UNIDADES DE BOMBEO
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'oilfield_app:pumping_unit_add' %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-plus me-1"></i> Nueva Unidad
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="dt-pumping-units">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Código</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Nombre</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Tipo</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Fabricante</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Max SPM</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Potencia Motor (HP)</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Estado</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2 text-end pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for unit in pumping_units %}
+                            <tr>
+                                <td class="ps-3">
+                                    <p class="text-xs font-weight-bold mb-0">{{ unit.Code }}</p>
+                                </td>
+                                <td>
+                                    <div class="d-flex px-2 py-1 align-items-center">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ unit.Name }}</h6>
+                                            {% if unit.Model %}<p class="text-xs text-secondary mb-0">{{ unit.Model }}</p>{% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs mb-0">{{ unit.get_Type_display|default:unit.Type|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs mb-0">{{ unit.Manufacturer|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ unit.MaxSPM|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ unit.MotorPower|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    {% if unit.Status == 'available' or unit.Status == 'operational' %}
+                                    <span class="badge badge-sm bg-gradient-success">Disponible</span>
+                                    {% elif unit.Status == 'in_use' %}
+                                    <span class="badge badge-sm bg-gradient-info">En uso</span>
+                                    {% elif unit.Status == 'maintenance' %}
+                                    <span class="badge badge-sm bg-gradient-warning">Mantenimiento</span>
+                                    {% elif unit.Status == 'retired' %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Retirado</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ unit.get_Status_display|default:unit.Status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-3">
+                                    <a href="{% url 'oilfield_app:pumping_unit_update' unit.id %}" class="btn btn-sm btn-warning mb-0 me-1" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'oilfield_app:pumping_unit_remove' unit.id %}" class="btn btn-sm btn-danger mb-0" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-secondary py-4">
+                                    <i class="fas fa-cogs d-block mb-1" style="font-size:2rem;opacity:.3;"></i>
+                                    No hay unidades de bombeo registradas.
+                                    <a href="{% url 'oilfield_app:pumping_unit_add' %}">Agregar la primera</a>.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    if (document.getElementById('dt-pumping-units')) {
+        new simpleDatatables.DataTable('#dt-pumping-units', { searchable: true, fixedHeight: false, perPage: 20 });
+    }
+</script>
+{% endblock JSscripts %}

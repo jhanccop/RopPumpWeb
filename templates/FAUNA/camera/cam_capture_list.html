@@ -55,7 +55,7 @@
                     <div class="row align-items-center px-2">
                         <div class="col">
                             <h6 class="text-white mb-0">
-                                <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">photo_camera</i>
+                                <i class="fas fa-camera me-1" style="vertical-align:middle;font-size:16px;"></i>
                                 Capture Records
                             </h6>
                         </div>
@@ -92,7 +92,7 @@
                                     {% else %}
                                     <div style="height:40px;width:60px;border-radius:6px;background:#f0f0f0;
                                                 display:flex;align-items:center;justify-content:center;">
-                                        <i class="material-icons text-secondary" style="font-size:1.2rem;">no_photography</i>
+                                        <i class="fas fa-ban text-secondary" style="font-size:1.2rem;"></i>
                                     </div>
                                     {% endif %}
                                 </td>
@@ -133,22 +133,22 @@
                                 <td class="text-end" style="white-space:nowrap;">
                                     <a href="{% url 'camera_app:capture_detail' c.id %}"
                                        class="btn btn-link btn-sm p-0 me-1" title="View">
-                                        <i class="material-icons mt-3 me-3 text-lg text-success">visibility</i>
+                                        <i class="fas fa-eye mt-3 me-3 text-lg text-success"></i>
                                     </a>
                                     <a href="{% url 'camera_app:capture_update' c.id %}"
                                        class="btn btn-link btn-sm p-0 me-1" title="Edit">
-                                        <i class="material-icons mt-3 me-3 text-lg text-info">edit</i>
+                                        <i class="fas fa-edit mt-3 me-3 text-lg text-info"></i>
                                     </a>
                                     <a href="{% url 'camera_app:capture_remove' c.id %}"
                                        class="btn btn-link btn-sm p-0" title="Delete">
-                                        <i class="material-icons mt-3 me-3 text-lg text-primary">delete</i>
+                                        <i class="fas fa-trash mt-3 me-3 text-lg text-primary"></i>
                                     </a>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
                                 <td colspan="8" class="text-center text-secondary py-5">
-                                    <i class="material-icons d-block mb-2" style="font-size:3rem;opacity:.3;">no_photography</i>
+                                    <i class="fas fa-ban d-block mb-2" style="font-size:3rem;opacity:.3;"></i>
                                     No captures found.
                                     <a href="{% url 'camera_app:capture_add' %}" class="btn btn-sm bg-gradient-success ms-2">
                                         Add First Capture

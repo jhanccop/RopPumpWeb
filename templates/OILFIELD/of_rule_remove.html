@@ -1,0 +1,47 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static %}
+
+{% block title %}Eliminar Regla de Alerta{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock %}
+{% block appName %}OILFIELD{% endblock %}
+{% block Type %}Eliminar Regla de Alerta{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-danger shadow-danger border-radius-lg pt-3 pb-2">
+                    <h6 class="text-white text-center mb-0">
+                        <i class="fas fa-trash me-1"></i> ELIMINAR REGLA DE ALERTA
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body p-4 text-center">
+                <i class="fas fa-sliders-h mb-3" style="font-size:3rem;color:#dee2e6;"></i>
+                <p class="text-secondary mb-1">¿Está seguro que desea eliminar la regla de alerta?</p>
+                {% if rule.Well %}
+                <p class="text-xs mb-1">Pozo: <strong>{{ rule.Well.Code }} — {{ rule.Well.Name }}</strong></p>
+                {% elif rule.Tank %}
+                <p class="text-xs mb-1">Tanque: <strong>{{ rule.Tank.Code }} — {{ rule.Tank.Name }}</strong></p>
+                {% endif %}
+                <p class="text-xs mb-1">Variable: <strong>{{ rule.get_Variable_display|default:rule.Variable }}</strong></p>
+                <p class="text-xs text-secondary mb-3">Umbral: <strong>{{ rule.Threshold }}</strong></p>
+                <p class="text-danger text-xs">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Esta acción no se puede deshacer.
+                </p>
+                <form method="post" class="mt-3">
+                    {% csrf_token %}
+                    <a href="{% url 'oilfield_app:rule_list' %}" class="btn btn-secondary me-2">Cancelar</a>
+                    <button type="submit" class="btn bg-gradient-danger">
+                        <i class="fas fa-trash me-1"></i> Sí, eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

@@ -9,19 +9,60 @@
 {% block extra_css %}
 <style>
     #cam-map { height: 400px; border-radius: 12px; }
-    .capture-thumb { width: 48px; height: 36px; object-fit: cover; border-radius: 6px; }
+    .capture-thumb { width: 60px; height: 45px; object-fit: cover; border-radius: 6px; }
+    .progress { height: 4px; border-radius: 4px; }
+    .stat-divider { border-left: 1px solid rgba(255,255,255,.3); }
+    .countup-val { font-variant-numeric: tabular-nums; }
 </style>
 {% endblock extra_css %}
 
 {% block content %}
 
-<!-- Stat cards -->
+<!-- Row 0: Welcome Banner -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" style="background:linear-gradient(195deg,#1b5e20,#2e7d32);overflow:hidden;">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <h5 class="text-white font-weight-bolder mb-1">
+                            <i class="fas fa-leaf me-2 opacity-7"></i>{{ CompanyName }} — FAUNA MONITORING
+                        </h5>
+                        <p class="text-white opacity-7 text-sm mb-0">Camera Traps · Wildlife detection</p>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ stations|length }}">{{ stations|length }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Cameras</p>
+                            </div>
+                            <div class="col-3 stat-divider">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ species_summary|length }}">{{ species_summary|length }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Species</p>
+                            </div>
+                            <div class="col-3 stat-divider">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ latest_captures|length }}">{{ latest_captures|length }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Captures</p>
+                            </div>
+                            <div class="col-3 stat-divider">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="0">0</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Alerts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 1: Stat cards -->
 <div class="row mb-4">
     <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
         <div class="card">
             <div class="card-header p-3 pt-2">
                 <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="material-icons opacity-10">photo_camera</i>
+                    <i class="fas fa-camera opacity-10"></i>
                 </div>
                 <div class="text-end pt-1">
                     <p class="text-sm mb-0 text-capitalize">Camera Stations</p>
@@ -37,7 +78,7 @@
         <div class="card">
             <div class="card-header p-3 pt-2">
                 <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="material-icons opacity-10">pets</i>
+                    <i class="fas fa-paw opacity-10"></i>
                 </div>
                 <div class="text-end pt-1">
                     <p class="text-sm mb-0 text-capitalize">Species Detected</p>
@@ -53,7 +94,7 @@
         <div class="card">
             <div class="card-header p-3 pt-2">
                 <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="material-icons opacity-10">image</i>
+                    <i class="fas fa-image opacity-10"></i>
                 </div>
                 <div class="text-end pt-1">
                     <p class="text-sm mb-0 text-capitalize">Latest Captures</p>
@@ -69,7 +110,7 @@
         <div class="card">
             <div class="card-header p-3 pt-2">
                 <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="material-icons opacity-10">add_a_photo</i>
+                    <i class="fas fa-camera opacity-10"></i>
                 </div>
                 <div class="text-end pt-1">
                     <p class="text-sm mb-0 text-capitalize">Quick Actions</p>
@@ -86,7 +127,7 @@
     </div>
 </div>
 
-<!-- Map + Species chart -->
+<!-- Row 2: Map + Species chart -->
 <div class="row mb-4">
     <div class="col-lg-7 mb-4">
         <div class="card h-100">
@@ -95,7 +136,7 @@
                     <div class="row align-items-center px-2">
                         <div class="col">
                             <h6 class="text-white mb-0">
-                                <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">map</i>
+                                <i class="fas fa-map-marked-alt me-1" style="vertical-align:middle;font-size:16px;"></i>
                                 Camera Trap Network
                             </h6>
                         </div>
@@ -121,7 +162,7 @@
             <div class="card-header p-3 pt-2">
                 <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2 mt-n4 mx-3">
                     <h6 class="text-white text-center mb-0">
-                        <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">bar_chart</i>
+                        <i class="fas fa-chart-bar me-1" style="vertical-align:middle;font-size:16px;"></i>
                         Top Species Detected
                     </h6>
                 </div>
@@ -133,7 +174,7 @@
     </div>
 </div>
 
-<!-- Latest captures table -->
+<!-- Row 3: Latest captures table -->
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -142,7 +183,7 @@
                     <div class="row align-items-center px-2">
                         <div class="col">
                             <h6 class="text-white mb-0">
-                                <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">table_chart</i>
+                                <i class="fas fa-chart-bar me-1" style="vertical-align:middle;font-size:16px;"></i>
                                 Latest Capture per Station
                             </h6>
                         </div>
@@ -161,13 +202,13 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Image</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Species</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                    <i class="material-icons" style="font-size:12px;vertical-align:middle;">thermostat</i>
+                                    <i class="fas fa-thermometer-half" style="font-size:12px;vertical-align:middle;"></i>
                                 </th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                    <i class="material-icons" style="font-size:12px;vertical-align:middle;">water_drop</i>
+                                    <i class="fas fa-tint" style="font-size:12px;vertical-align:middle;"></i>
                                 </th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
-                                    <i class="material-icons" style="font-size:12px;vertical-align:middle;">battery_std</i>
+                                    <i class="fas fa-battery-half" style="font-size:12px;vertical-align:middle;"></i>
                                 </th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date</th>
                                 <th></th>
@@ -178,16 +219,22 @@
                             <tr>
                                 <td>
                                     <div class="d-flex px-2 py-1">
+                                        <div class="avatar avatar-sm me-3 border-radius-sm bg-gradient-success">
+                                            <i class="fas fa-camera text-white" style="font-size:12px;line-height:36px;display:block;text-align:center;"></i>
+                                        </div>
                                         <div class="d-flex flex-column justify-content-center">
                                             <h6 class="mb-0 text-sm">{{ c.Station.StationName }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ c.Station.Code|default:"" }}</p>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
                                     {% if c.Image %}
-                                    <img src="{{ c.Image.url }}" alt="capture" class="capture-thumb">
+                                    <img src="{{ c.Image.url }}" alt="capture" class="capture-thumb"
+                                         onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
                                     {% else %}
-                                    <img src="{% static 'assets/img/img-detected.jpg' %}" alt="no img" class="capture-thumb" style="opacity:.35;">
+                                    <img src="{% static 'assets/img/img-detected.jpg' %}" alt="no img" class="capture-thumb" style="opacity:.35;"
+                                         onmouseover="this.style.opacity='.6'" onmouseout="this.style.opacity='.35'">
                                     {% endif %}
                                 </td>
                                 <td>
@@ -196,18 +243,25 @@
                                     {% empty %}—{% endfor %}
                                 </td>
                                 <td class="text-xs">
-                                    {% if c.Temperature is not None %}<span class="text-danger font-weight-bolder">{{ c.Temperature|floatformat:1 }}°</span>{% else %}—{% endif %}
+                                    {% if c.Temperature is not None %}
+                                    <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:{% if c.Temperature > 30 %}#F44336{% elif c.Temperature > 20 %}#FF9800{% else %}#2196F3{% endif %};margin-right:4px;"></span>
+                                    <span class="{% if c.Temperature > 30 %}text-danger{% else %}text-secondary{% endif %} font-weight-bolder">{{ c.Temperature|floatformat:1 }}°</span>
+                                    {% else %}—{% endif %}
                                 </td>
                                 <td class="text-xs">
                                     {% if c.Humidity is not None %}<span class="text-info">{{ c.Humidity|floatformat:1 }}%</span>{% else %}—{% endif %}
                                 </td>
-                                <td class="text-xs">
+                                <td style="min-width:100px;">
                                     {% if c.VoltageBattery is not None %}
-                                        {% if c.VoltageBattery < 3.5 %}
-                                        <span class="text-danger font-weight-bolder">{{ c.VoltageBattery|floatformat:2 }}V</span>
-                                        {% else %}
-                                        <span class="text-success font-weight-bolder">{{ c.VoltageBattery|floatformat:2 }}V</span>
-                                        {% endif %}
+                                    {% with batt_pct=c.VoltageBattery %}
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-1 text-xs font-weight-bold {% if c.VoltageBattery < 3.5 %}text-danger{% else %}text-success{% endif %}">{{ c.VoltageBattery|floatformat:2 }}V</span>
+                                        <div class="progress flex-grow-1">
+                                            <div class="progress-bar bg-gradient-{% if c.VoltageBattery < 3.5 %}danger{% elif c.VoltageBattery < 3.8 %}warning{% else %}success{% endif %}"
+                                                 style="width:{% widthratio c.VoltageBattery 4.2 100 %}%"></div>
+                                        </div>
+                                    </div>
+                                    {% endwith %}
                                     {% else %}—{% endif %}
                                 </td>
                                 <td class="text-xs text-secondary">{{ c.DateCapture|date:"d/m/Y H:i" }}</td>
@@ -223,7 +277,7 @@
                             {% empty %}
                             <tr>
                                 <td colspan="9" class="text-center text-secondary py-4">
-                                    <i class="material-icons d-block mb-1" style="font-size:32px;opacity:.3;">no_photography</i>
+                                    <i class="fas fa-ban d-block mb-1" style="font-size:32px;opacity:.3;"></i>
                                     No captures registered yet.
                                 </td>
                             </tr>
@@ -241,7 +295,7 @@
 {% block JSscripts %}
 <script>
 (function () {
-    // ── Camera Dashboard Map ───────────────────────────────────────────────────
+    // Camera Dashboard Map
     var camMap = L.map('cam-map', { zoomControl: true, scrollWheelZoom: false });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -330,7 +384,7 @@
     }
 }());
 
-// ── Species bar chart ──────────────────────────────────────────────────────────
+// Species bar chart
 (function () {
     var spNames      = {{ chart_species|safe }};
     var spCaptures   = {{ chart_captures|safe }};
@@ -354,5 +408,20 @@
         xaxis: { title: 'Count' },
     }, { responsive: true, displayModeBar: false });
 }());
+
+// CountUp animation
+document.querySelectorAll('.countup-val').forEach(function(el) {
+    var target = parseFloat(el.dataset.target) || 0;
+    var duration = 1500;
+    var startTime = null;
+    function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        var progress = Math.min((timestamp - startTime) / duration, 1);
+        el.textContent = Math.floor(progress * target);
+        if (progress < 1) requestAnimationFrame(animate);
+        else el.textContent = target;
+    }
+    requestAnimationFrame(animate);
+});
 </script>
 {% endblock JSscripts %}

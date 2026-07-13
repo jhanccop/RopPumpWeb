@@ -1,0 +1,587 @@
+{% extends 'TRANSFORMADOR/base_transformer.html' %}
+{% load static %}
+
+{% block title %}{{ transformer.StationName }}{% endblock title %}
+
+{% block extra_css %}
+<style>
+    #detail-map-tr { height: 100%; min-height: 200px; border-radius: 10px; }
+    .val-badge { display:inline-block; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+    .val-normal   { background:#e8f5e9; color:#2e7d32; }
+    .val-elevated { background:#fff8e1; color:#f57f17; }
+    .val-critical { background:#ffebee; color:#c62828; }
+    .val-na       { background:#f5f5f5; color:#9e9e9e; }
+
+    .kpi-card { padding:10px 14px; border-radius:10px; border-left:3px solid; }
+    .kpi-label { font-size:9px; text-transform:uppercase; font-weight:700; letter-spacing:.5px; opacity:.7; margin-bottom:2px; }
+    .kpi-sub   { font-size:9px; color:#9e9e9e; margin-bottom:4px; }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ROW 1 — Header + datos técnicos + mapa + KPIs última lectura
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="row g-3 mb-3">
+
+    <!-- Col izquierda: datos técnicos + acciones -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2 px-3">
+                    <h6 class="text-white mb-0">
+                        <i class="fas fa-bolt me-1"></i> {{ transformer.StationName }}
+                        <span class="ms-1 text-xs opacity-8">[{{ transformer.Code }}]</span>
+                    </h6>
+                    <p class="text-white text-xs mb-0 opacity-7">{{ transformer.Description|default:"" }}</p>
+                </div>
+            </div>
+            <div class="card-body pt-3 pb-2">
+                <!-- Datos técnicos en grid compacto -->
+                <div class="row g-1">
+                    <div class="col-6">
+                        <p class="text-xxs text-secondary mb-0">Potencia</p>
+                        <p class="text-xs font-weight-bold mb-2">{{ transformer.NominalPower }} kVA</p>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-xxs text-secondary mb-0">Voltajes</p>
+                        <p class="text-xs font-weight-bold mb-2">{{ transformer.PrimaryVoltage }} / {{ transformer.SecondaryVoltage }} V</p>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-xxs text-secondary mb-0">Tipo</p>
+                        <p class="text-xs font-weight-bold mb-2">{{ transformer.get_Type_display }}</p>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-xxs text-secondary mb-0">Estado</p>
+                        <div class="mb-2">
+                        {% if transformer.Status == 'operational' %}
+                        <span class="badge badge-sm bg-gradient-success">Operativo</span>
+                        {% elif transformer.Status == 'maintenance' %}
+                        <span class="badge badge-sm bg-gradient-warning">Mantenimiento</span>
+                        {% elif transformer.Status == 'fault' %}
+                        <span class="badge badge-sm bg-gradient-danger">Falla</span>
+                        {% else %}
+                        <span class="badge badge-sm bg-gradient-secondary">Inactivo</span>
+                        {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-xxs text-secondary mb-0">Fabricante</p>
+                        <p class="text-xs font-weight-bold mb-2">{{ transformer.Manufacturer|default:"—" }}</p>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-xxs text-secondary mb-0">Modelo</p>
+                        <p class="text-xs font-weight-bold mb-2">{{ transformer.Model|default:"—" }}</p>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-xxs text-secondary mb-0">Instalación</p>
+                        <p class="text-xs font-weight-bold mb-2">{{ transformer.InstallationDate|date:"d/m/Y"|default:"—" }}</p>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-xxs text-secondary mb-0">Edad</p>
+                        <p class="text-xs font-weight-bold mb-2">{{ transformer.age|default:"—" }} años</p>
+                    </div>
+                    <div class="col-12">
+                        <p class="text-xxs text-secondary mb-0">Subestación</p>
+                        <p class="text-xs font-weight-bold mb-0">{{ transformer.Substation.Name|default:"—" }}</p>
+                    </div>
+                </div>
+                <!-- Botones -->
+                <hr class="my-2" style="border-color:#e9ecef;">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{% url 'transformer_app:reading_add' %}?transformer={{ transformer.id }}" class="btn btn-sm bg-gradient-info mb-0 flex-fill" style="font-size:11px;">
+                        <i class="fas fa-plus me-1"></i> Lectura
+                    </a>
+                    <a href="{% url 'transformer_app:transformer_update' transformer.id %}" class="btn btn-sm bg-gradient-secondary mb-0 flex-fill" style="font-size:11px;">
+                        <i class="fas fa-edit me-1"></i> Editar
+                    </a>
+                    <a href="{% url 'transformer_app:transformer_list' %}" class="btn btn-sm btn-outline-secondary mb-0 flex-fill" style="font-size:11px;">Volver</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Col centro: KPIs última lectura (3×2 grid) -->
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-info shadow-info border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center">
+                    <i class="fas fa-chart-line text-white me-2"></i>
+                    <h6 class="text-white mb-0 me-auto">Última Lectura</h6>
+                    {% if latest_reading %}
+                    <span class="text-white opacity-8 text-xs">{{ latest_reading.DateCreate|date:"d/m/Y H:i" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-3">
+            {% if latest_reading %}
+                <div class="row g-2">
+
+                    <div class="col-6">
+                        <div class="kpi-card" style="background:#fff5f5;border-color:#e53e3e;">
+                            <div class="kpi-label" style="color:#c53030;"><i class="fas fa-thermometer-full me-1"></i>Hot Spot</div>
+                            <div class="kpi-sub">Devanado</div>
+                            {% if latest_reading.HotSpotTemperature is not None %}
+                                {% if latest_reading.HotSpotTemperature > 120 %}<span class="val-badge val-critical">
+                                {% elif latest_reading.HotSpotTemperature > 98 %}<span class="val-badge val-elevated">
+                                {% else %}<span class="val-badge val-normal">{% endif %}
+                                {{ latest_reading.HotSpotTemperature|floatformat:1 }}°C</span>
+                            {% else %}<span class="val-badge val-na">—</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="kpi-card" style="background:#fffaf0;border-color:#dd6b20;">
+                            <div class="kpi-label" style="color:#c05621;"><i class="fas fa-thermometer-three-quarters me-1"></i>OTI Aceite</div>
+                            <div class="kpi-sub">Temperatura superior</div>
+                            {% if latest_reading.OilTemperature is not None %}
+                                {% if latest_reading.OilTemperature > 90 %}<span class="val-badge val-critical">
+                                {% elif latest_reading.OilTemperature > 75 %}<span class="val-badge val-elevated">
+                                {% else %}<span class="val-badge val-normal">{% endif %}
+                                {{ latest_reading.OilTemperature|floatformat:1 }}°C</span>
+                            {% else %}<span class="val-badge val-na">—</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="kpi-card" style="background:#ebf8ff;border-color:#3182ce;">
+                            <div class="kpi-label" style="color:#2b6cb0;"><i class="fas fa-tachometer-alt me-1"></i>Presión PRD</div>
+                            <div class="kpi-sub">Interna del tanque</div>
+                            {% if latest_reading.InternalPressure is not None %}
+                                {% if latest_reading.InternalPressure > 70 %}<span class="val-badge val-critical">
+                                {% elif latest_reading.InternalPressure > 50 %}<span class="val-badge val-elevated">
+                                {% else %}<span class="val-badge val-normal">{% endif %}
+                                {{ latest_reading.InternalPressure|floatformat:1 }} kPa</span>
+                            {% else %}<span class="val-badge val-na">—</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="kpi-card" style="background:#f0fff4;border-color:#2f855a;">
+                            <div class="kpi-label" style="color:#276749;"><i class="fas fa-fill-drip me-1"></i>Nivel Aceite</div>
+                            <div class="kpi-sub">Visor conservador</div>
+                            {% if latest_reading.OilLevel is not None %}
+                                {% if latest_reading.OilLevel < 25 %}<span class="val-badge val-critical">
+                                {% elif latest_reading.OilLevel < 40 %}<span class="val-badge val-elevated">
+                                {% else %}<span class="val-badge val-normal">{% endif %}
+                                {{ latest_reading.OilLevel|floatformat:1 }}%</span>
+                            {% else %}<span class="val-badge val-na">—</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="kpi-card" style="background:#faf5ff;border-color:#6b46c1;">
+                            <div class="kpi-label" style="color:#553c9a;"><i class="fas fa-wave-square me-1"></i>Vibración</div>
+                            <div class="kpi-sub">Velocidad RMS</div>
+                            {% if latest_reading.Vibration is not None %}
+                                {% if latest_reading.Vibration > 7.1 %}<span class="val-badge val-critical">
+                                {% elif latest_reading.Vibration > 4.5 %}<span class="val-badge val-elevated">
+                                {% else %}<span class="val-badge val-normal">{% endif %}
+                                {{ latest_reading.Vibration|floatformat:2 }} mm/s</span>
+                            {% else %}<span class="val-badge val-na">—</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="kpi-card" style="background:#e6fffa;border-color:#2c7a7b;">
+                            <div class="kpi-label" style="color:#234e52;"><i class="fas fa-tint me-1"></i>H₂O Aceite</div>
+                            <div class="kpi-sub">Humedad dieléctrico</div>
+                            {% if latest_reading.OilHumidity is not None %}
+                                {% if latest_reading.OilHumidity > 35 %}<span class="val-badge val-critical">
+                                {% elif latest_reading.OilHumidity > 20 %}<span class="val-badge val-elevated">
+                                {% else %}<span class="val-badge val-normal">{% endif %}
+                                {{ latest_reading.OilHumidity|floatformat:1 }} ppm</span>
+                            {% else %}<span class="val-badge val-na">—</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="d-flex align-items-center gap-3 p-2 border-radius-lg" style="background:#f7fafc;border:1px solid #e2e8f0;">
+                            <span class="text-xxs text-secondary"><i class="fas fa-cloud-sun me-1"></i>T. Ambiente:</span>
+                            {% if latest_reading.AmbientTemperature is not None %}
+                            <span class="text-xs font-weight-bold">{{ latest_reading.AmbientTemperature|floatformat:1 }}°C</span>
+                            {% else %}<span class="text-secondary text-xs">—</span>{% endif %}
+                        </div>
+                    </div>
+
+                </div>
+            {% else %}
+                <div class="text-center text-secondary py-5">
+                    <i class="fas fa-chart-line d-block mb-2" style="font-size:2.5rem;opacity:.25;"></i>
+                    <p class="text-xs mb-1">Sin lecturas registradas.</p>
+                    <a href="{% url 'transformer_app:reading_add' %}?transformer={{ transformer.id }}" class="btn btn-sm bg-gradient-info">Agregar primera lectura</a>
+                </div>
+            {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Col derecha: mapa altura completa -->
+    <div class="col-lg-3">
+        <div class="card h-100">
+            <div class="card-body p-2 d-flex flex-column">
+                <div id="detail-map-tr" style="flex:1;min-height:200px;border-radius:10px;"></div>
+                {% if transformer.Address %}
+                <p class="text-xxs text-secondary mt-1 mb-0 px-1">{{ transformer.Address }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ROW 2 — Gráficos Plotly (grid uniforme 2×2 + 1 ancho completo)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="row g-3 mb-3">
+
+    <!-- Temperaturas col-6 -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center"
+                     style="background:linear-gradient(195deg,#c53030,#e53e3e);box-shadow:0 4px 20px 0 rgba(197,48,48,.4);">
+                    <i class="fas fa-thermometer-full text-white me-2"></i>
+                    <h6 class="text-white mb-0">Temperaturas</h6>
+                    <span class="text-white text-xs opacity-7 ms-2">Hot Spot · OTI (°C)</span>
+                </div>
+            </div>
+            <div class="card-body p-2">
+                <div id="chart-temperatures" style="height:220px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Presión PRD col-6 -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center"
+                     style="background:linear-gradient(195deg,#2b6cb0,#3182ce);box-shadow:0 4px 20px 0 rgba(49,130,206,.4);">
+                    <i class="fas fa-tachometer-alt text-white me-2"></i>
+                    <h6 class="text-white mb-0">Presión PRD</h6>
+                    <span class="text-white text-xs opacity-7 ms-2">(kPa)</span>
+                </div>
+            </div>
+            <div class="card-body p-2">
+                <div id="chart-pressure" style="height:220px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nivel de Aceite col-4 -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center"
+                     style="background:linear-gradient(195deg,#276749,#2f855a);box-shadow:0 4px 20px 0 rgba(47,133,90,.4);">
+                    <i class="fas fa-fill-drip text-white me-2"></i>
+                    <h6 class="text-white mb-0">Nivel de Aceite (%)</h6>
+                </div>
+            </div>
+            <div class="card-body p-2">
+                <div id="chart-oil-level" style="height:210px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vibración col-4 -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center"
+                     style="background:linear-gradient(195deg,#553c9a,#6b46c1);box-shadow:0 4px 20px 0 rgba(107,70,193,.4);">
+                    <i class="fas fa-wave-square text-white me-2"></i>
+                    <h6 class="text-white mb-0">Vibración (mm/s)</h6>
+                </div>
+            </div>
+            <div class="card-body p-2">
+                <div id="chart-vibration" style="height:210px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Humedad Aceite col-4 -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="border-radius-lg pt-2 pb-2 mt-n4 mx-3 px-3 d-flex align-items-center"
+                     style="background:linear-gradient(195deg,#234e52,#2c7a7b);box-shadow:0 4px 20px 0 rgba(44,122,123,.4);">
+                    <i class="fas fa-tint text-white me-2"></i>
+                    <h6 class="text-white mb-0">Humedad Aceite (ppm)</h6>
+                </div>
+            </div>
+            <div class="card-body p-2">
+                <div id="chart-humidity" style="height:210px;"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ROW 3 — Alertas activas + Reglas de Alerta
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+
+    <!-- Alertas activas col-6 -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-danger shadow-danger border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+                    <h6 class="text-white mb-0 me-auto">
+                        <i class="fas fa-bell me-1"></i> Alertas Activas
+                        {% if active_alerts %}
+                        <span class="badge ms-2" style="background:rgba(255,255,255,.3);font-size:10px;">{{ active_alerts|length }}</span>
+                        {% endif %}
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Severidad</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Variable</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Valor / Umbral</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in active_alerts %}
+                            <tr>
+                                <td class="ps-3">
+                                    {% if alert.Severity == 'warning' %}
+                                    <span class="badge badge-sm bg-gradient-warning">Advertencia</span>
+                                    {% elif alert.Severity == 'critical' %}
+                                    <span class="badge badge-sm" style="background:#FF5722;color:#fff;">Crítico</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-danger">Emergencia</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-xs">{{ alert.Variable }}</td>
+                                <td class="text-xs font-weight-bold">
+                                    {{ alert.DetectedValue|floatformat:2 }}
+                                    <span class="text-secondary fw-normal"> / {{ alert.ThresholdValue|floatformat:2 }}</span>
+                                </td>
+                                <td class="text-xs text-secondary" style="white-space:nowrap;">{{ alert.DateCreate|date:"d/m H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary py-4">
+                                    <i class="fas fa-check-circle d-block mb-1" style="font-size:2rem;opacity:.3;color:#4CAF50;"></i>
+                                    <p class="text-xs mb-0">Sin alertas activas</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reglas de Alerta col-6 -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-secondary shadow-secondary border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+                    <h6 class="text-white mb-0 me-auto">
+                        <i class="fas fa-cogs me-1"></i> Reglas de Alerta
+                    </h6>
+                    <a href="{% url 'transformer_app:rule_add' %}?transformer={{ transformer.id }}" class="btn btn-sm btn-white mb-0">
+                        <i class="fas fa-plus me-1"></i> Agregar Regla
+                    </a>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Variable</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Condición</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Umbral</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Severidad</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Activa</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rule in alert_rules %}
+                            <tr>
+                                <td class="ps-3 text-xs font-weight-bold">{{ rule.get_Variable_display }}</td>
+                                <td class="text-xs">{{ rule.get_Condition_display }}</td>
+                                <td class="text-xs font-weight-bold">{{ rule.Threshold }}</td>
+                                <td>
+                                    {% if rule.Severity == 'warning' %}
+                                    <span class="badge badge-sm bg-gradient-warning">Advertencia</span>
+                                    {% elif rule.Severity == 'critical' %}
+                                    <span class="badge badge-sm" style="background:#FF5722;color:#fff;">Crítico</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-danger">Emergencia</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if rule.IsActive %}
+                                    <span class="badge badge-sm bg-gradient-success">Sí</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'transformer_app:rule_update' rule.id %}" class="btn btn-sm btn-warning mb-0 me-1" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'transformer_app:rule_remove' rule.id %}" class="btn btn-sm btn-danger mb-0" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-secondary py-3">
+                                    Sin reglas de alerta configuradas.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+// ── Mini-map ──────────────────────────────────────────────────────────────────
+{% if transformer.Latitude and transformer.Longitude %}
+var dm = L.map('detail-map-tr', { zoomControl: false, scrollWheelZoom: false });
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 18,
+}).addTo(dm);
+
+var trIcon = L.divIcon({
+    className: '',
+    iconSize: [24, 24], iconAnchor: [12, 12],
+    html: '<div style="background:#344767;width:24px;height:24px;border-radius:50%;' +
+          'border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);' +
+          'display:flex;align-items:center;justify-content:center;">' +
+          '<i class="fas fa-bolt" style="color:#fff;font-size:10px;"></i></div>',
+});
+
+L.marker([{{ transformer.Latitude }}, {{ transformer.Longitude }}], { icon: trIcon })
+    .addTo(dm)
+    .bindPopup('<b>{{ transformer.StationName }}</b><br>{{ transformer.Code }}');
+
+dm.setView([{{ transformer.Latitude }}, {{ transformer.Longitude }}], 13);
+{% else %}
+document.getElementById('detail-map-tr').innerHTML =
+    '<div style="height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;border-radius:10px;">' +
+    '<p class="text-secondary text-xs p-2 mb-0">Sin ubicación configurada</p></div>';
+{% endif %}
+
+// ── Chart data ────────────────────────────────────────────────────────────────
+var dates       = {{ chart_dates|safe }};
+var hotspot     = {{ chart_hotspot_temp|safe }};
+var oilTemp     = {{ chart_oil_temp|safe }};
+var pressure    = {{ chart_pressure|safe }};
+var oilLevel    = {{ chart_oil_level|safe }};
+var vibration   = {{ chart_vibration|safe }};
+var oilHumidity = {{ chart_oil_humidity|safe }};
+
+var cfg = { responsive: true, displayModeBar: false };
+
+function baseLayout(yTitle, yRange) {
+    var l = {
+        margin: { t: 10, r: 15, b: 55, l: 48 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor:  'rgba(0,0,0,0)',
+        font: { family: 'inherit', size: 11, color: '#7b809a' },
+        legend: { orientation: 'h', y: -0.38, font: { size: 10 } },
+        xaxis: { tickangle: -35, tickfont: { size: 9 }, gridcolor: '#f0f2f5', showgrid: true },
+        yaxis: { title: { text: yTitle, font: { size: 10 } }, gridcolor: '#f0f2f5', showgrid: true, zeroline: false },
+    };
+    if (yRange) l.yaxis.range = yRange;
+    return l;
+}
+
+function threshold(len, val, label, color) {
+    return {
+        x: dates, y: Array(len).fill(val),
+        name: label, type: 'scatter', mode: 'lines',
+        line: { color: color, width: 1.5, dash: 'dash' },
+        hoverinfo: 'skip', showlegend: true,
+    };
+}
+
+function noDataMsg(divId) {
+    var el = document.getElementById(divId);
+    if (!el) return;
+    el.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#ccc;">' +
+                   '<div class="text-center"><i class="fas fa-chart-line d-block mb-1" style="font-size:1.8rem;opacity:.3;"></i>' +
+                   '<p class="text-xs">Sin datos históricos</p></div></div>';
+}
+
+function hasValues(arr) {
+    return arr && arr.some(function(v){ return v !== null && v !== undefined; });
+}
+
+if (hasValues(hotspot) || hasValues(oilTemp)) {
+    Plotly.newPlot('chart-temperatures', [
+        { x: dates, y: hotspot, name: 'Hot Spot Devanado', type: 'scatter', mode: 'lines+markers',
+          line: { color: '#e53e3e', width: 2 }, marker: { size: 4 }, connectgaps: false },
+        { x: dates, y: oilTemp, name: 'OTI Aceite', type: 'scatter', mode: 'lines+markers',
+          line: { color: '#dd6b20', width: 2 }, marker: { size: 4 }, connectgaps: false },
+        threshold(dates.length, 120, 'Crítico HS 120°C', '#F44336'),
+        threshold(dates.length,  90, 'Crítico OTI 90°C', '#FF9800'),
+    ], baseLayout('°C'), cfg);
+} else { noDataMsg('chart-temperatures'); }
+
+if (hasValues(pressure)) {
+    Plotly.newPlot('chart-pressure', [
+        { x: dates, y: pressure, name: 'Presión PRD', type: 'scatter', mode: 'lines+markers', fill: 'tozeroy',
+          line: { color: '#3182ce', width: 2 }, marker: { size: 4 },
+          fillcolor: 'rgba(49,130,206,0.08)', connectgaps: false },
+        threshold(dates.length, 70, 'Crítico 70 kPa', '#F44336'),
+        threshold(dates.length, 50, 'Alerta 50 kPa',  '#FF9800'),
+    ], baseLayout('kPa'), cfg);
+} else { noDataMsg('chart-pressure'); }
+
+if (hasValues(oilLevel)) {
+    Plotly.newPlot('chart-oil-level', [
+        { x: dates, y: oilLevel, name: 'Nivel Aceite', type: 'scatter', mode: 'lines+markers', fill: 'tozeroy',
+          line: { color: '#2f855a', width: 2 }, marker: { size: 4 },
+          fillcolor: 'rgba(47,133,90,0.08)', connectgaps: false },
+        threshold(dates.length, 40, 'Alerta <40%',  '#FF9800'),
+        threshold(dates.length, 25, 'Crítico <25%', '#F44336'),
+    ], baseLayout('%', [0, 105]), cfg);
+} else { noDataMsg('chart-oil-level'); }
+
+if (hasValues(vibration)) {
+    Plotly.newPlot('chart-vibration', [
+        { x: dates, y: vibration, name: 'Vibración', type: 'scatter', mode: 'lines+markers',
+          line: { color: '#6b46c1', width: 2 }, marker: { size: 4 }, connectgaps: false },
+        threshold(dates.length, 7.1, 'Crítico 7.1', '#F44336'),
+        threshold(dates.length, 4.5, 'Alerta 4.5',  '#FF9800'),
+    ], baseLayout('mm/s'), cfg);
+} else { noDataMsg('chart-vibration'); }
+
+if (hasValues(oilHumidity)) {
+    Plotly.newPlot('chart-humidity', [
+        { x: dates, y: oilHumidity, name: 'H₂O Aceite', type: 'scatter', mode: 'lines+markers', fill: 'tozeroy',
+          line: { color: '#2c7a7b', width: 2 }, marker: { size: 4 },
+          fillcolor: 'rgba(44,122,123,0.08)', connectgaps: false },
+        threshold(dates.length, 35, 'Crítico 35 ppm', '#F44336'),
+        threshold(dates.length, 20, 'Alerta 20 ppm',  '#FF9800'),
+    ], baseLayout('ppm'), cfg);
+} else { noDataMsg('chart-humidity'); }
+</script>
+{% endblock JSscripts %}

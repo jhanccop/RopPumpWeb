@@ -8,6 +8,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+from Apps.users.mixins import AppAccessMixin
 from django.views.generic import (
     TemplateView,
     ListView,
@@ -23,7 +24,12 @@ from .models import CameraStation, CameraCapture, CaptureDetection
 from .forms import CameraStationForm, CameraCaptureForm, CaptureReportFilterForm, DetectionFormSet
 
 
-# =================== MIXIN ===========================
+# =================== MIXINS ===========================
+class FaunaAccessMixin(AppAccessMixin):
+    required_app = 'fauna'
+    login_url = reverse_lazy('user_app:user-login')
+
+
 class CompanyMixin(object):
     def get_context_data(self, **kwargs):
         company_name = User.objects.get_company_name(
@@ -38,7 +44,7 @@ class CompanyMixin(object):
 
 
 # =================== DASHBOARD ===========================
-class DashboardView(LoginRequiredMixin, CompanyMixin, TemplateView):
+class DashboardView(FaunaAccessMixin, CompanyMixin, TemplateView):
     template_name = 'FAUNA/camera/cam_dashboard.html'
     login_url = reverse_lazy('user_app:user-login')
 
@@ -97,7 +103,7 @@ class DashboardView(LoginRequiredMixin, CompanyMixin, TemplateView):
 
 
 # =================== STATION CRUD ===========================
-class StationListView(LoginRequiredMixin, CompanyMixin, ListView):
+class StationListView(FaunaAccessMixin, CompanyMixin, ListView):
     template_name = 'FAUNA/camera/cam_station_list.html'
     login_url = reverse_lazy('user_app:user-login')
     context_object_name = 'stations'
@@ -106,7 +112,7 @@ class StationListView(LoginRequiredMixin, CompanyMixin, ListView):
         return CameraStation.objects.list_by_company(self.get_company_name())
 
 
-class StationAddView(LoginRequiredMixin, CompanyMixin, CreateView):
+class StationAddView(FaunaAccessMixin, CompanyMixin, CreateView):
     template_name = 'FAUNA/camera/cam_station_add.html'
     login_url = reverse_lazy('user_app:user-login')
     model = CameraStation
@@ -119,7 +125,7 @@ class StationAddView(LoginRequiredMixin, CompanyMixin, CreateView):
         return context
 
 
-class StationUpdateView(LoginRequiredMixin, CompanyMixin, UpdateView):
+class StationUpdateView(FaunaAccessMixin, CompanyMixin, UpdateView):
     template_name = 'FAUNA/camera/cam_station_update.html'
     login_url = reverse_lazy('user_app:user-login')
     model = CameraStation
@@ -132,14 +138,14 @@ class StationUpdateView(LoginRequiredMixin, CompanyMixin, UpdateView):
         return context
 
 
-class StationRemoveView(LoginRequiredMixin, CompanyMixin, DeleteView):
+class StationRemoveView(FaunaAccessMixin, CompanyMixin, DeleteView):
     template_name = 'FAUNA/camera/cam_station_remove.html'
     login_url = reverse_lazy('user_app:user-login')
     model = CameraStation
     success_url = reverse_lazy('camera_app:station_list')
 
 
-class StationDetailView(LoginRequiredMixin, CompanyMixin, DetailView):
+class StationDetailView(FaunaAccessMixin, CompanyMixin, DetailView):
     template_name = 'FAUNA/camera/cam_station_detail.html'
     login_url = reverse_lazy('user_app:user-login')
     model = CameraStation
@@ -187,7 +193,7 @@ class StationDetailView(LoginRequiredMixin, CompanyMixin, DetailView):
 
 
 # =================== CAPTURES ===========================
-class CaptureListView(LoginRequiredMixin, CompanyMixin, ListView):
+class CaptureListView(FaunaAccessMixin, CompanyMixin, ListView):
     template_name = 'FAUNA/camera/cam_capture_list.html'
     login_url = reverse_lazy('user_app:user-login')
     context_object_name = 'captures'
@@ -214,7 +220,7 @@ class CaptureListView(LoginRequiredMixin, CompanyMixin, ListView):
         return context
 
 
-class CaptureAddView(LoginRequiredMixin, CompanyMixin, CreateView):
+class CaptureAddView(FaunaAccessMixin, CompanyMixin, CreateView):
     template_name = 'FAUNA/camera/cam_capture_add.html'
     login_url = reverse_lazy('user_app:user-login')
     model = CameraCapture
@@ -252,7 +258,7 @@ class CaptureAddView(LoginRequiredMixin, CompanyMixin, CreateView):
         return self.form_invalid(form)
 
 
-class CaptureDetailView(LoginRequiredMixin, CompanyMixin, DetailView):
+class CaptureDetailView(FaunaAccessMixin, CompanyMixin, DetailView):
     template_name = 'FAUNA/camera/cam_capture_detail.html'
     login_url = reverse_lazy('user_app:user-login')
     model = CameraCapture
@@ -275,7 +281,7 @@ class CaptureDetailView(LoginRequiredMixin, CompanyMixin, DetailView):
         return context
 
 
-class CaptureUpdateView(LoginRequiredMixin, CompanyMixin, UpdateView):
+class CaptureUpdateView(FaunaAccessMixin, CompanyMixin, UpdateView):
     template_name = 'FAUNA/camera/cam_capture_update.html'
     login_url = reverse_lazy('user_app:user-login')
     model = CameraCapture
@@ -306,7 +312,7 @@ class CaptureUpdateView(LoginRequiredMixin, CompanyMixin, UpdateView):
         return self.form_invalid(form)
 
 
-class CaptureRemoveView(LoginRequiredMixin, CompanyMixin, DeleteView):
+class CaptureRemoveView(FaunaAccessMixin, CompanyMixin, DeleteView):
     template_name = 'FAUNA/camera/cam_capture_remove.html'
     login_url = reverse_lazy('user_app:user-login')
     model = CameraCapture
@@ -314,7 +320,7 @@ class CaptureRemoveView(LoginRequiredMixin, CompanyMixin, DeleteView):
 
 
 # =================== REPORTS ===========================
-class ReportView(LoginRequiredMixin, CompanyMixin, FormView):
+class ReportView(FaunaAccessMixin, CompanyMixin, FormView):
     template_name = 'FAUNA/camera/cam_report.html'
     login_url = reverse_lazy('user_app:user-login')
     form_class = CaptureReportFilterForm

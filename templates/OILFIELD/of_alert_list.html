@@ -1,0 +1,154 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static %}
+
+{% block title %}Alarmas{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock %}
+{% block appName %}OILFIELD{% endblock %}
+{% block Type %}Alarmas{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-danger shadow-danger border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-bell me-1"></i> ALARMAS
+                                {% if active_count %}<span class="badge bg-white text-danger ms-2">{{ active_count }} activa{{ active_count|pluralize:"s" }}</span>{% endif %}
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <!-- Filter buttons -->
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="?status=active" class="btn btn-white {% if request.GET.status == 'active' or not request.GET.status %}active{% endif %}">Activas</a>
+                                <a href="?status=all" class="btn btn-white {% if request.GET.status == 'all' %}active{% endif %}">Todas</a>
+                                <a href="?status=closed" class="btn btn-white {% if request.GET.status == 'closed' %}active{% endif %}">Cerradas</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="dt-alerts">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Pozo</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Tanque</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Tipo Alerta</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Severidad</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Valor / Umbral</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Estado</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Fecha</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in alerts %}
+                            <tr class="{% if alert.Severity == 'critical' %}table-danger{% elif alert.Severity == 'high' %}table-warning{% endif %}">
+                                <td class="ps-3">
+                                    {% if alert.Well %}
+                                    <p class="text-xs font-weight-bold mb-0">{{ alert.Well.Code }}</p>
+                                    <p class="text-xs text-secondary mb-0">{{ alert.Well.Name|truncatechars:20 }}</p>
+                                    {% else %}
+                                    <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if alert.Tank %}
+                                    <p class="text-xs font-weight-bold mb-0">{{ alert.Tank.Code }}</p>
+                                    <p class="text-xs text-secondary mb-0">{{ alert.Tank.Name|truncatechars:20 }}</p>
+                                    {% else %}
+                                    <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ alert.AlertType|default:alert.Variable }}</p>
+                                </td>
+                                <td>
+                                    {% if alert.Severity == 'low' %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Baja</span>
+                                    {% elif alert.Severity == 'medium' %}
+                                    <span class="badge badge-sm bg-gradient-warning text-dark">Media</span>
+                                    {% elif alert.Severity == 'high' %}
+                                    <span class="badge badge-sm bg-gradient-danger">Alta</span>
+                                    {% elif alert.Severity == 'critical' %}
+                                    <span class="badge badge-sm" style="background:#212529;color:#fff;">Crítica</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ alert.Severity }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">
+                                        {{ alert.DetectedValue|floatformat:2|default:"—" }}
+                                        {% if alert.ThresholdValue is not None %}
+                                        <span class="text-secondary"> / {{ alert.ThresholdValue|floatformat:2 }}</span>
+                                        {% endif %}
+                                    </p>
+                                </td>
+                                <td>
+                                    {% if alert.Status == 'active' %}
+                                    <span class="badge badge-sm bg-gradient-danger">Activa</span>
+                                    {% elif alert.Status == 'attended' %}
+                                    <span class="badge badge-sm bg-gradient-warning text-dark">Atendida</span>
+                                    {% elif alert.Status == 'closed' %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Cerrada</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ alert.get_Status_display|default:alert.Status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-xs text-secondary">{{ alert.DateCreate|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        {% if alert.Status == 'active' %}
+                                        <form method="post" action="{% url 'oilfield_app:alert_acknowledge' alert.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-warning mb-0" title="Atender">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'oilfield_app:alert_close' alert.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-secondary mb-0" title="Cerrar">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </form>
+                                        {% elif alert.Status == 'attended' %}
+                                        <form method="post" action="{% url 'oilfield_app:alert_close' alert.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-secondary mb-0" title="Cerrar">
+                                                <i class="fas fa-lock"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-secondary py-4">
+                                    <i class="fas fa-check-circle d-block mb-1" style="font-size:2rem;opacity:.3;color:green;"></i>
+                                    Sin alarmas registradas.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    if (document.getElementById('dt-alerts')) {
+        new simpleDatatables.DataTable('#dt-alerts', { searchable: true, fixedHeight: false, perPage: 25 });
+    }
+</script>
+{% endblock JSscripts %}

@@ -1,0 +1,213 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static %}
+
+{% block title %}Producción Diaria{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock %}
+{% block appName %}OILFIELD{% endblock %}
+{% block Type %}Producción Diaria{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-chart-bar me-1"></i> PRODUCCIÓN DIARIA
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'oilfield_app:production_add' %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-plus me-1"></i> Nuevo Registro
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card-body pb-0 pt-3 px-3">
+                <form method="get" class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label text-xs font-weight-bolder mb-1">Pozo</label>
+                        <select name="well" class="form-select form-select-sm">
+                            <option value="">— Todos —</option>
+                            {% for well in wells %}
+                            <option value="{{ well.id }}" {% if request.GET.well == well.id|stringformat:"s" %}selected{% endif %}>{{ well.Code }} — {{ well.Name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-xs font-weight-bolder mb-1">Batería</label>
+                        <select name="battery" class="form-select form-select-sm">
+                            <option value="">— Todas —</option>
+                            {% for bat in batteries %}
+                            <option value="{{ bat.id }}" {% if request.GET.battery == bat.id|stringformat:"s" %}selected{% endif %}>{{ bat.Name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-xs font-weight-bolder mb-1">Desde</label>
+                        <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request.GET.date_from }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-xs font-weight-bolder mb-1">Hasta</label>
+                        <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request.GET.date_to }}">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-sm bg-gradient-dark w-100">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                    </div>
+                    {% if request.GET.well or request.GET.battery or request.GET.date_from or request.GET.date_to %}
+                    <div class="col-md-1">
+                        <a href="{% url 'oilfield_app:production_list' %}" class="btn btn-sm btn-outline-secondary w-100">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </form>
+
+                <!-- Summary KPI chips -->
+                {% if total_oil is not None or total_water is not None %}
+                <div class="d-flex gap-3 mt-3 flex-wrap">
+                    <div class="d-flex align-items-center gap-2 px-3 py-2 border-radius-lg" style="background:#e8f5e9;">
+                        <i class="fas fa-oil-can text-success"></i>
+                        <span class="text-xs font-weight-bolder text-success">Oil Total: {{ total_oil|floatformat:1 }} bbl</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 px-3 py-2 border-radius-lg" style="background:#e3f2fd;">
+                        <i class="fas fa-tint text-info"></i>
+                        <span class="text-xs font-weight-bolder text-info">Agua Total: {{ total_water|floatformat:1 }} bbl</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card-body px-0 pt-2 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Fecha</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Pozo</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Batería</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Oil (bbl)</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Agua (bbl)</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Run Time (h)</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">SPM</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Llenado %</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Condición</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Dif.</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Obs.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prod in page_obj %}
+                            <tr>
+                                <td class="ps-3">
+                                    <p class="text-xs font-weight-bold mb-0">{{ prod.OperativeDate|date:"d/m/Y" }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ prod.Well.Code }}</p>
+                                    <p class="text-xs text-secondary mb-0">{{ prod.Well.Name|truncatechars:20 }}</p>
+                                </td>
+                                <td>
+                                    <p class="text-xs text-secondary mb-0">{{ prod.Well.Battery.Name|default:"—" }}</p>
+                                </td>
+                                <td>
+                                    <span class="text-xs font-weight-bold text-success">{{ prod.OilProduction|floatformat:1|default:"—" }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-xs text-info">{{ prod.WaterProduction|floatformat:1|default:"—" }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-xs">{{ prod.RunTime|floatformat:1|default:"—" }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-xs">{{ prod.SPM|floatformat:1|default:"—" }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-xs">{{ prod.Fillage|floatformat:1|default:"—" }}{% if prod.Fillage is not None %}%{% endif %}</span>
+                                </td>
+                                <td>
+                                    {% if prod.OperationalCondition %}
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ prod.get_OperationalCondition_display|default:prod.OperationalCondition }}</span>
+                                    {% else %}
+                                    <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="text-xs text-warning">{{ prod.DeferredProduction|floatformat:1|default:"—" }}</span>
+                                </td>
+                                <td>
+                                    {% if prod.Observations %}
+                                    <span title="{{ prod.Observations }}" data-bs-toggle="tooltip">
+                                        <i class="fas fa-comment-dots text-info"></i>
+                                    </span>
+                                    {% else %}
+                                    <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="11" class="text-center text-secondary py-4">
+                                    <i class="fas fa-chart-bar d-block mb-1" style="font-size:2rem;opacity:.3;"></i>
+                                    No hay registros de producción.
+                                    <a href="{% url 'oilfield_app:production_add' %}">Agregar el primero</a>.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="card-footer py-2 px-3">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0 justify-content-end">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.well %}well={{ request.GET.well }}&{% endif %}{% if request.GET.battery %}battery={{ request.GET.battery }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.well %}well={{ request.GET.well }}&{% endif %}{% if request.GET.battery %}battery={{ request.GET.battery }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.well %}well={{ request.GET.well }}&{% endif %}{% if request.GET.battery %}battery={{ request.GET.battery }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+tooltipTriggerList.forEach(function (el) { new bootstrap.Tooltip(el); });
+</script>
+{% endblock JSscripts %}

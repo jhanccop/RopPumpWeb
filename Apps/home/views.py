@@ -8,12 +8,10 @@ from .models import infoRequests
 from .forms import infoRequestsForm
 
 
-# Create your views here.
-
 class InitView(CreateView):
     model = infoRequests
     form_class = infoRequestsForm
-    template_name = "home/home.html"
+    template_name = "home/index.html"
     success_url = reverse_lazy('home_app:home')
 
     def form_valid(self, form):

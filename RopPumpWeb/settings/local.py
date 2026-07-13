@@ -4,7 +4,7 @@ from .base import *
 DEBUG = True
 
 #ALLOWED_HOSTS = ["0.0.0.0",'24.199.125.52',"*","24.144.68.190","192.168.3.56"]
-ALLOWED_HOSTS = ['24.199.125.52',"192.168.3.31","localhost","datagreensolutions.com","www.datagreensolutions.com"]
+ALLOWED_HOSTS = ['24.199.125.52',"192.168.1.9","localhost","datagreensolutions.com","www.datagreensolutions.com","*",""]
 
 CSRF_TRUSTED_ORIGINS = ['https://datagreensolutions.com', 'https://www.datagreensolutions.com']
 # Database

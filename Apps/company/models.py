@@ -20,8 +20,10 @@ class Company(models.Model):
     LocationState = models.CharField('Location State', max_length=100)
     LocationCounty = models.CharField('Location County', max_length=100)
     DateCreate = models.DateTimeField(auto_now_add=True)
+    Logo = models.ImageField('Logo', upload_to='company_logos/', null=True, blank=True)
+    IsActive = models.BooleanField('Activo', default=True)
 
-    CompanyType = models.CharField('Company Type',max_length=2, choices = TYPE_CHOICES, default="9", blank=True, null=True)
+    CompanyType = models.CharField('Company Type', max_length=2, choices=TYPE_CHOICES, default="9", blank=True, null=True)
     
     objects = CompanyManager()
 

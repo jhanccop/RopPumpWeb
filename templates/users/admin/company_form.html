@@ -1,0 +1,119 @@
+{% extends 'users/admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Editar{% else %}Nueva{% endif %} Compañía{% endblock title %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 col-xl-8 mx-auto">
+        <div class="card mb-4">
+            <div class="card-header pb-0 {% if object %}bg-gradient-warning{% else %}bg-gradient-success{% endif %}">
+                <h6 class="text-white text-uppercase font-weight-bolder mb-0">
+                    <i class="fas fa-{% if object %}edit{% else %}plus{% endif %} me-2"></i>
+                    {% if object %}Editar Compañía: {{ object.CompanyName }}{% else %}Nueva Compañía{% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Información general -->
+                    <h6 class="font-weight-bolder mt-3 mb-3">
+                        <i class="fas fa-building me-2 text-primary"></i>Información de la Compañía
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="input-group input-group-outline {% if form.CompanyName.value %}is-filled{% endif %}">
+                                <label class="form-label">Nombre de la compañía</label>
+                                {{ form.CompanyName }}
+                            </div>
+                            {% if form.CompanyName.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.CompanyName.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline {% if form.LocationState.value %}is-filled{% endif %}">
+                                <label class="form-label">Estado / Región</label>
+                                {{ form.LocationState }}
+                            </div>
+                            {% if form.LocationState.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.LocationState.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline {% if form.LocationCounty.value %}is-filled{% endif %}">
+                                <label class="form-label">Municipio / Ciudad</label>
+                                {{ form.LocationCounty }}
+                            </div>
+                            {% if form.LocationCounty.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.LocationCounty.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline is-focused">
+                                <label class="form-label">Tipo de compañía</label>
+                                {{ form.CompanyType }}
+                            </div>
+                            {% if form.CompanyType.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.CompanyType.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Logo -->
+                    <h6 class="font-weight-bolder mt-3 mb-3">
+                        <i class="fas fa-image me-2 text-info"></i>Logo
+                    </h6>
+                    <div class="row">
+                        {% if object and object.Logo %}
+                        <div class="col-md-3 mb-3">
+                            <p class="text-xs text-secondary mb-1">Logo actual:</p>
+                            <img src="{{ object.Logo.url }}" alt="Logo"
+                                 class="border-radius-sm border" style="height:80px;width:auto;object-fit:contain;">
+                        </div>
+                        {% endif %}
+                        <div class="col-md-9 mb-3">
+                            <label class="form-label text-sm">{{ form.Logo.label }}</label>
+                            {{ form.Logo }}
+                            {% if form.Logo.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.Logo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3 d-flex align-items-center">
+                            <div class="form-check form-switch">
+                                {{ form.IsActive }}
+                                <label class="form-check-label ms-2" for="{{ form.IsActive.id_for_label }}">
+                                    Compañía activa
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="horizontal dark">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'user_app:company_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn {% if object %}bg-gradient-warning{% else %}bg-gradient-success{% endif %}">
+                            <i class="fas fa-save me-1"></i>
+                            {% if object %}Guardar cambios{% else %}Crear compañía{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

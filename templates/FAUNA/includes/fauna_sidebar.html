@@ -1,17 +1,15 @@
 {% load static %}
-{# Detects active app and view from the request resolver #}
 {% with app=request.resolver_match.app_name view=request.resolver_match.url_name %}
 
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 bg-gradient-dark"
     id="sidenav-main">
 
-    <!-- Brand -->
     <div class="sidenav-header">
         <i class="fas fa-times p-3 cursor-pointer text-white opacity-5 position-absolute end-0 top-0 d-none d-xl-none"
             aria-hidden="true" id="iconSidenav"></i>
-        <a class="navbar-brand d-flex align-items-center px-3 py-2" href="#">
+        <a class="navbar-brand d-flex align-items-center px-3 py-2" href="{% url 'camera_app:dashboard' %}">
             <img src="{% static 'assets/img/logo-ct.png' %}" class="navbar-brand-img" style="height:28px;" alt="logo">
-            <span class="ms-2 font-weight-bold text-white text-sm">FAUNA Monitor</span>
+            <span class="ms-2 font-weight-bold text-white text-sm">FAUNA</span>
         </a>
     </div>
     <hr class="horizontal light mt-0 mb-1">
@@ -19,175 +17,117 @@
     <div class="collapse navbar-collapse w-auto h-auto" id="sidenav-collapse-main">
         <ul class="navbar-nav">
 
-            <!-- ===== OTHER APPS ===== -->
+            <!-- WEATHER -->
             <li class="nav-item mt-1">
-                <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">Platform</p>
+                <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">Weather</p>
             </li>
 
-            <li class="nav-item">
-                <a class="nav-link text-white" href="{% url 'data_app:oil-overview' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">dashboard</i>
-                    </div>
-                    <span class="nav-link-text ms-1">Data Overview</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link text-white" href="{% url 'equipment_app:equipments' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">folder</i>
-                    </div>
-                    <span class="nav-link-text ms-1">Equipment</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link text-white" href="{% url 'device_app:devices' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">memory</i>
-                    </div>
-                    <span class="nav-link-text ms-1">Devices</span>
-                </a>
-            </li>
-
-            <hr class="horizontal light my-2">
-
-            <!-- ===== WEATHER STATIONS ===== -->
-            <li class="nav-item mt-1">
-                <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">
-                    <i class="material-icons me-1" style="font-size:0.9rem;vertical-align:middle;">cloud</i>
-                    Weather
-                </p>
-            </li>
-
-            {# Dashboard weather #}
             <li class="nav-item">
                 <a class="nav-link text-white {% if app == 'weather_app' and view == 'dashboard' %}active bg-gradient-primary{% endif %}"
-                    href="{% url 'weather_app:dashboard' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">wb_sunny</i>
+                   href="{% url 'weather_app:dashboard' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-chart-bar"></i>
                     </div>
                     <span class="nav-link-text ms-1">Dashboard</span>
                 </a>
             </li>
 
-            {# Stations list weather #}
             <li class="nav-item">
                 <a class="nav-link text-white {% if app == 'weather_app' and view == 'station_list' %}active bg-gradient-primary{% endif %}"
-                    href="{% url 'weather_app:station_list' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">sensors</i>
+                   href="{% url 'weather_app:station_list' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-broadcast-tower"></i>
                     </div>
-                    <span class="nav-link-text ms-1">Stations</span>
+                    <span class="nav-link-text ms-1">Estaciones</span>
                 </a>
             </li>
 
-            {# All readings #}
             <li class="nav-item">
                 <a class="nav-link text-white {% if app == 'weather_app' and view == 'reading_list' %}active bg-gradient-primary{% endif %}"
-                    href="{% url 'weather_app:reading_list' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">table_chart</i>
+                   href="{% url 'weather_app:reading_list' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-chart-line"></i>
                     </div>
-                    <span class="nav-link-text ms-1">All Readings</span>
+                    <span class="nav-link-text ms-1">Lecturas</span>
                 </a>
             </li>
 
-            {# Add reading #}
-            <li class="nav-item">
-                <a class="nav-link text-white {% if app == 'weather_app' and view == 'reading_add' %}active bg-gradient-primary{% endif %}"
-                    href="{% url 'weather_app:reading_add' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">add_chart</i>
-                    </div>
-                    <span class="nav-link-text ms-1">Add Reading</span>
-                </a>
-            </li>
-
-            {# Weather reports #}
             <li class="nav-item">
                 <a class="nav-link text-white {% if app == 'weather_app' and view == 'report' %}active bg-gradient-primary{% endif %}"
-                    href="{% url 'weather_app:report' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">summarize</i>
+                   href="{% url 'weather_app:report' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-file-alt"></i>
                     </div>
-                    <span class="nav-link-text ms-1">Reports</span>
+                    <span class="nav-link-text ms-1">Reportes</span>
                 </a>
             </li>
 
             <hr class="horizontal light my-2">
 
-            <!-- ===== CAMERA TRAPS ===== -->
+            <!-- CÁMARAS -->
             <li class="nav-item mt-1">
-                <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">
-                    <i class="material-icons me-1" style="font-size:0.9rem;vertical-align:middle;">photo_camera</i>
-                    Camera Traps
-                </p>
+                <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">Cámaras</p>
             </li>
 
-            {# Dashboard camera #}
             <li class="nav-item">
                 <a class="nav-link text-white {% if app == 'camera_app' and view == 'dashboard' %}active bg-gradient-success{% endif %}"
-                    href="{% url 'camera_app:dashboard' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">grid_view</i>
+                   href="{% url 'camera_app:dashboard' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-th-large"></i>
                     </div>
                     <span class="nav-link-text ms-1">Dashboard</span>
                 </a>
             </li>
 
-            {# Camera stations list #}
             <li class="nav-item">
                 <a class="nav-link text-white {% if app == 'camera_app' and view == 'station_list' %}active bg-gradient-success{% endif %}"
-                    href="{% url 'camera_app:station_list' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">videocam</i>
+                   href="{% url 'camera_app:station_list' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-camera"></i>
                     </div>
-                    <span class="nav-link-text ms-1">Stations</span>
+                    <span class="nav-link-text ms-1">Estaciones</span>
                 </a>
             </li>
 
-            {# All captures #}
             <li class="nav-item">
                 <a class="nav-link text-white {% if app == 'camera_app' and view == 'capture_list' %}active bg-gradient-success{% endif %}"
-                    href="{% url 'camera_app:capture_list' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">collections</i>
+                   href="{% url 'camera_app:capture_list' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-images"></i>
                     </div>
-                    <span class="nav-link-text ms-1">All Captures</span>
+                    <span class="nav-link-text ms-1">Capturas</span>
                 </a>
             </li>
 
-            {# Add capture #}
-            <li class="nav-item">
-                <a class="nav-link text-white {% if app == 'camera_app' and view == 'capture_add' %}active bg-gradient-success{% endif %}"
-                    href="{% url 'camera_app:capture_add' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">add_a_photo</i>
-                    </div>
-                    <span class="nav-link-text ms-1">Add Capture</span>
-                </a>
-            </li>
-
-            {# Camera reports #}
             <li class="nav-item">
                 <a class="nav-link text-white {% if app == 'camera_app' and view == 'report' %}active bg-gradient-success{% endif %}"
-                    href="{% url 'camera_app:report' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">assessment</i>
+                   href="{% url 'camera_app:report' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-file-alt"></i>
                     </div>
-                    <span class="nav-link-text ms-1">Reports</span>
+                    <span class="nav-link-text ms-1">Reportes</span>
                 </a>
             </li>
 
             <hr class="horizontal light my-2">
 
-            <!-- ===== USER ===== -->
+            {% if request.user.is_admin %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'user_app:admin_dashboard' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Admin Panel</span>
+                </a>
+            </li>
+            {% endif %}
+
             <li class="nav-item">
                 <a class="nav-link text-white" href="{% url 'user_app:user-logout' %}">
-                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                        <i class="material-icons opacity-10">logout</i>
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-sign-out-alt"></i>
                     </div>
-                    <span class="nav-link-text ms-1">Log out</span>
+                    <span class="nav-link-text ms-1">Cerrar sesión</span>
                 </a>
             </li>
 

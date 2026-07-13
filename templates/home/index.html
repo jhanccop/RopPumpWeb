@@ -1,0 +1,543 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartIO — Monitoreo Industrial & Ambiental</title>
+    <link rel="icon" type="image/png" href="{% static 'assets/img/logo-ct.png' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/local-fonts.css' %}" />
+        <link rel="stylesheet" href="{% static 'assets/css/font-awesome.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/material-dashboard.css' %}">
+    <style>
+        :root {
+            --primary: #344767;
+            --accent:  #e91e63;
+            --fauna:   #2e7d32;
+            --oil:     #0d47a1;
+            --elec:    #1a237e;
+        }
+
+        * { scroll-behavior: smooth; }
+
+        /* ── Navbar ── */
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: rgba(255,255,255,.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 2px 24px rgba(52,71,103,.08);
+            transition: background .3s;
+        }
+        .top-nav .nav-link { color: var(--primary) !important; font-weight: 500; font-size: .875rem; }
+        .top-nav .nav-link:hover { color: var(--accent) !important; }
+        .nav-logo { font-weight: 800; font-size: 1.15rem; color: var(--primary); letter-spacing: -.5px; }
+        .nav-logo span { color: var(--accent); }
+
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f1628 0%, #1a237e 40%, #283593 70%, #344767 100%);
+            display: flex; align-items: center;
+            position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: url("{% static 'assets/img/oil_monitoring.png' %}") center/cover no-repeat;
+            opacity: .12;
+        }
+        .hero-badge {
+            display: inline-block; padding: 6px 16px;
+            background: rgba(233,30,99,.15); border: 1px solid rgba(233,30,99,.3);
+            border-radius: 50px; color: #f48fb1; font-size: .75rem; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1.5rem;
+        }
+        .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; color: #fff; line-height: 1.15; }
+        .hero h1 span { color: #f48fb1; }
+        .hero p { color: rgba(255,255,255,.75); font-size: 1.15rem; max-width: 560px; }
+        .btn-hero-primary {
+            background: linear-gradient(135deg, #e91e63, #c2185b);
+            color: #fff; border: none; padding: 14px 36px;
+            border-radius: 50px; font-weight: 600; font-size: 1rem;
+            box-shadow: 0 8px 24px rgba(233,30,99,.35);
+            transition: transform .2s, box-shadow .2s;
+            text-decoration: none; display: inline-block;
+        }
+        .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(233,30,99,.45); color: #fff; }
+        .btn-hero-outline {
+            background: transparent; color: rgba(255,255,255,.85);
+            border: 1.5px solid rgba(255,255,255,.35); padding: 14px 36px;
+            border-radius: 50px; font-weight: 500; font-size: 1rem;
+            transition: all .2s; text-decoration: none; display: inline-block;
+        }
+        .btn-hero-outline:hover { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.6); }
+
+        /* Floating cards in hero */
+        .hero-cards { position: relative; }
+        .hero-card {
+            background: rgba(255,255,255,.08);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 16px; padding: 20px 24px;
+            color: #fff; margin-bottom: 16px;
+            transition: transform .3s;
+        }
+        .hero-card:hover { transform: translateX(-4px); }
+        .hero-card .icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .hero-card h6 { font-size: .85rem; font-weight: 700; margin: 0 0 4px; }
+        .hero-card p  { font-size: .75rem; color: rgba(255,255,255,.65); margin: 0; }
+        .hero-stat { text-align: center; color: #fff; }
+        .hero-stat strong { display: block; font-size: 1.75rem; font-weight: 800; color: #f48fb1; }
+        .hero-stat span   { font-size: .75rem; color: rgba(255,255,255,.6); }
+
+        /* ── Section titles ── */
+        .section-label { color: var(--accent); font-weight: 700; font-size: .8rem; letter-spacing: 2px; text-transform: uppercase; }
+        .section-title { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 800; color: var(--primary); }
+
+        /* ── Module cards ── */
+        .module-card {
+            border-radius: 20px; overflow: hidden;
+            border: none; box-shadow: 0 4px 24px rgba(52,71,103,.08);
+            transition: transform .3s, box-shadow .3s;
+        }
+        .module-card:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(52,71,103,.16); }
+        .module-card .card-header { padding: 32px 28px 20px; position: relative; overflow: hidden; }
+        .module-card .card-header::after {
+            content: ''; position: absolute; bottom: -30px; right: -30px;
+            width: 100px; height: 100px; border-radius: 50%;
+            background: rgba(255,255,255,.1);
+        }
+        .module-card .card-body { padding: 20px 28px 28px; }
+        .module-card .big-icon { font-size: 2.5rem; color: rgba(255,255,255,.9); }
+        .module-card h4 { font-weight: 800; color: #fff; margin-top: 12px; }
+        .module-card .card-header p { color: rgba(255,255,255,.8); font-size: .9rem; }
+        .module-card ul { list-style: none; padding: 0; margin: 0 0 20px; }
+        .module-card ul li { padding: 6px 0; color: #637085; font-size: .875rem; border-bottom: 1px solid rgba(0,0,0,.04); }
+        .module-card ul li i { margin-right: 8px; opacity: .6; }
+        .fauna-header  { background: linear-gradient(135deg, #1b5e20, #388e3c); }
+        .oil-header    { background: linear-gradient(135deg, #0d47a1, #1565c0); }
+        .elec-header   { background: linear-gradient(135deg, #1a237e, #283593); }
+        .btn-module { border-radius: 50px; padding: 10px 28px; font-weight: 600; font-size: .875rem; }
+
+        /* ── Feature strip ── */
+        .feature-strip { background: linear-gradient(135deg, var(--primary), #455a64); }
+        .feature-item { text-align: center; color: #fff; padding: 16px; }
+        .feature-item i { font-size: 1.75rem; opacity: .85; margin-bottom: 10px; }
+        .feature-item h6 { font-size: .9rem; font-weight: 700; margin: 0 0 4px; }
+        .feature-item p  { font-size: .78rem; color: rgba(255,255,255,.65); margin: 0; }
+
+        /* ── Stats row ── */
+        .stat-box { text-align: center; padding: 20px; }
+        .stat-box strong { display: block; font-size: 2.5rem; font-weight: 900; color: var(--primary); line-height: 1; }
+        .stat-box span   { font-size: .8rem; color: #7b809a; font-weight: 500; }
+
+        /* ── CTA ── */
+        .cta-section {
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            padding: 80px 0; text-align: center;
+        }
+        .cta-section h2 { color: #fff; font-weight: 800; font-size: 2rem; }
+        .cta-section p  { color: rgba(255,255,255,.8); font-size: 1.05rem; }
+        .btn-cta-white {
+            background: #fff; color: var(--accent);
+            border: none; padding: 14px 40px;
+            border-radius: 50px; font-weight: 700; font-size: 1rem;
+            text-decoration: none; display: inline-block;
+            box-shadow: 0 8px 24px rgba(0,0,0,.15);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .btn-cta-white:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,.2); color: var(--accent); }
+
+        /* ── Footer ── */
+        footer { background: #0f1628; color: rgba(255,255,255,.6); padding: 48px 0 24px; font-size: .85rem; }
+        footer .logo-footer { font-size: 1.2rem; font-weight: 800; color: #fff; }
+        footer .logo-footer span { color: #f48fb1; }
+        footer hr { border-color: rgba(255,255,255,.1); margin: 32px 0 20px; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .hero-cards { margin-top: 40px; }
+            .hero-stat { margin-bottom: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================================================================ NAVBAR -->
+<nav class="top-nav py-3">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between">
+            <a href="#" class="nav-logo text-decoration-none">
+                <img src="{% static 'assets/img/logo-ct.png' %}" height="28" alt="logo" class="me-2">
+                Smart<span>IO</span>
+            </a>
+            <ul class="nav d-none d-md-flex align-items-center gap-2 mb-0">
+                <li class="nav-item"><a class="nav-link px-3" href="#soluciones">Soluciones</a></li>
+                <li class="nav-item"><a class="nav-link px-3" href="#tecnologia">Tecnología</a></li>
+                <li class="nav-item"><a class="nav-link px-3" href="#proyectos">Proyectos</a></li>
+            </ul>
+            <a href="{% url 'user_app:user-login' %}" class="btn-hero-primary py-2 px-4" style="font-size:.875rem;">
+                <i class="fas fa-sign-in-alt me-2"></i>Ingresar al sistema
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- ================================================================ HERO -->
+<section class="hero pt-5">
+    <div class="container py-5" style="position:relative;z-index:1;">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="hero-badge"><i class="fas fa-broadcast-tower me-2"></i>IoT · IA · Tiempo Real</div>
+                <h1>Monitoreo <span>industrial</span> y ambiental inteligente</h1>
+                <p class="mt-3 mb-4">
+                    Plataforma integrada de supervisión para campos petroleros, redes eléctricas y ecosistemas naturales.
+                    Datos en tiempo real, alertas automáticas y analítica predictiva.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'user_app:user-login' %}" class="btn-hero-primary">
+                        <i class="fas fa-rocket me-2"></i>Acceder al sistema
+                    </a>
+                    <a href="#soluciones" class="btn-hero-outline">
+                        Conocer más <i class="fas fa-chevron-down ms-2"></i>
+                    </a>
+                </div>
+                <!-- Mini stats -->
+                <div class="row mt-5 g-3">
+                    <div class="col-4 hero-stat">
+                        <strong>3</strong><span>Módulos activos</span>
+                    </div>
+                    <div class="col-4 hero-stat">
+                        <strong>24/7</strong><span>Monitoreo continuo</span>
+                    </div>
+                    <div class="col-4 hero-stat">
+                        <strong>IoT</strong><span>Telemetría en tiempo real</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 hero-cards">
+                <!-- Floating module previews -->
+                <div class="hero-card">
+                    <div class="icon" style="background:rgba(46,125,50,.25);"><i class="fas fa-leaf" style="color:#81c784;"></i></div>
+                    <h6>FAUNA — Cámaras trampa & Estaciones</h6>
+                    <p>Detección de especies, variables climáticas, alertas automáticas.</p>
+                </div>
+                <div class="hero-card" style="margin-left: 24px;">
+                    <div class="icon" style="background:rgba(13,71,161,.25);"><i class="fas fa-industry" style="color:#64b5f6;"></i></div>
+                    <h6>OILFIELD — Pozos & Producción</h6>
+                    <p>Dinamometría, bombeo mecánico, tanques, alarmas operacionales.</p>
+                </div>
+                <div class="hero-card">
+                    <div class="icon" style="background:rgba(26,35,126,.25);"><i class="fas fa-bolt" style="color:#9fa8da;"></i></div>
+                    <h6>TRANSFORMADORES — Red eléctrica</h6>
+                    <p>Temperatura, carga, factor de potencia, mantenimiento predictivo.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================================================================ STATS -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-6 col-md-3 stat-box"><strong>3</strong><span>Industrias monitoreadas</span></div>
+            <div class="col-6 col-md-3 stat-box"><strong>IoT</strong><span>Protocolo MQTT</span></div>
+            <div class="col-6 col-md-3 stat-box"><strong>AI</strong><span>Diagnóstico automático</span></div>
+            <div class="col-6 col-md-3 stat-box"><strong>REST</strong><span>API integrable</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- ================================================================ MÓDULOS -->
+<section class="py-5 bg-gray-100" id="soluciones">
+    <div class="container">
+        <div class="text-center mb-5">
+            <p class="section-label">Plataforma modular</p>
+            <h2 class="section-title">Tres módulos. Un sistema unificado.</h2>
+            <p class="text-secondary">Cada módulo es independiente y escalable, integrado en una única plataforma multiempresa.</p>
+        </div>
+        <div class="row g-4">
+
+            <!-- FAUNA -->
+            <div class="col-lg-4">
+                <div class="module-card card h-100">
+                    <div class="card-header fauna-header">
+                        <i class="fas fa-leaf big-icon"></i>
+                        <h4>FAUNA</h4>
+                        <p>Monitoreo de biodiversidad y plagas con cámaras trampa e IA</p>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li><i class="fas fa-camera text-success"></i>Cámaras trampa inteligentes</li>
+                            <li><i class="fas fa-cloud-sun text-info"></i>Estaciones meteorológicas</li>
+                            <li><i class="fas fa-spider text-warning"></i>Detección de plagas con IA</li>
+                            <li><i class="fas fa-map-marked-alt text-primary"></i>Mapa georreferenciado</li>
+                            <li><i class="fas fa-chart-bar text-success"></i>Reportes y tendencias</li>
+                            <li><i class="fas fa-bell text-danger"></i>Sistema de alertas</li>
+                        </ul>
+                        <a href="{% url 'user_app:user-login' %}" class="btn bg-gradient-success text-white btn-module w-100">
+                            <i class="fas fa-sign-in-alt me-2"></i>Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OILFIELD -->
+            <div class="col-lg-4">
+                <div class="module-card card h-100">
+                    <div class="card-header oil-header">
+                        <i class="fas fa-industry big-icon"></i>
+                        <h4>OILFIELD</h4>
+                        <p>Control de producción y monitoreo de pozos petroleros</p>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li><i class="fas fa-oil-can text-info"></i>Pozos y producción diaria</li>
+                            <li><i class="fas fa-chart-area text-primary"></i>Cartas dinamométricas</li>
+                            <li><i class="fas fa-database text-warning"></i>Control de tanques y cubicación</li>
+                            <li><i class="fas fa-cogs text-secondary"></i>Unidades de bombeo mecánico</li>
+                            <li><i class="fas fa-exclamation-triangle text-danger"></i>Alarmas operacionales</li>
+                            <li><i class="fas fa-broadcast-tower text-success"></i>Telemetría MQTT / IoT</li>
+                        </ul>
+                        <a href="{% url 'user_app:user-login' %}" class="btn bg-gradient-primary text-white btn-module w-100">
+                            <i class="fas fa-sign-in-alt me-2"></i>Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRANSFORMADORES -->
+            <div class="col-lg-4">
+                <div class="module-card card h-100">
+                    <div class="card-header elec-header">
+                        <i class="fas fa-bolt big-icon"></i>
+                        <h4>TRANSFORMADORES</h4>
+                        <p>Monitoreo de red eléctrica y mantenimiento predictivo</p>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li><i class="fas fa-thermometer-half text-danger"></i>Temperatura aceite/devanado</li>
+                            <li><i class="fas fa-chart-bar text-warning"></i>Carga y factor de potencia</li>
+                            <li><i class="fas fa-map text-info"></i>Mapa de red eléctrica</li>
+                            <li><i class="fas fa-industry text-secondary"></i>Subestaciones</li>
+                            <li><i class="fas fa-sliders-h text-primary"></i>Reglas de alerta configurables</li>
+                            <li><i class="fas fa-file-chart-line text-success"></i>Reportes técnicos</li>
+                        </ul>
+                        <a href="{% url 'user_app:user-login' %}" class="btn bg-gradient-dark text-white btn-module w-100">
+                            <i class="fas fa-sign-in-alt me-2"></i>Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- ================================================================ TECNOLOGÍA -->
+<section class="py-5 bg-white" id="tecnologia">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5">
+                <p class="section-label">Stack tecnológico</p>
+                <h2 class="section-title mb-4">Arquitectura industrial en tiempo real</h2>
+                <div class="d-flex align-items-start mb-4">
+                    <div class="icon icon-shape bg-gradient-info shadow-info border-radius-lg me-3 flex-shrink-0" style="width:44px;height:44px;">
+                        <i class="fas fa-microchip text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="font-weight-bolder mb-1">Sensores IoT → MQTT → Backend</h6>
+                        <p class="text-secondary text-sm mb-0">ESP32, PLCs, RTU y gateways industriales conectados vía MQTT al servidor Django para procesamiento inmediato.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start mb-4">
+                    <div class="icon icon-shape bg-gradient-success shadow-success border-radius-lg me-3 flex-shrink-0" style="width:44px;height:44px;">
+                        <i class="fas fa-brain text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="font-weight-bolder mb-1">IA embebida y en servidor</h6>
+                        <p class="text-secondary text-sm mb-0">Modelos de clasificación corriendo en el dispositivo (edge) y diagnóstico avanzado en el servidor.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start mb-4">
+                    <div class="icon icon-shape bg-gradient-warning shadow-warning border-radius-lg me-3 flex-shrink-0" style="width:44px;height:44px;">
+                        <i class="fas fa-chart-line text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="font-weight-bolder mb-1">Dashboards industriales</h6>
+                        <p class="text-secondary text-sm mb-0">Plotly, Leaflet, Material Dashboard Pro — visualizaciones interactivas adaptadas al monitoreo 24/7.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start">
+                    <div class="icon icon-shape bg-gradient-danger shadow-danger border-radius-lg me-3 flex-shrink-0" style="width:44px;height:44px;">
+                        <i class="fas fa-users-cog text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="font-weight-bolder mb-1">Multiempresa y roles</h6>
+                        <p class="text-secondary text-sm mb-0">Separación de datos por compañía. Roles Super Admin, Administrador y Operador con permisos granulares por módulo.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <!-- Architecture diagram as cards -->
+                <div class="card border-0" style="background:linear-gradient(135deg,#0f1628,#1a237e);border-radius:20px;padding:32px;">
+                    <div class="row g-3 text-center">
+                        <div class="col-4">
+                            <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:20px 12px;">
+                                <i class="fas fa-microchip text-info fa-2x mb-2"></i>
+                                <p class="text-white text-xs font-weight-bold mb-0">ESP32 / PLC / RTU</p>
+                                <p class="text-white opacity-6 text-xs mb-0">Sensores de campo</p>
+                            </div>
+                        </div>
+                        <div class="col-4 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-long-arrow-alt-right text-white fa-2x opacity-5"></i>
+                        </div>
+                        <div class="col-4">
+                            <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:20px 12px;">
+                                <i class="fas fa-broadcast-tower text-warning fa-2x mb-2"></i>
+                                <p class="text-white text-xs font-weight-bold mb-0">MQTT Broker</p>
+                                <p class="text-white opacity-6 text-xs mb-0">Telemetría en tiempo real</p>
+                            </div>
+                        </div>
+                        <div class="col-12 d-flex justify-content-center py-1">
+                            <i class="fas fa-arrow-down text-white fa-lg opacity-5"></i>
+                        </div>
+                        <div class="col-4">
+                            <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:20px 12px;">
+                                <i class="fas fa-server text-success fa-2x mb-2"></i>
+                                <p class="text-white text-xs font-weight-bold mb-0">Django + DRF</p>
+                                <p class="text-white opacity-6 text-xs mb-0">Backend + API REST</p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:20px 12px;">
+                                <i class="fas fa-database text-primary fa-2x mb-2"></i>
+                                <p class="text-white text-xs font-weight-bold mb-0">PostgreSQL</p>
+                                <p class="text-white opacity-6 text-xs mb-0">Históricos y auditoría</p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:20px 12px;">
+                                <i class="fas fa-chart-bar text-danger fa-2x mb-2"></i>
+                                <p class="text-white text-xs font-weight-bold mb-0">Dashboard</p>
+                                <p class="text-white opacity-6 text-xs mb-0">SCADA Web 24/7</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================================================================ FEATURE STRIP -->
+<div class="feature-strip py-4">
+    <div class="container">
+        <div class="row g-0">
+            <div class="col-6 col-md-3"><div class="feature-item"><i class="fas fa-shield-alt d-block"></i><h6>Seguro</h6><p>Autenticación JWT + roles</p></div></div>
+            <div class="col-6 col-md-3"><div class="feature-item"><i class="fas fa-mobile-alt d-block"></i><h6>Responsive</h6><p>Mobile & Desktop</p></div></div>
+            <div class="col-6 col-md-3"><div class="feature-item"><i class="fas fa-plug d-block"></i><h6>Integrable</h6><p>REST API · MQTT · Modbus</p></div></div>
+            <div class="col-6 col-md-3"><div class="feature-item"><i class="fas fa-expand-alt d-block"></i><h6>Escalable</h6><p>Multi-campo · Multi-empresa</p></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================ PROYECTOS -->
+<section class="py-5 bg-gray-100" id="proyectos">
+    <div class="container">
+        <div class="text-center mb-5">
+            <p class="section-label">Casos reales</p>
+            <h2 class="section-title">Proyectos implementados</h2>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden;">
+                    <img src="{% static 'assets/img/MARIPOSA.png' %}" class="card-img-top" alt="Fauna" style="height:200px;object-fit:cover;">
+                    <div class="card-body p-4">
+                        <span class="badge bg-gradient-success mb-2">FAUNA</span>
+                        <h5 class="font-weight-bolder">Monitoreo de lepidópteros — UNALM</h5>
+                        <p class="text-secondary text-sm">Seguimiento de mariposas con correlación de variables microclimáticas para dinámica poblacional.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden;">
+                    <img src="{% static 'assets/img/oilRP.png' %}" class="card-img-top" alt="Oilfield" style="height:200px;object-fit:cover;">
+                    <div class="card-body p-4">
+                        <span class="badge bg-gradient-primary mb-2">OILFIELD</span>
+                        <h5 class="font-weight-bolder">Monitoreo dinamométrico de pozos</h5>
+                        <p class="text-secondary text-sm">Cartas dinamométricas, llenado de bomba y producción en tiempo real para campos de extracción.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden;">
+                    <img src="{% static 'assets/img/dash.png' %}" class="card-img-top" alt="Dashboard" style="height:200px;object-fit:cover;">
+                    <div class="card-body p-4">
+                        <span class="badge bg-gradient-dark mb-2">TRANSFORMADORES</span>
+                        <h5 class="font-weight-bolder">Red eléctrica de distribución</h5>
+                        <p class="text-secondary text-sm">Monitoreo de temperatura, carga y factor de potencia con mantenimiento predictivo.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================================================================ CTA -->
+<section class="cta-section">
+    <div class="container">
+        <h2 class="mb-3">¿Listo para comenzar?</h2>
+        <p class="mb-4">Accede al sistema con tus credenciales o contáctanos para una demostración.</p>
+        <a href="{% url 'user_app:user-login' %}" class="btn-cta-white">
+            <i class="fas fa-sign-in-alt me-2"></i>Ingresar al sistema
+        </a>
+    </div>
+</section>
+
+<!-- ================================================================ FOOTER -->
+<footer>
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <p class="logo-footer mb-2">Smart<span>IO</span></p>
+                <p class="mb-0">Plataforma de monitoreo industrial y ambiental basada en IoT e IA.</p>
+            </div>
+            <div class="col-md-4">
+                <p class="text-white font-weight-bold mb-2">Módulos</p>
+                <ul class="list-unstyled mb-0">
+                    <li><a href="{% url 'user_app:user-login' %}" class="text-decoration-none" style="color:rgba(255,255,255,.6);">FAUNA</a></li>
+                    <li><a href="{% url 'user_app:user-login' %}" class="text-decoration-none" style="color:rgba(255,255,255,.6);">OILFIELD</a></li>
+                    <li><a href="{% url 'user_app:user-login' %}" class="text-decoration-none" style="color:rgba(255,255,255,.6);">TRANSFORMADORES</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <p class="text-white font-weight-bold mb-2">Sistema</p>
+                <ul class="list-unstyled mb-0">
+                    <li><a href="{% url 'user_app:user-login' %}" class="text-decoration-none" style="color:rgba(255,255,255,.6);"><i class="fas fa-sign-in-alt me-1"></i>Iniciar sesión</a></li>
+                    <li><a href="{% url 'user_app:admin_dashboard' %}" class="text-decoration-none" style="color:rgba(255,255,255,.6);"><i class="fas fa-user-cog me-1"></i>Panel Admin</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr>
+        <p class="text-center mb-0" style="font-size:.8rem;">© 2025 SmartIO — Desarrollado con <i class="fas fa-heart" style="color:#f48fb1;"></i> para monitoreo industrial</p>
+    </div>
+</footer>
+
+<script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
+<script>
+// Smooth active nav on scroll
+window.addEventListener('scroll', function() {
+    var nav = document.querySelector('.top-nav');
+    if (window.scrollY > 60) {
+        nav.style.boxShadow = '0 4px 32px rgba(52,71,103,.15)';
+    } else {
+        nav.style.boxShadow = '0 2px 24px rgba(52,71,103,.08)';
+    }
+});
+</script>
+</body>
+</html>

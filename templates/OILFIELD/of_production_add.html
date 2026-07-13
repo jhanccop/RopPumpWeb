@@ -1,0 +1,209 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static %}
+
+{% block title %}Nueva Producción Diaria{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock %}
+{% block appName %}OILFIELD{% endblock %}
+{% block Type %}Nueva Producción Diaria{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-9 col-md-11 col-12">
+    <div class="card mt-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+          <i class="fas fa-plus text-white me-2"></i>
+          <h6 class="text-white mb-0">NUEVA PRODUCCIÓN DIARIA</h6>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">{% csrf_token %}
+
+          <!-- ── Tanque y Fecha ───────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-0">
+            <i class="fas fa-database me-1"></i> Tanque y Fecha
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-7">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Tanque *</label>
+                {{ form.Tank }}
+              </div>
+              {% if form.Tank.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Tank.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-5">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Fecha Operativa *</label>
+                {{ form.OperativeDate }}
+              </div>
+              {% if form.OperativeDate.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.OperativeDate.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- ── Inventario en Tanque ─────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-2 mb-0">
+            <i class="fas fa-tint me-1"></i> Inventario en Tanque
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Nivel inicio (bbl)</label>
+                {{ form.TankLevelStart }}
+              </div>
+              {% if form.TankLevelStart.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.TankLevelStart.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Nivel fin (bbl)</label>
+                {{ form.TankLevelEnd }}
+              </div>
+              {% if form.TankLevelEnd.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.TankLevelEnd.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Producción neta (bbl)</label>
+                {{ form.TankProduction }}
+              </div>
+              {% if form.TankProduction.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.TankProduction.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- ── Producción ───────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-2 mb-0">
+            <i class="fas fa-chart-bar me-1"></i> Producción
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Oil (bbl)</label>
+                {{ form.OilProduction }}
+              </div>
+              {% if form.OilProduction.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.OilProduction.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Agua (bbl)</label>
+                {{ form.WaterProduction }}
+              </div>
+              {% if form.WaterProduction.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.WaterProduction.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Gas (Mscf)</label>
+                {{ form.GasProduction }}
+              </div>
+              {% if form.GasProduction.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.GasProduction.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Producción Diferida (bbl)</label>
+                {{ form.DeferredProduction }}
+              </div>
+              {% if form.DeferredProduction.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.DeferredProduction.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- ── Operación ────────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-2 mb-0">
+            <i class="fas fa-cogs me-1"></i> Operación
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Run Time (h)</label>
+                {{ form.RunTime }}
+              </div>
+              {% if form.RunTime.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.RunTime.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">SPM</label>
+                {{ form.SPM }}
+              </div>
+              {% if form.SPM.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.SPM.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Llenado (%)</label>
+                {{ form.Fillage }}
+              </div>
+              {% if form.Fillage.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Fillage.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-6 col-sm-3">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Condición Operativa</label>
+                {{ form.OperationalCondition }}
+              </div>
+              {% if form.OperationalCondition.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.OperationalCondition.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- ── Observaciones ───────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-2 mb-0">
+            <i class="fas fa-comment-alt me-1"></i> Observaciones
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="input-group input-group-outline mb-3">
+            <label class="form-label">Observaciones</label>
+            {{ form.Observations }}
+          </div>
+          {% if form.Observations.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Observations.errors.0 }}</p>{% endif %}
+
+          <div class="d-flex justify-content-between pt-3 mt-2 border-top">
+            <a class="btn btn-outline-secondary" href="{% url 'oilfield_app:production_list' %}">
+              <i class="fas fa-arrow-left me-1"></i> Volver
+            </a>
+            <button class="btn bg-gradient-success" type="submit">
+              <i class="fas fa-save me-1"></i> Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+(function() {
+    // Set today's date by default
+    var dateField = document.getElementById('id_OperativeDate');
+    if (dateField && !dateField.value) {
+        var today = new Date();
+        var y = today.getFullYear();
+        var m = String(today.getMonth()+1).padStart(2,'0');
+        var d = String(today.getDate()).padStart(2,'0');
+        dateField.value = y + '-' + m + '-' + d;
+    }
+
+    // Auto-calculate TankProduction = TankLevelEnd - TankLevelStart
+    var start = document.getElementById('id_TankLevelStart');
+    var end   = document.getElementById('id_TankLevelEnd');
+    var prod  = document.getElementById('id_TankProduction');
+    if (start && end && prod) {
+        function calc() {
+            var s = parseFloat(start.value);
+            var e = parseFloat(end.value);
+            if (!isNaN(s) && !isNaN(e)) {
+                prod.value = Math.max(0, e - s).toFixed(2);
+                prod.closest('.input-group-outline').classList.add('is-filled');
+            }
+        }
+        start.addEventListener('input', calc);
+        end.addEventListener('input', calc);
+    }
+})();
+</script>
+{% endblock JSscripts %}

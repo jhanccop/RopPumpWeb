@@ -1,0 +1,189 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static %}
+
+{% block title %}Editar Tanque{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock %}
+{% block appName %}OILFIELD{% endblock %}
+{% block Type %}Editar Tanque{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-9 col-md-11 col-12">
+    <div class="card mt-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-warning shadow-warning border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+          <i class="fas fa-edit text-white me-2"></i>
+          <h6 class="text-white mb-0">EDITAR TANQUE — {{ tank.Code }}</h6>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">{% csrf_token %}
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-info-circle me-1"></i> Información General
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Código *</label>
+                {{ form.Code }}
+              </div>
+              {% if form.Code.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Code.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-5">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Nombre *</label>
+                {{ form.Name }}
+              </div>
+              {% if form.Name.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Name.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Batería</label>
+                {{ form.Battery }}
+              </div>
+              {% if form.Battery.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Battery.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Tipo de Tanque</label>
+                {{ form.Type }}
+              </div>
+              {% if form.Type.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Type.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Estado</label>
+                {{ form.Status }}
+              </div>
+              {% if form.Status.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Status.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-ruler-combined me-1"></i> Dimensiones
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Cap. Nominal (bbl)</label>
+                {{ form.NominalCapacity }}
+              </div>
+              {% if form.NominalCapacity.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.NominalCapacity.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-3">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Cap. Operativa (bbl)</label>
+                {{ form.WorkingCapacity }}
+              </div>
+              {% if form.WorkingCapacity.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.WorkingCapacity.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-2">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Diámetro (m)</label>
+                {{ form.Diameter }}
+              </div>
+              {% if form.Diameter.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Diameter.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-2">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Altura (m)</label>
+                {{ form.Height }}
+              </div>
+              {% if form.Height.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Height.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-2">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Material</label>
+                {{ form.Material }}
+              </div>
+              {% if form.Material.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Material.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-microchip me-1"></i> Sensor y Alertas de Nivel
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Tipo de Sensor</label>
+                {{ form.SensorType }}
+              </div>
+              {% if form.SensorType.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.SensorType.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Alerta Nivel Bajo (%)</label>
+                {{ form.LowLevelAlert }}
+              </div>
+              {% if form.LowLevelAlert.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.LowLevelAlert.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Alerta Nivel Alto (%)</label>
+                {{ form.HighLevelAlert }}
+              </div>
+              {% if form.HighLevelAlert.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.HighLevelAlert.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-map-marker-alt me-1"></i> Ubicación
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-6">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Latitud</label>
+                {{ form.Latitude }}
+              </div>
+              {% if form.Latitude.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Latitude.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Longitud</label>
+                {{ form.Longitude }}
+              </div>
+              {% if form.Longitude.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Longitude.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-calendar-alt me-1"></i> Instalación
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Fecha de Instalación</label>
+                {{ form.InstallationDate }}
+              </div>
+              {% if form.InstallationDate.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.InstallationDate.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between pt-3 mt-3 border-top">
+            <a class="btn btn-outline-secondary" href="{% url 'oilfield_app:tank_list' %}">
+              <i class="fas fa-arrow-left me-1"></i> Volver
+            </a>
+            <button class="btn bg-gradient-warning" type="submit">
+              <i class="fas fa-save me-1"></i> Actualizar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

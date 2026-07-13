@@ -41,4 +41,6 @@ urlpatterns = [
     re_path('', include('Apps.users.urls')),
     re_path('', include('Apps.FAUNA.weatherStation.urls')),
     re_path('', include('Apps.FAUNA.camera.urls')),
+    path('transformer/', include('Apps.TRANSFORMADOR.urls')),
+    path('oilfield/', include('Apps.OILFIELD.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

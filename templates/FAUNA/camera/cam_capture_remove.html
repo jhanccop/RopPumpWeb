@@ -21,7 +21,7 @@
                 <img src="{{ object.Image.url }}" alt="capture"
                     style="max-height:120px;border-radius:8px;margin-bottom:12px;">
                 {% endif %}
-                <i class="material-icons text-danger" style="font-size:2.5rem;">warning</i>
+                <i class="fas fa-exclamation-triangle text-danger" style="font-size:2.5rem;"></i>
                 <h5 class="mt-2">Delete capture</h5>
                 <div class="mb-2">
                     {% for det in object.detections.all %}

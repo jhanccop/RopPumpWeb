@@ -11,6 +11,7 @@ Message types (JSON field "type"):
   weatherStationData     → stores WeatherReading
   cameraStationSetting   → responds with device config
   cameraCapture          → stores CameraCapture (with optional image)
+  cameraData (imageName vacío) → health report → stores CameraDeviceHealth, no pending
 
 Inbound payloads
 ────────────────
@@ -300,9 +301,44 @@ def _cam_reply(client, mac: str):
     print(f"[cam-reply] → {mac_norm}  {payload}")
     print(f"[cam-reply] debug - Hora Perú: {now_peru.strftime('%H:%M:%S')}, On: {ton_time}, Off: {toff_time}, Active: {active}")
 
-def _handle_cam_data(client, data):
-    """Cache sensor data in _pending, flush any stale image buffer, reply with config."""
+def _handle_cam_health(data):
+    """Store health data as a CameraCapture row (no image). Never touches _pending."""
     mac = data.get("mac", "")
+    rows = db_get(
+        'SELECT id FROM "camera_camerastation" WHERE "MacAddress" = %s',
+        (mac,),
+    )
+    if not rows:
+        print(f"[cam-health] unknown MAC: {mac}")
+        return
+    station_id = rows[0][0]
+    db_exec(
+        """INSERT INTO "camera_cameracapture"
+               ("Station_id","DateCapture","Image",
+                "Temperature","Humidity","VoltageBattery","MemFree","Notes")
+           VALUES (%s,NOW(),'',%s,%s,%s,%s,'health')""",
+        (
+            station_id,
+            _float(data.get("temperature")),
+            _float(data.get("humidity")),
+            _float(data.get("battery")),
+            _float(data.get("memory_kb")),
+        ),
+    )
+    print(f"[cam-health] station={station_id}"
+          f"  battery={data.get('battery')}  memory_kb={data.get('memory_kb')}"
+          f"  T={data.get('temperature')}  H={data.get('humidity')}")
+
+
+def _handle_cam_data(client, data):
+    """Cache sensor data in _pending, or store as health log if no image expected."""
+    mac = data.get("mac", "")
+    img_name = data.get("imageName", "").strip()
+
+    # ── Health report: imageName vacío → no hay imagen entrante ──
+    if not img_name:
+        _handle_cam_health(data)
+        return
 
     # If a previous image buffer was never completed, save whatever arrived
     if mac in _img_buf and len(_img_buf[mac]) > 0:
@@ -313,7 +349,7 @@ def _handle_cam_data(client, data):
         del _img_buf[mac]
 
     _pending[mac] = {
-        "imageName":   data.get("imageName", f"{mac.replace(':', '')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"),
+        "imageName":   img_name,
         "temperature": _float(data.get("temperature")),
         "humidity":    _float(data.get("humidity")),
         "battery":     _float(data.get("battery")),
@@ -321,7 +357,7 @@ def _handle_cam_data(client, data):
         "detected":    bool(data.get("detected", False)),
         "targetClass": int(data.get("targetClass", 0)),
     }
-    print(f"[cam-data] pending  mac={mac}  img={_pending[mac]['imageName']}"
+    print(f"[cam-data] pending  mac={mac}  img={img_name}"
           f"  T={_pending[mac]['temperature']}  H={_pending[mac]['humidity']}"
           f"  detected={_pending[mac]['detected']}")
     #_cam_reply(client, mac)
@@ -448,6 +484,7 @@ def _process(client, topic, payload):
         dispatch = {
             "weatherStationData": lambda: _handle_ws_data(client, data),
             "cameraData":         lambda: _handle_cam_data(client, data),
+            "cameraHealth":       lambda: _handle_cam_health(data),
         }
         handler = dispatch.get(msg_type)
         if handler:
@@ -473,10 +510,14 @@ def on_message(_client, _userdata, message):
 
 # ── Entry point ───────────────────────────────────────────────
 if __name__ == "__main__":
-    client = mqtt.Client(
-        client_id=CLIENT_ID,
-        callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
-    )
+    # paho-mqtt ≥2.0 requires callback_api_version; 1.x does not have it
+    if hasattr(mqtt, "CallbackAPIVersion"):
+        client = mqtt.Client(
+            client_id=CLIENT_ID,
+            callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
+        )
+    else:
+        client = mqtt.Client(client_id=CLIENT_ID)
     client.username_pw_set(USERNAME, PASSWORD)
     client.on_connect = on_connect
     client.on_message = on_message

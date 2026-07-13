@@ -50,6 +50,12 @@ INSTALLED_APPS = [
     'Apps.FAUNA.weatherStation',
     'Apps.FAUNA.camera',
 
+    # TRANSFORMADOR app
+    'Apps.TRANSFORMADOR',
+
+    # OILFIELD app
+    'Apps.OILFIELD',
+
     # third apps
     'multiselectfield',
     'rest_framework',

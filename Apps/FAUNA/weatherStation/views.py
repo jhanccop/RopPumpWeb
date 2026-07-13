@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+from Apps.users.mixins import AppAccessMixin
 from django.views.generic import (
     TemplateView,
     ListView,
@@ -20,7 +21,12 @@ from .models import WeatherStation, WeatherReading
 from .forms import WeatherStationForm, WeatherReadingForm, ReportFilterForm
 
 
-# =================== MIXIN ===========================
+# =================== MIXINS ===========================
+class FaunaAccessMixin(AppAccessMixin):
+    required_app = 'fauna'
+    login_url = reverse_lazy('user_app:user-login')
+
+
 class CompanyMixin(object):
     def get_context_data(self, **kwargs):
         company_name = User.objects.get_company_name(
@@ -35,7 +41,7 @@ class CompanyMixin(object):
 
 
 # =================== DASHBOARD ===========================
-class DashboardView(LoginRequiredMixin, CompanyMixin, TemplateView):
+class DashboardView(FaunaAccessMixin, CompanyMixin, TemplateView):
     template_name = 'FAUNA/weatherStation/ws_dashboard.html'
     login_url = reverse_lazy('user_app:user-login')
 
@@ -81,7 +87,7 @@ class DashboardView(LoginRequiredMixin, CompanyMixin, TemplateView):
 
 
 # =================== STATION CRUD ===========================
-class StationListView(LoginRequiredMixin, CompanyMixin, ListView):
+class StationListView(FaunaAccessMixin, CompanyMixin, ListView):
     template_name = 'FAUNA/weatherStation/ws_station_list.html'
     login_url = reverse_lazy('user_app:user-login')
     context_object_name = 'stations'
@@ -90,7 +96,7 @@ class StationListView(LoginRequiredMixin, CompanyMixin, ListView):
         return WeatherStation.objects.list_by_company(self.get_company_name())
 
 
-class StationAddView(LoginRequiredMixin, CompanyMixin, CreateView):
+class StationAddView(FaunaAccessMixin, CompanyMixin, CreateView):
     template_name = 'FAUNA/weatherStation/ws_station_add.html'
     login_url = reverse_lazy('user_app:user-login')
     model = WeatherStation
@@ -103,7 +109,7 @@ class StationAddView(LoginRequiredMixin, CompanyMixin, CreateView):
         return context
 
 
-class StationUpdateView(LoginRequiredMixin, CompanyMixin, UpdateView):
+class StationUpdateView(FaunaAccessMixin, CompanyMixin, UpdateView):
     template_name = 'FAUNA/weatherStation/ws_station_update.html'
     login_url = reverse_lazy('user_app:user-login')
     model = WeatherStation
@@ -116,14 +122,14 @@ class StationUpdateView(LoginRequiredMixin, CompanyMixin, UpdateView):
         return context
 
 
-class StationRemoveView(LoginRequiredMixin, CompanyMixin, DeleteView):
+class StationRemoveView(FaunaAccessMixin, CompanyMixin, DeleteView):
     template_name = 'FAUNA/weatherStation/ws_station_remove.html'
     login_url = reverse_lazy('user_app:user-login')
     model = WeatherStation
     success_url = reverse_lazy('weather_app:station_list')
 
 
-class StationDetailView(LoginRequiredMixin, CompanyMixin, DetailView):
+class StationDetailView(FaunaAccessMixin, CompanyMixin, DetailView):
     template_name = 'FAUNA/weatherStation/ws_station_detail.html'
     login_url = reverse_lazy('user_app:user-login')
     model = WeatherStation
@@ -165,7 +171,7 @@ class StationDetailView(LoginRequiredMixin, CompanyMixin, DetailView):
 
 
 # =================== READINGS ===========================
-class ReadingListView(LoginRequiredMixin, CompanyMixin, ListView):
+class ReadingListView(FaunaAccessMixin, CompanyMixin, ListView):
     template_name = 'FAUNA/weatherStation/ws_reading_list.html'
     login_url = reverse_lazy('user_app:user-login')
     context_object_name = 'readings'
@@ -187,7 +193,7 @@ class ReadingListView(LoginRequiredMixin, CompanyMixin, ListView):
         return context
 
 
-class ReadingAddView(LoginRequiredMixin, CompanyMixin, CreateView):
+class ReadingAddView(FaunaAccessMixin, CompanyMixin, CreateView):
     template_name = 'FAUNA/weatherStation/ws_reading_add.html'
     login_url = reverse_lazy('user_app:user-login')
     model = WeatherReading
@@ -208,7 +214,7 @@ class ReadingAddView(LoginRequiredMixin, CompanyMixin, CreateView):
 
 
 # =================== REPORTS ===========================
-class ReportView(LoginRequiredMixin, CompanyMixin, FormView):
+class ReportView(FaunaAccessMixin, CompanyMixin, FormView):
     template_name = 'FAUNA/weatherStation/ws_report.html'
     login_url = reverse_lazy('user_app:user-login')
     form_class = ReportFilterForm

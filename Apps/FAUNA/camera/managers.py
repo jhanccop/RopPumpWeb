@@ -16,7 +16,7 @@ class CameraStationManager(models.Manager):
         ).values(
             'id', 'StationName', 'Description',
             'Latitude', 'Longitude', 'Altitude',
-            'Status',
+            'Status', 'MacAddress',
         )
 
 

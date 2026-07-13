@@ -1,0 +1,203 @@
+{% extends 'TRANSFORMADOR/base_transformer.html' %}
+{% load static %}
+
+{% block title %}Nueva Lectura{% endblock title %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-md-10 col-12">
+    <div class="card mt-4">
+
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+          <i class="fas fa-plus text-white me-2"></i>
+          <h6 class="text-white mb-0">NUEVA LECTURA DE MONITOREO</h6>
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        <form method="POST">{% csrf_token %}
+
+          <!-- Transformador -->
+          <div class="mb-4">
+            <label class="text-xs text-uppercase font-weight-bolder text-secondary mb-1">
+              <i class="fas fa-bolt me-1"></i>Transformador *
+            </label>
+            <div class="input-group input-group-outline is-focused">
+              {{ form.Transformer }}
+            </div>
+            {% if form.Transformer.errors %}
+            <p class="text-danger text-xs mt-1 mb-0">{{ form.Transformer.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <hr class="horizontal dark mb-4">
+
+          <!-- Variables de monitoreo: 2 columnas -->
+          <div class="row g-3">
+
+            <!-- Hot Spot -->
+            <div class="col-12 col-sm-6">
+              <div class="h-100 p-3 border-radius-lg" style="background:#fff5f5;border-left:4px solid #e53e3e;">
+                <div class="d-flex align-items-start gap-2 mb-2">
+                  <span class="badge bg-gradient-danger mt-1"><i class="fas fa-thermometer-full"></i></span>
+                  <div>
+                    <p class="text-xs font-weight-bolder mb-0" style="color:#c53030;">Hot Spot — Devanado</p>
+                    <p class="text-xxs text-secondary mb-0">Punto caliente (fibra óptica / estimado)</p>
+                  </div>
+                </div>
+                <div class="input-group input-group-outline">
+                  <label class="form-label">°C</label>
+                  {{ form.HotSpotTemperature }}
+                </div>
+                {% if form.HotSpotTemperature.errors %}
+                <p class="text-danger text-xxs mt-1 mb-0">{{ form.HotSpotTemperature.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xxs text-secondary mt-1 mb-0">Alerta: &gt;98°C · Crítico: &gt;120°C</p>
+              </div>
+            </div>
+
+            <!-- OTI -->
+            <div class="col-12 col-sm-6">
+              <div class="h-100 p-3 border-radius-lg" style="background:#fffaf0;border-left:4px solid #dd6b20;">
+                <div class="d-flex align-items-start gap-2 mb-2">
+                  <span class="badge mt-1" style="background:#dd6b20;"><i class="fas fa-thermometer-three-quarters"></i></span>
+                  <div>
+                    <p class="text-xs font-weight-bolder mb-0" style="color:#c05621;">Temp. Aceite Superior — OTI</p>
+                    <p class="text-xxs text-secondary mb-0">Oil Temperature Indicator (tapa tanque)</p>
+                  </div>
+                </div>
+                <div class="input-group input-group-outline">
+                  <label class="form-label">°C</label>
+                  {{ form.OilTemperature }}
+                </div>
+                {% if form.OilTemperature.errors %}
+                <p class="text-danger text-xxs mt-1 mb-0">{{ form.OilTemperature.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xxs text-secondary mt-1 mb-0">Alerta: &gt;75°C · Crítico: &gt;90°C</p>
+              </div>
+            </div>
+
+            <!-- Presión PRD -->
+            <div class="col-12 col-sm-6">
+              <div class="h-100 p-3 border-radius-lg" style="background:#ebf8ff;border-left:4px solid #3182ce;">
+                <div class="d-flex align-items-start gap-2 mb-2">
+                  <span class="badge bg-gradient-info mt-1"><i class="fas fa-tachometer-alt"></i></span>
+                  <div>
+                    <p class="text-xs font-weight-bolder mb-0" style="color:#2b6cb0;">Presión Interna / PRD</p>
+                    <p class="text-xxs text-secondary mb-0">Pressure Relief Device (kPa)</p>
+                  </div>
+                </div>
+                <div class="input-group input-group-outline">
+                  <label class="form-label">kPa</label>
+                  {{ form.InternalPressure }}
+                </div>
+                {% if form.InternalPressure.errors %}
+                <p class="text-danger text-xxs mt-1 mb-0">{{ form.InternalPressure.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xxs text-secondary mt-1 mb-0">Alerta: &gt;50 kPa · Crítico: &gt;70 kPa</p>
+              </div>
+            </div>
+
+            <!-- Nivel de Aceite -->
+            <div class="col-12 col-sm-6">
+              <div class="h-100 p-3 border-radius-lg" style="background:#f0fff4;border-left:4px solid #2f855a;">
+                <div class="d-flex align-items-start gap-2 mb-2">
+                  <span class="badge mt-1" style="background:#2f855a;"><i class="fas fa-fill-drip"></i></span>
+                  <div>
+                    <p class="text-xs font-weight-bolder mb-0" style="color:#276749;">Nivel de Aceite</p>
+                    <p class="text-xxs text-secondary mb-0">% sobre el visor / conservador</p>
+                  </div>
+                </div>
+                <div class="input-group input-group-outline">
+                  <label class="form-label">%</label>
+                  {{ form.OilLevel }}
+                </div>
+                {% if form.OilLevel.errors %}
+                <p class="text-danger text-xxs mt-1 mb-0">{{ form.OilLevel.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xxs text-secondary mt-1 mb-0">Alerta: &lt;40% · Crítico: &lt;25%</p>
+              </div>
+            </div>
+
+            <!-- Vibración -->
+            <div class="col-12 col-sm-6">
+              <div class="h-100 p-3 border-radius-lg" style="background:#faf5ff;border-left:4px solid #6b46c1;">
+                <div class="d-flex align-items-start gap-2 mb-2">
+                  <span class="badge mt-1" style="background:#6b46c1;"><i class="fas fa-wave-square"></i></span>
+                  <div>
+                    <p class="text-xs font-weight-bolder mb-0" style="color:#553c9a;">Vibración</p>
+                    <p class="text-xxs text-secondary mb-0">Velocidad RMS (ISO 10816)</p>
+                  </div>
+                </div>
+                <div class="input-group input-group-outline">
+                  <label class="form-label">mm/s</label>
+                  {{ form.Vibration }}
+                </div>
+                {% if form.Vibration.errors %}
+                <p class="text-danger text-xxs mt-1 mb-0">{{ form.Vibration.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xxs text-secondary mt-1 mb-0">Alerta: &gt;4.5 · Crítico: &gt;7.1 mm/s</p>
+              </div>
+            </div>
+
+            <!-- Humedad en Aceite -->
+            <div class="col-12 col-sm-6">
+              <div class="h-100 p-3 border-radius-lg" style="background:#e6fffa;border-left:4px solid #2c7a7b;">
+                <div class="d-flex align-items-start gap-2 mb-2">
+                  <span class="badge mt-1" style="background:#2c7a7b;"><i class="fas fa-tint"></i></span>
+                  <div>
+                    <p class="text-xs font-weight-bolder mb-0" style="color:#234e52;">Humedad en Aceite</p>
+                    <p class="text-xxs text-secondary mb-0">Contenido de agua en dieléctrico</p>
+                  </div>
+                </div>
+                <div class="input-group input-group-outline">
+                  <label class="form-label">ppm</label>
+                  {{ form.OilHumidity }}
+                </div>
+                {% if form.OilHumidity.errors %}
+                <p class="text-danger text-xxs mt-1 mb-0">{{ form.OilHumidity.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xxs text-secondary mt-1 mb-0">Alerta: &gt;20 ppm · Crítico: &gt;35 ppm</p>
+              </div>
+            </div>
+
+            <!-- Temperatura Ambiente (secundaria, ancho completo) -->
+            <div class="col-12">
+              <div class="p-3 border-radius-lg d-flex flex-wrap align-items-center gap-3" style="background:#f7fafc;border:1px solid #e2e8f0;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fas fa-cloud-sun text-secondary"></i>
+                  <span class="text-xs text-secondary font-weight-bolder">Temperatura Ambiente</span>
+                  <span class="text-xxs text-secondary">(referencia)</span>
+                </div>
+                <div style="max-width:180px;">
+                  <div class="input-group input-group-outline mb-0">
+                    <label class="form-label">°C</label>
+                    {{ form.AmbientTemperature }}
+                  </div>
+                </div>
+                {% if form.AmbientTemperature.errors %}
+                <p class="text-danger text-xxs mt-1 mb-0 w-100">{{ form.AmbientTemperature.errors.0 }}</p>
+                {% endif %}
+              </div>
+            </div>
+
+          </div><!-- end row -->
+
+          <div class="d-flex justify-content-between pt-4 mt-3 border-top">
+            <a class="btn btn-outline-secondary" href="{% url 'transformer_app:reading_list' %}">
+              <i class="fas fa-arrow-left me-1"></i> Volver
+            </a>
+            <button class="btn bg-gradient-success" type="submit">
+              <i class="fas fa-save me-1"></i> Guardar Lectura
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

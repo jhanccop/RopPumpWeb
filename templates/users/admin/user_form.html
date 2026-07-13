@@ -1,0 +1,178 @@
+{% extends 'users/admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Usuario{% endblock title %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 col-xl-10 mx-auto">
+        <div class="card mb-4">
+            <div class="card-header pb-0 {% if object %}bg-gradient-warning{% else %}bg-gradient-success{% endif %}">
+                <h6 class="text-white text-uppercase font-weight-bolder mb-0">
+                    <i class="fas fa-{% if object %}edit{% else %}user-plus{% endif %} me-2"></i>
+                    {% if object %}Editar Usuario: {{ object.UserName }}{% else %}Nuevo Usuario{% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Datos Personales -->
+                    <h6 class="font-weight-bolder mt-3 mb-3">
+                        <i class="fas fa-id-card me-2 text-primary"></i>Datos Personales
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline {% if form.Name.value %}is-filled{% endif %}">
+                                <label class="form-label">Nombre</label>
+                                {{ form.Name }}
+                            </div>
+                            {% if form.Name.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.Name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline {% if form.LastName.value %}is-filled{% endif %}">
+                                <label class="form-label">Apellido</label>
+                                {{ form.LastName }}
+                            </div>
+                            {% if form.LastName.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.LastName.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        {% if form.UserName %}
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline {% if form.UserName.value %}is-filled{% endif %}">
+                                <label class="form-label">Nombre de usuario</label>
+                                {{ form.UserName }}
+                            </div>
+                            {% if form.UserName.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.UserName.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline {% if form.Email.value %}is-filled{% endif %}">
+                                <label class="form-label">Email</label>
+                                {{ form.Email }}
+                            </div>
+                            {% if form.Email.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.Email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Acceso -->
+                    <h6 class="font-weight-bolder mt-3 mb-3">
+                        <i class="fas fa-key me-2 text-warning"></i>Configuración de Acceso
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline is-focused">
+                                <label class="form-label">Compañía</label>
+                                {{ form.CompanyId }}
+                            </div>
+                            {% if form.CompanyId.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.CompanyId.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        {% if form.Role %}
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline is-focused">
+                                <label class="form-label">Rol</label>
+                                {{ form.Role }}
+                            </div>
+                            {% if form.Role.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.Role.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6 mb-3 d-flex align-items-center">
+                            <div class="form-check form-switch">
+                                {{ form.IsActive }}
+                                <label class="form-check-label ms-2" for="{{ form.IsActive.id_for_label }}">
+                                    Usuario activo
+                                </label>
+                            </div>
+                            {% if form.IsActive.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.IsActive.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Contraseña (solo en creación) -->
+                    {% if form.password1 %}
+                    <h6 class="font-weight-bolder mt-3 mb-3">
+                        <i class="fas fa-lock me-2 text-danger"></i>Contraseña
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline">
+                                <label class="form-label">Contraseña</label>
+                                {{ form.password1 }}
+                            </div>
+                            {% if form.password1.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.password1.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline">
+                                <label class="form-label">Confirmar contraseña</label>
+                                {{ form.password2 }}
+                            </div>
+                            {% if form.password2.errors %}
+                            <div class="text-danger text-xs mt-1">{{ form.password2.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Aplicaciones -->
+                    <h6 class="font-weight-bolder mt-3 mb-3">
+                        <i class="fas fa-th me-2 text-info"></i>Aplicaciones habilitadas
+                    </h6>
+                    <div class="row">
+                        {% for checkbox in form.Applications %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card border p-3 h-100"
+                                 style="cursor:pointer; border-color: {% if checkbox.data.attrs.checked %}#344767{% else %}#dee2e6{% endif %} !important;">
+                                <div class="form-check">
+                                    {{ checkbox.tag }}
+                                    <label class="form-check-label ms-2 d-flex align-items-center"
+                                           for="{{ checkbox.id_for_label }}" style="cursor:pointer;">
+                                        <span class="text-sm font-weight-bold">{{ checkbox.choice_label }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-secondary text-sm">No hay aplicaciones disponibles.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <hr class="horizontal dark">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'user_app:user_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn {% if object %}bg-gradient-warning{% else %}bg-gradient-success{% endif %}">
+                            <i class="fas fa-save me-1"></i>
+                            {% if object %}Guardar cambios{% else %}Crear usuario{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

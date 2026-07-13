@@ -50,7 +50,7 @@
                     <div class="row align-items-center px-2">
                         <div class="col">
                             <h6 class="text-white mb-0">
-                                <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">thermostat</i>
+                                <i class="fas fa-thermometer-half me-1" style="vertical-align:middle;font-size:16px;"></i>
                                 Weather Readings
                             </h6>
                         </div>
@@ -121,7 +121,7 @@
                             {% empty %}
                             <tr>
                                 <td colspan="8" class="text-center text-secondary py-5">
-                                    <i class="material-icons d-block mb-2" style="font-size:3rem;opacity:.3;">thermostat</i>
+                                    <i class="fas fa-thermometer-half d-block mb-2" style="font-size:3rem;opacity:.3;"></i>
                                     No readings found.
                                     <a href="{% url 'weather_app:reading_add' %}" class="btn btn-sm bg-gradient-success ms-2">
                                         Add First Reading

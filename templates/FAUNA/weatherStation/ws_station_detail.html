@@ -24,7 +24,7 @@
                     <div class="row align-items-center px-3">
                         <div class="col">
                             <h6 class="text-white mb-0">
-                                <i class="material-icons me-1" style="vertical-align:middle;font-size:16px;">sensors</i>
+                                <i class="fas fa-broadcast-tower me-1" style="vertical-align:middle;font-size:16px;"></i>
                                 {{ station.StationName }}
                             </h6>
                             <p class="text-white text-xs mb-0 opacity-8">{{ station.Description|default:"" }}</p>
@@ -51,49 +51,49 @@
                         <div class="row g-2">
                             <div class="col-6 col-md-6">
                                 <div class="card bg-gradient-primary text-white text-center py-2 mb-0">
-                                    <i class="material-icons" style="font-size:1.4rem;">thermostat</i>
+                                    <i class="fas fa-thermometer-half" style="font-size:1.4rem;"></i>
                                     <div class="fw-bold" style="font-size:.95rem;">{% if latest.Temperature is not None %}{{ latest.Temperature|floatformat:1 }}°C{% else %}—{% endif %}</div>
                                     <small style="font-size:.65rem;">Temp</small>
                                 </div>
                             </div>
                             <div class="col-6 col-md-6">
                                 <div class="card bg-gradient-primary text-white text-center py-2 mb-0">
-                                    <i class="material-icons" style="font-size:1.4rem;">water_drop</i>
+                                    <i class="fas fa-tint" style="font-size:1.4rem;"></i>
                                     <div class="fw-bold" style="font-size:.95rem;">{% if latest.Humidity is not None %}{{ latest.Humidity|floatformat:1 }}%{% else %}—{% endif %}</div>
                                     <small style="font-size:.65rem;">Humidity</small>
                                 </div>
                             </div>
                             <div class="col-6 col-md-6">
                                 <div class="card bg-gradient-warning text-white text-center py-2 mb-0">
-                                    <i class="material-icons" style="font-size:1.4rem;">wb_sunny</i>
+                                    <i class="fas fa-sun" style="font-size:1.4rem;"></i>
                                     <div class="fw-bold" style="font-size:.95rem;">{% if latest.SolarRadiation is not None %}{{ latest.SolarRadiation|floatformat:0 }}{% else %}—{% endif %}</div>
                                     <small style="font-size:.65rem;">W/m²</small>
                                 </div>
                             </div>
                             <div class="col-6 col-md-6">
                                 <div class="card bg-gradient-info text-white text-center py-2 mb-0">
-                                    <i class="material-icons" style="font-size:1.4rem;">grain</i>
+                                    <i class="fas fa-umbrella" style="font-size:1.4rem;"></i>
                                     <div class="fw-bold" style="font-size:.95rem;">{% if latest.Precipitation is not None %}{{ latest.Precipitation|floatformat:1 }}{% else %}—{% endif %}</div>
                                     <small style="font-size:.65rem;">mm</small>
                                 </div>
                             </div>
                             <div class="col-6 col-md-6">
                                 <div class="card bg-gradient-dark text-white text-center py-2 mb-0">
-                                    <i class="material-icons" style="font-size:1.4rem;">air</i>
+                                    <i class="fas fa-snowflake" style="font-size:1.4rem;"></i>
                                     <div class="fw-bold" style="font-size:.95rem;">{% if latest.WindSpeed is not None %}{{ latest.WindSpeed|floatformat:1 }}{% else %}—{% endif %}</div>
                                     <small style="font-size:.65rem;">m/s</small>
                                 </div>
                             </div>
                             <div class="col-6 col-md-6">
                                 <div class="card bg-gradient-dark text-white text-center py-2 mb-0">
-                                    <i class="material-icons" style="font-size:1.4rem;">explore</i>
+                                    <i class="fas fa-compass" style="font-size:1.4rem;"></i>
                                     <div class="fw-bold" style="font-size:.95rem;">{% if latest.WindDirection is not None %}{{ latest.WindDirection|floatformat:0 }}°{% else %}—{% endif %}</div>
                                     <small style="font-size:.65rem;">Dir</small>
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="card text-white text-center py-2 mb-0 {% if latest.VoltageBattery is not None and latest.VoltageBattery < 3.5 %}bg-gradient-danger{% else %}bg-gradient-success{% endif %}">
-                                    <i class="material-icons" style="font-size:1.4rem;">battery_charging_full</i>
+                                    <i class="fas fa-battery-full" style="font-size:1.4rem;"></i>
                                     <div class="fw-bold" style="font-size:.95rem;">{% if latest.VoltageBattery is not None %}{{ latest.VoltageBattery|floatformat:2 }} V{% else %}—{% endif %}</div>
                                     <small style="font-size:.65rem;">Battery</small>
                                 </div>
@@ -213,7 +213,7 @@
                     <div class="row align-items-center px-2">
                         <div class="col">
                             <h6 class="text-white mb-0" style="font-size:.8rem;">
-                                <i class="material-icons me-1" style="vertical-align:middle;font-size:14px;">table_chart</i>
+                                <i class="fas fa-chart-bar me-1" style="vertical-align:middle;font-size:14px;"></i>
                                 Readings ({{ readings|length }})
                             </h6>
                         </div>
@@ -261,7 +261,7 @@
                             {% empty %}
                             <tr>
                                 <td colspan="8" class="text-center text-secondary py-4">
-                                    <i class="material-icons d-block mb-1" style="font-size:28px;opacity:.3;">sensors_off</i>
+                                    <i class="fas fa-broadcast-tower d-block mb-1" style="font-size:28px;opacity:.3;"></i>
                                     No data for this period.
                                 </td>
                             </tr>

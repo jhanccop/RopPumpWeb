@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /home/jh/Documentos/webs/PO/RopPumpWeb/Apps/TRANSFORMADOR/migrations)",
+      "Bash(python -c ' *)",
+      "Bash(python manage.py makemigrations TRANSFORMADOR)",
+      "Bash(python -m py_compile Apps/OILFIELD/forms.py)",
+      "Bash(python -m py_compile Apps/OILFIELD/views.py)",
+      "Bash(python -m py_compile Apps/OILFIELD/urls.py)",
+      "Bash(sed -n '143,175p' /home/jh/Documentos/webs/PO/RopPumpWeb/Apps/device/models.py)",
+      "Bash(sed -n '18,65p' /home/jh/Documentos/webs/PO/RopPumpWeb/Apps/equipment/models.py)",
+      "Bash(sed -i 's/LoginRequiredMixin, CompanyMixin/TransformadorAccessMixin, CompanyMixin/g' /home/jh/Documentos/webs/PO/RopPumpWeb/Apps/TRANSFORMADOR/views.py)",
+      "Bash(sed -i '/class.*TransformadorAccessMixin.*CompanyMixin/! s/class \\\\\\(Alert.*View\\\\\\)\\(LoginRequiredMixin, View\\)/class \\\\1\\(TransformadorAccessMixin, View\\)/g' /home/jh/Documentos/webs/PO/RopPumpWeb/Apps/TRANSFORMADOR/views.py)",
+      "Bash(sed -i 's/LoginRequiredMixin, CompanyMixin/OilfieldAccessMixin, CompanyMixin/g' /home/jh/Documentos/webs/PO/RopPumpWeb/Apps/OILFIELD/views.py)",
+      "Bash(sed -i 's/\\(LoginRequiredMixin, View\\)/\\(OilfieldAccessMixin, View\\)/g' /home/jh/Documentos/webs/PO/RopPumpWeb/Apps/OILFIELD/views.py)",
+      "Bash(cp /usr/share/fonts/truetype/roboto/unhinted/RobotoTTF/Roboto-Light.ttf /home/jh/Documentos/webs/PO/RopPumpWeb/static/assets/fonts/roboto/Roboto-300.ttf)",
+      "Bash(cp /usr/share/fonts/truetype/roboto/unhinted/RobotoTTF/Roboto-Regular.ttf /home/jh/Documentos/webs/PO/RopPumpWeb/static/assets/fonts/roboto/Roboto-400.ttf)",
+      "Bash(cp /usr/share/fonts/truetype/roboto/unhinted/RobotoTTF/Roboto-Medium.ttf /home/jh/Documentos/webs/PO/RopPumpWeb/static/assets/fonts/roboto/Roboto-500.ttf)",
+      "Bash(cp /usr/share/fonts/truetype/roboto/unhinted/RobotoTTF/Roboto-Bold.ttf /home/jh/Documentos/webs/PO/RopPumpWeb/static/assets/fonts/roboto/Roboto-700.ttf)",
+      "Bash(cp /usr/share/fonts/truetype/roboto/unhinted/RobotoTTF/Roboto-Black.ttf /home/jh/Documentos/webs/PO/RopPumpWeb/static/assets/fonts/roboto/Roboto-900.ttf)",
+      "Bash(sed -n '21627,21650p' /home/jh/Documentos/webs/PO/RopPumpWeb/static/assets/css/material-dashboard.css)",
+      "Bash(sed -n '21696,21715p' /home/jh/Documentos/webs/PO/RopPumpWeb/static/assets/css/material-dashboard.css)",
+      "Bash(python manage.py check)",
+      "Bash(pip show *)",
+      "Bash(git checkout *)",
+      "Bash(python manage.py makemigrations TRANSFORMADOR --name=\"monitoring_variables_hotspot_pressure_oilhumidity\")"
+    ],
+    "additionalDirectories": [
+      "/home/jh/Documentos/webs/PO/RopPumpWeb/Apps/TRANSFORMADOR/migrations"
+    ]
+  }
+}

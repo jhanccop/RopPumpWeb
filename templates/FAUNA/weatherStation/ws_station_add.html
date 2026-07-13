@@ -4,127 +4,148 @@
 {% block title %}Add Station{% endblock title %}
 {% block company %}{{ CompanyName }}{% endblock company %}
 {% block appName %}WEATHER STATIONS{% endblock appName %}
-{% block Type %}NEW STATION{% endblock Type %}
+{% block Type %}NUEVA ESTACIÓN{% endblock Type %}
 
 {% block content %}
 
-<div class="row min-vh-80">
-    <div class="col-lg-8 col-md-10 col-12 m-auto">
-        <div class="card">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2">
-                    <h6 class="text-center text-white">ADD NEW WEATHER STATION</h6>
-                </div>
-            </div>
-            <div class="card-body">
-                <form method="POST">{% csrf_token %}
-
-                    <!-- General info -->
-                    <h6 class="font-weight-bolder mb-3">General Information</h6>
-                    <div class="row">
-                        <div class="col-12 col-sm-6" hidden>
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Owner</label>
-                                {{ form.Owner }}
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-8">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Station Name *</label>
-                                {{ form.StationName }}
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label"></label>
-                                {{ form.Status }}
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Description</label>
-                                {{ form.Description }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Location -->
-                    <h6 class="font-weight-bolder mb-3 mt-2">Location</h6>
-                    <div class="row">
-                        <div class="col-12 col-sm-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Latitude</label>
-                                {{ form.Latitude }}
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Longitude</label>
-                                {{ form.Longitude }}
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Altitude (m)</label>
-                                {{ form.Altitude }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Device configuration -->
-                    <h6 class="font-weight-bolder mb-3 mt-2">Device Configuration</h6>
-                    <div class="row">
-                        <div class="col-12 col-sm-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">MAC Address</label>
-                                {{ form.MacAddress }}
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label"></label>
-                                {{ form.TimeSleep }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sensors -->
-                    <h6 class="font-weight-bolder mb-3 mt-2">Available Sensors</h6>
-                    <div class="row">
-                        <div class="col-6 col-sm-4 col-md-3 mb-3">
-                            <div class="form-check form-switch">
-                                {{ form.HasTempHumidity }}
-                                <label class="form-check-label text-sm ms-2">Temp &amp; Humidity</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4 col-md-3 mb-3">
-                            <div class="form-check form-switch">
-                                {{ form.HasSolarRadiation }}
-                                <label class="form-check-label text-sm ms-2">Solar Radiation</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4 col-md-3 mb-3">
-                            <div class="form-check form-switch">
-                                {{ form.HasPrecipitation }}
-                                <label class="form-check-label text-sm ms-2">Precipitation</label>
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4 col-md-3 mb-3">
-                            <div class="form-check form-switch">
-                                {{ form.HasWind }}
-                                <label class="form-check-label text-sm ms-2">Wind</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="button-row d-flex pt-3 mt-2">
-                        <a class="btn bg-gradient-dark" href="{% url 'weather_app:station_list' %}">Back</a>
-                        <button class="btn bg-gradient-success ms-auto" type="submit">Save Station</button>
-                    </div>
-                </form>
-            </div>
+<div class="row justify-content-center">
+  <div class="col-lg-9 col-md-11 col-12">
+    <div class="card mt-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+          <i class="fas fa-plus text-white me-2"></i>
+          <h6 class="text-white mb-0">NUEVA ESTACIÓN METEOROLÓGICA</h6>
         </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">{% csrf_token %}
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-info-circle me-1"></i> Información General
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div hidden>{{ form.Owner }}</div>
+
+          <div class="row">
+            <div class="col-12 col-sm-8">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Station Name *</label>
+                {{ form.StationName }}
+              </div>
+              {% if form.StationName.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.StationName.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Status</label>
+                {{ form.Status }}
+              </div>
+              {% if form.Status.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Status.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Description</label>
+                {{ form.Description }}
+              </div>
+              {% if form.Description.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Description.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-map-marker-alt me-1"></i> Ubicación
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Latitude</label>
+                {{ form.Latitude }}
+              </div>
+              {% if form.Latitude.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Latitude.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Longitude</label>
+                {{ form.Longitude }}
+              </div>
+              {% if form.Longitude.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Longitude.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-4">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Altitude (m)</label>
+                {{ form.Altitude }}
+              </div>
+              {% if form.Altitude.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Altitude.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-microchip me-1"></i> Configuración del Dispositivo
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-12 col-sm-6">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">MAC Address</label>
+                {{ form.MacAddress }}
+              </div>
+              {% if form.MacAddress.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.MacAddress.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="input-group input-group-outline is-focused mb-3">
+                <label class="form-label">Reading Interval</label>
+                {{ form.TimeSleep }}
+              </div>
+              {% if form.TimeSleep.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.TimeSleep.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-thermometer-half me-1"></i> Sensores Disponibles
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row">
+            <div class="col-6 col-sm-4 col-md-3">
+              <div class="form-check form-switch mb-3 d-flex align-items-center">
+                {{ form.HasTempHumidity }}
+                <label class="form-check-label ms-3 mb-0">Temp &amp; Humidity</label>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4 col-md-3">
+              <div class="form-check form-switch mb-3 d-flex align-items-center">
+                {{ form.HasSolarRadiation }}
+                <label class="form-check-label ms-3 mb-0">Solar Radiation</label>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4 col-md-3">
+              <div class="form-check form-switch mb-3 d-flex align-items-center">
+                {{ form.HasPrecipitation }}
+                <label class="form-check-label ms-3 mb-0">Precipitation</label>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4 col-md-3">
+              <div class="form-check form-switch mb-3 d-flex align-items-center">
+                {{ form.HasWind }}
+                <label class="form-check-label ms-3 mb-0">Wind</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between pt-3 mt-3 border-top">
+            <a class="btn btn-outline-secondary" href="{% url 'weather_app:station_list' %}">
+              <i class="fas fa-arrow-left me-1"></i> Volver
+            </a>
+            <button class="btn bg-gradient-success" type="submit">
+              <i class="fas fa-save me-1"></i> Guardar
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 
 {% endblock content %}

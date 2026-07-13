@@ -79,6 +79,7 @@ class CameraCapture(models.Model):
     Temperature = models.FloatField('Temperature (°C)', null=True, blank=True)
     Humidity = models.FloatField('Humidity (%)', null=True, blank=True)
     VoltageBattery = models.FloatField('Battery Voltage (V)', null=True, blank=True)
+    MemFree = models.FloatField('Free Memory (KB)', null=True, blank=True)
 
     Notes = models.TextField('Notes', max_length=500, blank=True, null=True)
 
@@ -111,6 +112,28 @@ class CameraCapture(models.Model):
             except CameraCapture.DoesNotExist:
                 pass
         super().save(*args, **kwargs)
+
+
+class CameraDeviceHealth(models.Model):
+    """Periodic health report sent by the device (no image attached)."""
+    Station = models.ForeignKey(
+        CameraStation,
+        on_delete=models.CASCADE,
+        related_name='health_logs'
+    )
+    DateRecord = models.DateTimeField('Recorded At', auto_now_add=True)
+    VoltageBattery = models.FloatField('Battery (V)', null=True, blank=True)
+    MemFree = models.FloatField('Free Memory (KB)', null=True, blank=True)
+    Temperature = models.FloatField('Temperature (°C)', null=True, blank=True)
+    Humidity = models.FloatField('Humidity (%)', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Device Health Log'
+        verbose_name_plural = 'Device Health Logs'
+        ordering = ['-DateRecord']
+
+    def __str__(self):
+        return f'{self.Station} — {self.DateRecord:%Y-%m-%d %H:%M}'
 
 
 class SpeciesLabel(models.Model):

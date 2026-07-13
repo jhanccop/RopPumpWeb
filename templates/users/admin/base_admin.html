@@ -1,0 +1,141 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" type="image/png" href="{% static 'assets/img/oil-refinery.png' %}">
+    <title>ADMIN PANEL – {% block title %}Admin{% endblock title %}</title>
+    <link rel="stylesheet" href="{% static 'assets/css/local-fonts.css' %}" />
+    <link href="{% static 'assets/css/nucleo-icons.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/css/nucleo-svg.css' %}" rel="stylesheet" />
+        <link rel="stylesheet" href="{% static 'assets/css/font-awesome.min.css' %}" />
+    <script src="{% static 'assets/js/jquery-1.12.4.js' %}"></script>
+<link id="pagestyle" href="{% static 'assets/css/material-dashboard.css' %}" rel="stylesheet" />
+    {% block extra_css %}{% endblock extra_css %}
+</head>
+
+<body class="g-sidenav-show bg-gray-200">
+
+    <!-- Sidebar -->
+    {% with app=request.resolver_match.app_name view=request.resolver_match.url_name %}
+    <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 bg-gradient-dark"
+        id="sidenav-main">
+
+        <div class="sidenav-header">
+            <i class="fas fa-times p-3 cursor-pointer text-white opacity-5 position-absolute end-0 top-0 d-none d-xl-none"
+                aria-hidden="true" id="iconSidenav"></i>
+            <a class="navbar-brand d-flex align-items-center px-3 py-2" href="{% url 'user_app:admin_dashboard' %}">
+                <img src="{% static 'assets/img/logo-ct.png' %}" class="navbar-brand-img" style="height:28px;" alt="logo">
+                <span class="ms-2 font-weight-bold text-white text-sm">ADMIN PANEL</span>
+            </a>
+        </div>
+        <hr class="horizontal light mt-0 mb-1">
+
+        <div class="collapse navbar-collapse w-auto h-auto" id="sidenav-collapse-main">
+            <ul class="navbar-nav">
+
+                <li class="nav-item mt-1">
+                    <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">
+                        ADMINISTRACIÓN
+                    </p>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link text-white {% if view == 'admin_dashboard' %}active bg-gradient-primary{% endif %}"
+                        href="{% url 'user_app:admin_dashboard' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link text-white {% if view == 'user_list' or view == 'user_create' or view == 'user_update' %}active bg-gradient-primary{% endif %}"
+                        href="{% url 'user_app:user_list' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Usuarios</span>
+                    </a>
+                </li>
+
+                {% if request.user.is_superadmin %}
+                <li class="nav-item">
+                    <a class="nav-link text-white {% if view == 'company_list' or view == 'company_create' or view == 'company_update' %}active bg-gradient-primary{% endif %}"
+                        href="{% url 'user_app:company_list' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Compañías</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <hr class="horizontal light my-2">
+
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{{ request.user.get_first_app_url }}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Volver a la app</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'user_app:user-logout' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Cerrar sesión</span>
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+    </aside>
+    {% endwith %}
+
+    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+
+        {% include 'includes/generic_topbar.html' %}
+
+        <div class="container-fluid py-2">
+            {% if messages %}
+            <div class="row mb-2">
+                <div class="col-12">
+                    {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% block content %}{% endblock content %}
+        </div>
+
+        {% include 'includes/footer.html' %}
+
+    </main>
+
+    <!-- Core JS -->
+    <script src="{% static 'assets/js/core/popper.min.js' %}"></script>
+    <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/perfect-scrollbar.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/smooth-scrollbar.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/choices.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
+    <script>
+        var win = navigator.platform.indexOf('Win') > -1;
+        if (win && document.querySelector('#sidenav-scrollbar')) {
+            Scrollbar.init(document.querySelector('#sidenav-scrollbar'), { damping: '0.5' });
+        }
+    </script>
+    <script src="{% static 'assets/js/material-dashboard.min.js' %}"></script>
+    {% block JSscripts %}{% endblock JSscripts %}
+</body>
+</html>

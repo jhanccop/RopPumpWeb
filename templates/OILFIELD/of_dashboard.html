@@ -1,0 +1,540 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock title %}
+{% block company %}{{ CompanyName }}{% endblock %}
+{% block appName %}OILFIELD{% endblock %}
+{% block Type %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    #map-oilfield { height: 380px; border-radius: 12px; }
+    .progress { height: 4px; border-radius: 4px; }
+    .stat-divider { border-left: 1px solid rgba(255,255,255,.3); }
+    .countup-val { font-variant-numeric: tabular-nums; }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+
+<!-- Row 0: Welcome Banner -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" style="background:linear-gradient(195deg,#42424a,#191919);overflow:hidden;">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <h5 class="text-white font-weight-bolder mb-1">
+                            <i class="fas fa-industry me-2 opacity-7"></i>{{ CompanyName }} — OILFIELD
+                        </h5>
+                        <p class="text-white opacity-7 text-sm mb-0">Panel de Control · Monitoreo en tiempo real</p>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ total_wells }}">{{ total_wells }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Total Pozos</p>
+                            </div>
+                            <div class="col-3 stat-divider">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ producing_count }}">{{ producing_count }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Activo</p>
+                            </div>
+                            <div class="col-3 stat-divider">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ total_oil_today|floatformat:0 }}">{{ total_oil_today|floatformat:0 }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">bbl Hoy</p>
+                            </div>
+                            <div class="col-3 stat-divider">
+                                <h4 class="text-white mb-0 font-weight-bolder countup-val" data-target="{{ active_alerts_count }}">{{ active_alerts_count }}</h4>
+                                <p class="text-white opacity-7 text-xs mb-0">Alertas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 1: KPI Cards -->
+<div class="row mb-4">
+
+    <!-- Pozos Produciendo -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                    <i class="fas fa-industry fa-lg text-white opacity-10"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Pozos Produciendo</p>
+                    <h4 class="mb-0">{{ producing_count }} <small class="text-secondary text-sm">/ {{ total_wells }}</small></h4>
+                </div>
+            </div>
+            <div class="card-footer p-3">
+                <p class="mb-0"><span class="text-success text-sm font-weight-bolder">En producción</span> actualmente</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Con Problemas -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
+                    <i class="fas fa-exclamation-triangle fa-lg text-white opacity-10"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Con Problemas</p>
+                    <h4 class="mb-0">{{ problem_count }}</h4>
+                </div>
+            </div>
+            <div class="card-footer p-3">
+                <p class="mb-0"><span class="text-warning text-sm font-weight-bolder">Requieren</span> atención</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Producción Oil Hoy -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+                    <i class="fas fa-oil-can fa-lg text-white opacity-10"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Prod. Oil Hoy (bbl)</p>
+                    <h4 class="mb-0">{{ total_oil_today|floatformat:1 }}</h4>
+                </div>
+            </div>
+            <div class="card-footer p-3">
+                <p class="mb-0"><span class="text-info text-sm font-weight-bolder">Producción</span> acumulada hoy</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas Activas -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
+                    <i class="fas fa-bell fa-lg text-white opacity-10"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Alertas Activas</p>
+                    <h4 class="mb-0">{{ active_alerts_count }} <small class="text-secondary text-sm">({{ critical_alerts_count }} críticas)</small></h4>
+                </div>
+            </div>
+            <div class="card-footer p-3">
+                <p class="mb-0"><span class="text-danger text-sm font-weight-bolder">Monitoreo</span> en tiempo real</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Row 2: Map + Alerts -->
+<div class="row mb-4">
+
+    <!-- Mapa de Pozos -->
+    <div class="col-lg-7 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2 mt-n4 mx-3">
+                    <div class="row align-items-center px-2">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-map-marked-alt me-1" style="vertical-align:middle;font-size:16px;"></i>
+                                Mapa de Pozos
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <span class="text-white text-xs opacity-8">{{ total_wells }} pozo{{ total_wells|pluralize:"s" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div id="map-oilfield"></div>
+                <div class="d-flex gap-3 mt-2 flex-wrap">
+                    <span class="text-xs"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4CAF50;margin-right:4px;"></span>Activo</span>
+                    <span class="text-xs"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#FF9800;margin-right:4px;"></span>Mantenimiento</span>
+                    <span class="text-xs"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F44336;margin-right:4px;"></span>Detenido/Falla</span>
+                    <span class="text-xs"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#FFC107;margin-right:4px;"></span>Inactivo</span>
+                    <span class="text-xs"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#9E9E9E;margin-right:4px;"></span>Otro</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimas Alarmas -->
+    <div class="col-lg-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-danger shadow-danger border-radius-lg pt-3 pb-2 mt-n4 mx-3">
+                    <div class="row align-items-center px-2">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-bell me-1"></i> Últimas Alarmas
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'oilfield_app:alert_list' %}" class="btn btn-sm btn-white mb-0">Ver todas</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Activo</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipo</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Severidad</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in recent_alerts %}
+                            <tr>
+                                <td class="ps-3">
+                                    <span class="text-xs font-weight-bold">
+                                        {% if alert.Well %}{{ alert.Well.Code }}{% elif alert.Tank %}{{ alert.Tank.Code }}{% else %}—{% endif %}
+                                    </span>
+                                </td>
+                                <td class="text-xs text-secondary">{{ alert.AlertType|default:alert.Variable }}</td>
+                                <td>
+                                    {% if alert.Severity == 'low' %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Baja</span>
+                                    {% elif alert.Severity == 'medium' %}
+                                    <span class="badge badge-sm bg-gradient-warning text-dark">Media</span>
+                                    {% elif alert.Severity == 'high' %}
+                                    <span class="badge badge-sm bg-gradient-danger">Alta</span>
+                                    {% elif alert.Severity == 'critical' %}
+                                    <span class="badge badge-sm" style="background:#212529;color:#fff;">Crítica</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ alert.Severity }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-xs text-secondary">{{ alert.DateCreate|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary py-4">
+                                    <i class="fas fa-check-circle d-block mb-1" style="font-size:2rem;opacity:.3;color:green;"></i>
+                                    Sin alarmas activas
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Row 3: Well Status + Tank Status -->
+<div class="row mb-4">
+
+    <!-- Estado de Pozos -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-industry me-1"></i> Estado de Pozos
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'oilfield_app:well_list' %}" class="btn btn-sm btn-white mb-0">Ver todos</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Pozo</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Estado</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Llenado</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Meta (bbl/d)</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Acc.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for well in wells %}
+                            <tr style="{% if well in overloaded_wells %}border-left:3px solid #FF9800;{% endif %}">
+                                <td class="ps-3">
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="avatar avatar-sm me-3 border-radius-sm bg-gradient-dark">
+                                            <i class="fas fa-industry text-white" style="font-size:12px;line-height:36px;display:block;text-align:center;"></i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ well.Code }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ well.Name }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if well.Status == 'active' %}
+                                    <span class="badge badge-sm bg-gradient-success">
+                                        <span class="badge badge-sm" style="background:#4CAF50;width:8px;height:8px;border-radius:50%;padding:0;margin-right:4px;display:inline-block;"></span>Produciendo
+                                    </span>
+                                    {% elif well.Status == 'abandoned' %}
+                                    <span class="badge badge-sm bg-gradient-danger">
+                                        <span class="badge badge-sm" style="background:#F44336;width:8px;height:8px;border-radius:50%;padding:0;margin-right:4px;display:inline-block;"></span>Detenido
+                                    </span>
+                                    {% elif well.Status == 'maintenance' %}
+                                    <span class="badge badge-sm bg-gradient-warning">
+                                        <span class="badge badge-sm" style="background:#FF9800;width:8px;height:8px;border-radius:50%;padding:0;margin-right:4px;display:inline-block;"></span>Mantenimiento
+                                    </span>
+                                    {% elif well.Status == 'inactive' %}
+                                    <span class="badge badge-sm bg-warning text-dark">
+                                        <span class="badge badge-sm" style="background:#FFC107;width:8px;height:8px;border-radius:50%;padding:0;margin-right:4px;display:inline-block;"></span>Pump Off
+                                    </span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ well.get_Status_display|default:well.Status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td style="min-width:120px;">
+                                    {% with lr=well.latest_reading %}
+                                    {% if lr and lr.Fillage %}
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2 text-xs font-weight-bold">{{ lr.Fillage|floatformat:0 }}%</span>
+                                        <div class="progress flex-grow-1">
+                                            <div class="progress-bar bg-gradient-{% if lr.Fillage >= 80 %}success{% elif lr.Fillage >= 50 %}warning{% else %}danger{% endif %}" style="width:{{ lr.Fillage|floatformat:0 }}%"></div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <p class="text-xs mb-0">{{ well.ProductionTarget|default:"—" }} bbl/d</p>
+                                </td>
+                                <td>
+                                    <a href="{% url 'oilfield_app:well_detail' well.id %}" class="btn btn-link btn-sm p-0">
+                                        <i class="fas fa-eye text-info"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-secondary py-4">
+                                    <i class="fas fa-industry d-block mb-1" style="font-size:2rem;opacity:.3;"></i>
+                                    No hay pozos registrados.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado de Tanques -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">
+                                <i class="fas fa-database me-1"></i> Estado de Tanques
+                            </h6>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'oilfield_app:tank_list' %}" class="btn btn-sm btn-white mb-0">Ver todos</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tanque</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nivel</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Temp °C</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tank in tanks %}
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="avatar avatar-sm me-3 border-radius-sm
+                                            {% if tank.Type == 'oil' %}bg-gradient-warning
+                                            {% elif tank.Type == 'water' %}bg-gradient-info
+                                            {% else %}bg-gradient-secondary{% endif %}">
+                                            {% if tank.Type == 'oil' %}
+                                            <i class="fas fa-oil-can text-white" style="font-size:12px;line-height:36px;display:block;text-align:center;"></i>
+                                            {% elif tank.Type == 'water' %}
+                                            <i class="fas fa-tint text-white" style="font-size:12px;line-height:36px;display:block;text-align:center;"></i>
+                                            {% else %}
+                                            <i class="fas fa-database text-white" style="font-size:12px;line-height:36px;display:block;text-align:center;"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ tank.Code }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ tank.get_Type_display|default:tank.Type }} · {{ tank.Battery.Name|default:"—" }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="min-width:120px;">
+                                    {% with r=tank.latest_reading %}
+                                    {% if r and r.LevelPercent is not None %}
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2 text-xs font-weight-bold">{{ r.LevelPercent|floatformat:1 }}%</span>
+                                        <div class="progress flex-grow-1">
+                                            <div class="progress-bar bg-gradient-{% if r.LevelPercent >= 80 %}danger{% elif r.LevelPercent >= 50 %}warning{% else %}info{% endif %}" style="width:{{ r.LevelPercent|floatformat:0 }}%"></div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with r=tank.latest_reading %}
+                                    {% if r and r.Temperature is not None %}
+                                    <span class="text-xs">{{ r.Temperature|floatformat:1 }}</span>
+                                    {% else %}
+                                    <span class="text-secondary text-xs">—</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% if tank.Status == 'operational' %}
+                                    <span class="badge badge-sm bg-gradient-success">Operativo</span>
+                                    {% elif tank.Status == 'maintenance' %}
+                                    <span class="badge badge-sm bg-gradient-warning">Mantenimiento</span>
+                                    {% elif tank.Status == 'fault' %}
+                                    <span class="badge badge-sm bg-gradient-danger">Falla</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ tank.get_Status_display|default:tank.Status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary py-4">
+                                    <i class="fas fa-database d-block mb-1" style="font-size:2rem;opacity:.3;"></i>
+                                    No hay tanques registrados.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+(function () {
+    var statusColor = {
+        'active':    '#4CAF50',
+        'stopped':      '#F44336',
+        'abandoned': '#F44336',
+        'maintenance':  '#FF9800',
+        'inactive':  '#9E9E9E',
+        'portable':  '#2196F3',
+    };
+
+    function getColor(status) {
+        return statusColor[status] || '#9E9E9E';
+    }
+
+    function makeIcon(color) {
+        return L.divIcon({
+            className: '',
+            iconSize:  [26, 26],
+            iconAnchor:[13, 13],
+            html: '<div style="background:' + color + ';width:26px;height:26px;' +
+                  'border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);' +
+                  'display:flex;align-items:center;justify-content:center;">' +
+                  '<i class="fas fa-industry" style="color:#fff;font-size:10px;"></i></div>',
+        });
+    }
+
+    function val(v, unit) {
+        return (v !== null && v !== undefined && v !== '')
+            ? '<span class="popup-val">' + v + (unit ? ' ' + unit : '') + '</span>'
+            : '<span class="popup-val" style="color:#aaa">—</span>';
+    }
+
+    var geojson = {{ wells_geojson|safe }};
+    var oilMap = L.map('map-oilfield', { zoomControl: true, scrollWheelZoom: false });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18,
+    }).addTo(oilMap);
+
+    var markers = [];
+
+    geojson.features.forEach(function (f) {
+        var coords = f.geometry.coordinates;
+        if (!coords || (coords[0] === 0 && coords[1] === 0)) return;
+        var p = f.properties;
+        var color = getColor(p.status);
+        var latlng = [coords[1], coords[0]];
+
+        var popup =
+            '<div class="popup-title"><i style="color:' + color + '">●</i> ' + p.name + '</div>' +
+            '<span class="popup-status" style="background:' + color + ';color:#fff">' + (p.status || '—') + '</span>' +
+            '<div class="popup-row" style="margin-top:6px"><span class="popup-label">Código</span>' + val(p.code) + '</div>' +
+            '<div class="popup-row"><span class="popup-label">Batería</span>' + val(p.battery) + '</div>' +
+            '<div class="popup-row"><span class="popup-label">Meta Prod.</span>' + val(p.production_target, 'bbl') + '</div>' +
+            '<div class="popup-row"><span class="popup-label">Tipo Levant.</span>' + val(p.lift_type) + '</div>' +
+            '<div style="margin-top:8px;">' +
+            '<a href="/oilfield/wells/' + p.id + '/" ' +
+            'style="display:block;font-size:11px;padding:4px 6px;border-radius:6px;background:#344767;color:#fff;text-decoration:none;text-align:center;">Ver detalle</a>' +
+            '</div>';
+
+        var marker = L.marker(latlng, { icon: makeIcon(color) })
+            .addTo(oilMap)
+            .bindPopup(popup, { maxWidth: 240 });
+
+        markers.push(marker);
+    });
+
+    if (markers.length > 0) {
+        oilMap.fitBounds(L.featureGroup(markers).getBounds().pad(0.3));
+    } else {
+        oilMap.setView([-5, -75], 6);
+    }
+}());
+
+// CountUp animation
+document.querySelectorAll('.countup-val').forEach(function(el) {
+    var target = parseFloat(el.dataset.target) || 0;
+    var duration = 1500;
+    var startTime = null;
+    function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        var progress = Math.min((timestamp - startTime) / duration, 1);
+        el.textContent = Math.floor(progress * target);
+        if (progress < 1) requestAnimationFrame(animate);
+        else el.textContent = target;
+    }
+    requestAnimationFrame(animate);
+});
+</script>
+{% endblock JSscripts %}

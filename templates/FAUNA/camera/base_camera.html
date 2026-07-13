@@ -6,12 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" type="image/png" href="{% static 'assets/img/oil-refinery.png' %}">
     <title>FAUNA – {% block title %}Camera Traps{% endblock title %}</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900|Roboto+Slab:400,700" />
+    <link rel="stylesheet" href="{% static 'assets/css/local-fonts.css' %}" />
     <link href="{% static 'assets/css/nucleo-icons.css' %}" rel="stylesheet" />
     <link href="{% static 'assets/css/nucleo-svg.css' %}" rel="stylesheet" />
-    <script src="{% static 'assets/js/awesome.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'assets/css/font-awesome.min.css' %}" />
     <script src="{% static 'assets/js/jquery-1.12.4.js' %}"></script>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'assets/css/leaflet.css' %}" />
     <link id="pagestyle" href="{% static 'assets/css/material-dashboard.css' %}" rel="stylesheet" />
     {% block extra_css %}{% endblock extra_css %}

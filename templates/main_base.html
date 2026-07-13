@@ -11,16 +11,15 @@
         IO - {% block title %} {% endblock title %}
     </title>
     <!--     Fonts and icons     -->
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900|Roboto+Slab:400,700" />
     <!-- Nucleo Icons -->
+        <link rel="stylesheet" href="{% static 'assets/css/font-awesome.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/local-fonts.css' %}" />
     <link href="{% static 'assets/css/nucleo-icons.css' %}" rel="stylesheet" />
     <link href="{% static 'assets/css/nucleo-svg.css' %}" rel="stylesheet" />
     <!-- Font Awesome Icons -->
-    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 
     <script src="{% static 'assets/js/jquery-1.12.4.js' %}" crossorigin="anonymous"></script>
     <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <!-- CSS Files -->
     <link id="pagestyle" href="/assets/css/material-dashboard.css" rel="stylesheet" />
     
@@ -47,7 +46,7 @@
                 <li class="nav-item">
                     <a class="nav-link text-white active bg-gradient-primary" href="{% url 'overview_app:overview' %}">
                         <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">dashboard</i>
+                            <i class="fas fa-chart-bar opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Overview</span>
                     </a>
@@ -55,7 +54,7 @@
                 <li class="nav-item">
                     <a class="nav-link text-white " href="../pages/tables.html">
                         <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">table_view</i>
+                            <i class="fas fa-table opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Manage Wells</span>
                     </a>
@@ -63,7 +62,7 @@
                 <li class="nav-item">
                     <a class="nav-link text-white " href="../pages/billing.html">
                         <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">receipt_long</i>
+                            <i class="fas fa-file-alt opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Input Data</span>
                     </a>
@@ -71,7 +70,7 @@
                 <li class="nav-item">
                     <a class="nav-link text-white " href="../pages/notifications.html">
                         <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">notifications</i>
+                            <i class="fas fa-bell opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Notifications</span>
                     </a>
@@ -82,7 +81,7 @@
                 <li class="nav-item">
                     <a class="nav-link text-white " href="../pages/profile.html">
                         <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">person</i>
+                            <i class="fas fa-user opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Profile</span>
                     </a>
@@ -90,7 +89,7 @@
                 <li class="nav-item">
                     <a class="nav-link text-white " href="../pages/sign-in.html">
                         <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">login</i>
+                            <i class="fas fa-sign-in-alt opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Sign In</span>
                     </a>
@@ -98,7 +97,7 @@
                 <li class="nav-item">
                     <a class="nav-link text-white " href="../pages/sign-up.html">
                         <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">assignment</i>
+                            <i class="fas fa-clipboard opacity-10"></i>
                         </div>
                         <span class="nav-link-text ms-1">Sign Up</span>
                     </a>
@@ -173,7 +172,7 @@
 
         <div class="fixed-plugin">
             <a class="fixed-plugin-button text-dark position-fixed px-3 py-2">
-                <i class="material-icons py-2">settings</i>
+                <i class="fas fa-cog py-2"></i>
             </a>
             <div class="card shadow-lg">
                 <div class="card-header pb-0 pt-3">
@@ -183,7 +182,7 @@
                     </div>
                     <div class="float-end mt-4">
                         <button class="btn btn-link text-dark p-0 fixed-plugin-close-button">
-                            <i class="material-icons">clear</i>
+                            <i class="fas fa-times"></i>
                         </button>
                     </div>
                     <!-- End Toggle Button -->
