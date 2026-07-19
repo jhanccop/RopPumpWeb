@@ -31,6 +31,7 @@
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Station</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">MAC Address</th>
                                 <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Location</th>
                                 <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Sensors</th>
                                 <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Status</th>
@@ -44,11 +45,14 @@
                                     <div class="d-flex px-2 py-1">
                                         <div class="d-flex flex-column justify-content-center">
                                             <h6 class="mb-0 text-sm">{{ s.StationName }}</h6>
-                                            <p class="text-xs text-secondary mb-0">
-                                                <i class="fas fa-ethernet me-1 opacity-6"></i>{{ s.MacAddress|default:"—" }}
-                                            </p>
+                                            <p class="text-xs text-secondary mb-0">{{ s.Description|default:"—"|truncatechars:40 }}</p>
                                         </div>
                                     </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">
+                                        <i class="fas fa-ethernet me-1 opacity-6"></i>{{ s.MacAddress|default:"—" }}
+                                    </p>
                                 </td>
                                 <td>
                                     <p class="text-xs font-weight-bold mb-0">{{ s.Latitude|default:"—" }}, {{ s.Longitude|default:"—" }}</p>
@@ -86,7 +90,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center text-secondary py-4">
+                                <td colspan="6" class="text-center text-secondary py-4">
                                     No stations registered yet.
                                     <a href="{% url 'weather_app:station_add' %}">Add your first station</a>.
                                 </td>

@@ -13,7 +13,7 @@ class WeatherStationManager(models.Manager):
         return self.filter(
             Owner__CompanyId__CompanyName=company_name
         ).values(
-            'id', 'StationName', 'Description',
+            'id', 'StationName', 'Description', 'MacAddress',
             'Latitude', 'Longitude', 'Altitude',
             'Status',
             'HasTempHumidity',
