@@ -8,21 +8,37 @@
 <link rel="stylesheet" href="{% static 'assets/css/leaflet.css' %}" />
 <script src="{% static 'assets/js/plugins/leaflet.js' %}"></script>
 <script src="{% static 'assets/js/plugins/plotly-2.12.1.min.js' %}"></script>
+<script src="{% static 'assets/js/plugins/datatables.js' %}"></script>
 <style>
     .pub-hero-ws {
         background: linear-gradient(135deg, #1565c0 0%, #0288d1 60%, #00838f 100%);
         padding: 100px 0 32px;
         min-height: 200px;
     }
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+        gap: 8px;
+        align-items: stretch;
+    }
     .val-chip {
-        display: inline-flex; flex-direction: column; align-items: center;
-        padding: 10px 14px; border-radius: 10px; border-left: 3px solid;
-        min-width: 88px; background: #fff;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 10px 12px; border-radius: 10px; border-left: 3px solid;
+        background: #fff; min-height: 82px;
     }
     .val-chip-label { font-size: 9px; text-transform: uppercase; font-weight: 700;
-                      letter-spacing: .4px; opacity: .65; margin-bottom: 3px; }
+                      letter-spacing: .4px; opacity: .65; margin-bottom: 4px; text-align:center; }
     .val-chip-val   { font-size: 1.15rem; font-weight: 800; line-height: 1; }
-    .val-chip-unit  { font-size: 9px; opacity: .55; margin-top: 2px; }
+    .val-chip-unit  { font-size: 9px; opacity: .55; margin-top: 3px; }
+    /* chip de rosa: layout horizontal compacto */
+    .wind-rose-chip {
+        flex-direction: row !important; justify-content: center !important;
+        gap: 8px; min-width: 150px;
+    }
+    .wind-rose-chip .wr-text { display:flex; flex-direction:column; align-items:flex-start; justify-content:center; }
+    .wind-rose-chip .wr-label { font-size:9px; text-transform:uppercase; font-weight:700; letter-spacing:.4px; opacity:.65; }
+    .wind-rose-chip .wr-cardinal { font-size:1.1rem; font-weight:800; color:#344767; line-height:1.1; }
+    .wind-rose-chip .wr-deg { font-size:9px; opacity:.55; margin-top:2px; }
 
     .period-btn {
         padding: 5px 14px; font-size: .75rem; border-radius: 20px;
@@ -33,22 +49,33 @@
 
     #mini-map { height: 160px; border-radius: 8px; overflow: hidden; }
 
+    /* Corrige overlap del header flotante (mt-n4 = -1.5rem) */
+    .chart-row { padding-top: 1.75rem; }
+    .table-card-wrap { margin-top: 1.75rem; }
     .chart-card { overflow: visible; }
-    .chart-card .card-body { padding: 4px 8px 12px; }
+    .chart-card .card-body { padding: 12px 8px 12px; }
 
     /* Tabla de datos */
     .data-table thead th {
         font-size: .65rem; text-transform: uppercase; font-weight: 700;
         color: #7b809a; letter-spacing: .4px; white-space: nowrap;
         padding: 8px 10px; border-bottom: 1px solid #f0f2f5;
-        position: sticky; top: 0; background: #fff; z-index: 1;
     }
     .data-table tbody td { font-size: .78rem; padding: 6px 10px; vertical-align: middle; }
     .data-table tbody tr:hover { background: #f8f9fe; }
-    .data-table tbody tr:last-child td { border-bottom: none; }
     .tbl-null { color: #c8c8c8; }
+    /* Ajustes visuales de simpleDatatables */
+    .dataTable-wrapper .dataTable-top    { padding: 6px 12px; }
+    .dataTable-wrapper .dataTable-bottom { padding: 6px 12px; border-top: 1px solid #f0f2f5; }
+    .dataTable-wrapper .dataTable-input  { font-size: .78rem; border-radius: 6px; border: 1px solid #dee2e6; padding: 3px 8px; }
+    .dataTable-wrapper .dataTable-selector { font-size: .78rem; border-radius: 6px; border: 1px solid #dee2e6; padding: 3px 6px; }
+    .dataTable-wrapper .dataTable-pagination a { font-size: .75rem; padding: 3px 8px; border-radius: 4px; }
+    .dataTable-wrapper .dataTable-pagination a.active { background: #344767; color: #fff; }
 
-    @media (max-width:767px) { .val-chip { min-width: 72px; } }
+    @media (max-width:767px) {
+        .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); }
+        .wind-rose-chip { grid-column: span 2; }
+    }
 </style>
 
 <!-- ═══ HERO ══════════════════════════════════════════════════════════════ -->
@@ -119,7 +146,7 @@
 
     <!-- ── KPIs última lectura + mini-mapa ─────────────────────────────── -->
     {% if latest %}
-    <div class="row g-3 mb-3">
+    <div class="row g-3 mb-3 chart-row">
         <div class="col-lg-9">
             <div class="card shadow-sm">
                 <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
@@ -130,7 +157,24 @@
                     </div>
                 </div>
                 <div class="card-body p-3">
-                    <div class="d-flex flex-wrap gap-2">
+                    <div class="kpi-grid">
+
+                        <!-- Tipo de conexión (siempre visible) -->
+                        <div class="val-chip" style="border-color:{% if latest.TypeConn == 'LTE' %}#667eea{% else %}#48bb78{% endif %};">
+                            <span class="val-chip-label">📶 Conexión</span>
+                            {% if latest.TypeConn == 'LTE' %}
+                            <span class="val-chip-val" style="color:#667eea; font-size:.95rem;">
+                                <i class="fas fa-signal me-1" style="font-size:.8rem;"></i>LTE
+                            </span>
+                            {% elif latest.TypeConn %}
+                            <span class="val-chip-val" style="color:#38a169; font-size:.95rem;">
+                                <i class="fas fa-wifi me-1" style="font-size:.8rem;"></i>{{ latest.TypeConn }}
+                            </span>
+                            {% else %}
+                            <span class="val-chip-val text-secondary" style="font-size:.85rem;">—</span>
+                            {% endif %}
+                        </div>
+
                         {% if latest.Temperature is not None %}
                         <div class="val-chip" style="border-color:#e53e3e;">
                             <span class="val-chip-label" style="color:#c53030;">🌡 Temp</span>
@@ -139,6 +183,7 @@
                             <span class="val-chip-unit">°C</span>
                         </div>
                         {% endif %}
+
                         {% if latest.Humidity is not None %}
                         <div class="val-chip" style="border-color:#3182ce;">
                             <span class="val-chip-label" style="color:#2b6cb0;">💧 Humedad</span>
@@ -146,6 +191,7 @@
                             <span class="val-chip-unit">%</span>
                         </div>
                         {% endif %}
+
                         {% if latest.Precipitation is not None %}
                         <div class="val-chip" style="border-color:#2c7a7b;">
                             <span class="val-chip-label" style="color:#2c7a7b;">🌧 Lluvia</span>
@@ -153,6 +199,7 @@
                             <span class="val-chip-unit">mm</span>
                         </div>
                         {% endif %}
+
                         {% if latest.SolarRadiation is not None %}
                         <div class="val-chip" style="border-color:#dd6b20;">
                             <span class="val-chip-label" style="color:#c05621;">☀️ Radiación</span>
@@ -160,6 +207,8 @@
                             <span class="val-chip-unit">W/m²</span>
                         </div>
                         {% endif %}
+
+                        {% if station.HasWind %}
                         {% if latest.WindSpeed is not None %}
                         <div class="val-chip" style="border-color:#718096;">
                             <span class="val-chip-label" style="color:#4a5568;">🌬 Viento</span>
@@ -167,13 +216,42 @@
                             <span class="val-chip-unit">m/s</span>
                         </div>
                         {% endif %}
+
                         {% if latest.WindDirection is not None %}
-                        <div class="val-chip" style="border-color:#a0aec0;">
-                            <span class="val-chip-label" style="color:#718096;">🧭 Dirección</span>
-                            <span class="val-chip-val text-dark">{{ latest.WindDirection|floatformat:0 }}</span>
-                            <span class="val-chip-unit">°</span>
+                        <!-- Rosa de vientos: layout horizontal para mantener altura uniforme -->
+                        <div class="val-chip wind-rose-chip" style="border-color:#a0aec0;">
+                            <svg viewBox="0 0 60 60" width="56" height="56" flex-shrink="0" style="flex-shrink:0;">
+                                <circle cx="30" cy="30" r="27" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1.5"/>
+                                <!-- ticks -->
+                                <line x1="30" y1="4"  x2="30" y2="9"  stroke="#cbd5e0" stroke-width="1.2" transform="rotate(0,30,30)"/>
+                                <line x1="30" y1="4"  x2="30" y2="7"  stroke="#e2e8f0" stroke-width="1"   transform="rotate(45,30,30)"/>
+                                <line x1="30" y1="4"  x2="30" y2="9"  stroke="#cbd5e0" stroke-width="1.2" transform="rotate(90,30,30)"/>
+                                <line x1="30" y1="4"  x2="30" y2="7"  stroke="#e2e8f0" stroke-width="1"   transform="rotate(135,30,30)"/>
+                                <line x1="30" y1="4"  x2="30" y2="9"  stroke="#cbd5e0" stroke-width="1.2" transform="rotate(180,30,30)"/>
+                                <line x1="30" y1="4"  x2="30" y2="7"  stroke="#e2e8f0" stroke-width="1"   transform="rotate(225,30,30)"/>
+                                <line x1="30" y1="4"  x2="30" y2="9"  stroke="#cbd5e0" stroke-width="1.2" transform="rotate(270,30,30)"/>
+                                <line x1="30" y1="4"  x2="30" y2="7"  stroke="#e2e8f0" stroke-width="1"   transform="rotate(315,30,30)"/>
+                                <!-- cardinales -->
+                                <text x="30" y="6"  text-anchor="middle" font-size="6" font-weight="700" fill="#344767">N</text>
+                                <text x="55" y="32" text-anchor="middle" font-size="5.5" fill="#718096">E</text>
+                                <text x="30" y="58" text-anchor="middle" font-size="6" fill="#718096">S</text>
+                                <text x="5"  y="32" text-anchor="middle" font-size="5.5" fill="#718096">O</text>
+                                <!-- aguja -->
+                                <g transform="rotate({{ latest.WindDirection|floatformat:0 }}, 30, 30)">
+                                    <polygon points="30,10 33,30 30,30 27,30" fill="#e53e3e" opacity=".9"/>
+                                    <polygon points="30,30 33,30 30,50 27,30" fill="#a0aec0" opacity=".85"/>
+                                </g>
+                                <circle cx="30" cy="30" r="3" fill="#344767"/>
+                            </svg>
+                            <div class="wr-text">
+                                <span class="wr-label">🧭 Dirección</span>
+                                <span class="wr-cardinal">{{ latest.WindDirection|wind_compass }}</span>
+                                <span class="wr-deg">{{ latest.WindDirection|floatformat:0 }}°</span>
+                            </div>
                         </div>
                         {% endif %}
+                        {% endif %}
+
                         {% if latest.VoltageBattery is not None %}
                         <div class="val-chip" style="border-color:#2f855a;">
                             <span class="val-chip-label" style="color:#276749;">🔋 Batería</span>
@@ -182,6 +260,7 @@
                             <span class="val-chip-unit">V</span>
                         </div>
                         {% endif %}
+
                     </div>
                 </div>
             </div>
@@ -202,9 +281,10 @@
     {% endif %}
 
     <!-- ── GRÁFICOS ─────────────────────────────────────────────────────── -->
-    <div class="row g-3 mb-3">
+    <div class="row g-3 mb-3 chart-row">
 
         <!-- Temperatura + Humedad -->
+        {% if station.HasTempHumidity %}
         <div class="col-lg-6">
             <div class="card chart-card shadow-sm">
                 <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
@@ -221,8 +301,10 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <!-- Precipitación -->
+        {% if station.HasPrecipitation %}
         <div class="col-lg-6">
             <div class="card chart-card shadow-sm">
                 <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
@@ -239,8 +321,10 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <!-- Radiación Solar -->
+        {% if station.HasSolarRadiation %}
         <div class="col-lg-6">
             <div class="card chart-card shadow-sm">
                 <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
@@ -257,8 +341,10 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
-        <!-- Viento + Batería -->
+        <!-- Viento -->
+        {% if station.HasWind %}
         <div class="col-lg-6">
             <div class="card chart-card shadow-sm">
                 <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
@@ -266,12 +352,31 @@
                          style="background:linear-gradient(195deg,#1c2833,#4a5568); box-shadow:0 4px 16px rgba(28,40,51,.4);">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-wind text-white me-2"></i>
-                            <h6 class="text-white mb-0 text-sm">Viento y Batería</h6>
+                            <h6 class="text-white mb-0 text-sm">Velocidad del Viento</h6>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div id="chart-wind-bat" style="height:250px;"></div>
+                    <div id="chart-wind" style="height:250px;"></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Batería -->
+        <div class="col-lg-6">
+            <div class="card chart-card shadow-sm">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="border-radius-lg py-2 px-3"
+                         style="background:linear-gradient(195deg,#1b5e20,#2f855a); box-shadow:0 4px 16px rgba(27,94,32,.4);">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-battery-three-quarters text-white me-2"></i>
+                            <h6 class="text-white mb-0 text-sm">Batería</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="chart-bat" style="height:250px;"></div>
                 </div>
             </div>
         </div>
@@ -279,7 +384,7 @@
     </div><!-- /row charts -->
 
     <!-- ── TABLA DE DATOS ────────────────────────────────────────────────── -->
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mb-4 table-card-wrap">
         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
             <div class="bg-gradient-dark shadow-dark border-radius-lg py-2 px-3 d-flex align-items-center">
                 <i class="fas fa-table text-white me-2"></i>
@@ -287,7 +392,6 @@
                     Registros del período
                     {% if show_all %}(todos){% else %}(últimos {{ days }} días){% endif %}
                 </h6>
-                <!-- Botón descarga CSV (único) -->
                 <button class="btn btn-sm mb-0 ms-3"
                         style="background:rgba(255,255,255,.18); color:#fff;
                                border:1px solid rgba(255,255,255,.35); font-size:.72rem;
@@ -298,29 +402,30 @@
             </div>
         </div>
 
-        <div class="card-body px-0 pt-0 pb-0">
-            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <div class="card-body px-0 pt-3 pb-0">
+            <div class="table-responsive">
                 <table class="table data-table mb-0" id="readings-table">
                     <thead>
                         <tr>
                             <th>#</th>
                             <th>Fecha / Hora</th>
-                            <th>🌡 Temp (°C)</th>
-                            <th>💧 Hum (%)</th>
-                            <th>🌧 Lluvia (mm)</th>
-                            <th>☀️ Rad. (W/m²)</th>
-                            <th>🌬 Viento (m/s)</th>
+                            {% if station.HasTempHumidity %}<th>🌡 Temp (°C)</th>{% endif %}
+                            {% if station.HasTempHumidity %}<th>💧 Hum (%)</th>{% endif %}
+                            {% if station.HasPrecipitation %}<th>🌧 Lluvia (mm)</th>{% endif %}
+                            {% if station.HasSolarRadiation %}<th>☀️ Rad. (W/m²)</th>{% endif %}
+                            {% if station.HasWind %}<th>🌬 Viento (m/s)</th>{% endif %}
+                            {% if station.HasWind %}<th>🧭 Dir. (°)</th>{% endif %}
+                            {% if station.HasWind %}<th>🧭 Dir. (cardinal)</th>{% endif %}
                             <th>🔋 Batería (V)</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
-                        <!-- Relleno por JS desde los datos del gráfico -->
+                        <!-- Relleno por JS -->
                     </tbody>
                 </table>
             </div>
-            <div class="card-footer py-2 px-3 d-flex align-items-center border-top" style="border-color:#f0f2f5 !important;">
-                <span class="text-xxs text-secondary" id="row-count"></span>
-                <span class="ms-auto text-xxs text-secondary">
+            <div class="px-3 py-2 border-top" style="border-color:#f0f2f5 !important;">
+                <span class="text-xxs text-secondary">
                     <i class="fas fa-lock me-1 opacity-5"></i>
                     <a href="{% url 'user_app:user-login' %}" class="text-primary">Iniciar sesión</a> para gestionar lecturas
                 </span>
@@ -363,12 +468,19 @@ var SHOW_ALL     = {{ show_all|yesno:"true,false" }};
 // displayDates: "dd/mm/YYYY HH:MM" — para la tabla y hover tooltip
 var dates        = {{ chart_dates|safe }};
 var displayDates = {{ display_dates|safe }};
-var temp  = {{ chart_temperature|safe }};
-var hum   = {{ chart_humidity|safe }};
-var rain  = {{ chart_precipitation|safe }};
-var rad   = {{ chart_radiation|safe }};
-var wind  = {{ chart_wind|safe }};
-var bat   = {{ chart_battery|safe }};
+var temp    = {{ chart_temperature|safe }};
+var hum     = {{ chart_humidity|safe }};
+var rain    = {{ chart_precipitation|safe }};
+var rad     = {{ chart_radiation|safe }};
+var wind    = {{ chart_wind|safe }};
+var windDir = {{ chart_wind_direction|safe }};
+var bat     = {{ chart_battery|safe }};
+
+// Flags de sensores habilitados
+var HAS_TEMP  = {{ station.HasTempHumidity|yesno:"true,false" }};
+var HAS_RAIN  = {{ station.HasPrecipitation|yesno:"true,false" }};
+var HAS_RAD   = {{ station.HasSolarRadiation|yesno:"true,false" }};
+var HAS_WIND  = {{ station.HasWind|yesno:"true,false" }};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function hasVal(arr) {
@@ -378,6 +490,36 @@ function hasVal(arr) {
 function fmt(v, dec) {
     if (v === null || v === undefined) return '<span class="tbl-null">—</span>';
     return parseFloat(v).toFixed(dec !== undefined ? dec : 1);
+}
+
+var COMPASS_POINTS = [
+    { name: 'N',   min: 348.75, max: 360 },
+    { name: 'N',   min: 0,      max: 11.25 },
+    { name: 'NNE', min: 11.25,  max: 33.75 },
+    { name: 'NE',  min: 33.75,  max: 56.25 },
+    { name: 'ENE', min: 56.25,  max: 78.75 },
+    { name: 'E',   min: 78.75,  max: 101.25 },
+    { name: 'ESE', min: 101.25, max: 123.75 },
+    { name: 'SE',  min: 123.75, max: 146.25 },
+    { name: 'SSE', min: 146.25, max: 168.75 },
+    { name: 'S',   min: 168.75, max: 191.25 },
+    { name: 'SSO', min: 191.25, max: 213.75 },
+    { name: 'SO',  min: 213.75, max: 236.25 },
+    { name: 'OSO', min: 236.25, max: 258.75 },
+    { name: 'O',   min: 258.75, max: 281.25 },
+    { name: 'ONO', min: 281.25, max: 303.75 },
+    { name: 'NO',  min: 303.75, max: 326.25 },
+    { name: 'NNO', min: 326.25, max: 348.75 },
+];
+
+function degToCompass(deg) {
+    if (deg === null || deg === undefined || isNaN(deg)) return '<span class="tbl-null">—</span>';
+    var d = ((parseFloat(deg) % 360) + 360) % 360;
+    for (var i = 0; i < COMPASS_POINTS.length; i++) {
+        var p = COMPASS_POINTS[i];
+        if (d >= p.min && d < p.max) return p.name;
+    }
+    return d === 360 ? 'N' : '—';
 }
 
 function noData(id) {
@@ -442,97 +584,153 @@ var cfg = {
 };
 
 // ── Temperatura + Humedad ─────────────────────────────────────────────────────
-if (hasVal(temp) || hasVal(hum)) {
-    Plotly.newPlot('chart-temp-hum', [
-        { x: dates, y: temp, customdata: displayDates, name: 'Temperatura (°C)',
-          type: 'scatter', mode: 'lines+markers',
-          line: { color: '#e53e3e', width: 2, shape: 'spline' }, marker: { size: 3, color: '#e53e3e' },
-          connectgaps: false,
-          hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} °C<extra>Temperatura</extra>' },
-        { x: dates, y: hum, customdata: displayDates, name: 'Humedad (%)',
-          type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
-          line: { color: '#3182ce', width: 2, dash: 'dot', shape: 'spline' },
-          marker: { size: 3, color: '#3182ce', symbol: 'diamond' },
-          connectgaps: false,
-          hovertemplate: '%{y:.1f} %<extra>Humedad</extra>' },
-    ], mkLayout({ y1: '°C', y2: '%' }), cfg);
-} else { noData('chart-temp-hum'); }
+if (HAS_TEMP) {
+    if (hasVal(temp) || hasVal(hum)) {
+        Plotly.newPlot('chart-temp-hum', [
+            { x: dates, y: temp, customdata: displayDates, name: 'Temperatura (°C)',
+              type: 'scatter', mode: 'lines+markers',
+              line: { color: '#e53e3e', width: 2, shape: 'spline' }, marker: { size: 3, color: '#e53e3e' },
+              connectgaps: false,
+              hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} °C<extra>Temperatura</extra>' },
+            { x: dates, y: hum, customdata: displayDates, name: 'Humedad (%)',
+              type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
+              line: { color: '#3182ce', width: 2, dash: 'dot', shape: 'spline' },
+              marker: { size: 3, color: '#3182ce', symbol: 'diamond' },
+              connectgaps: false,
+              hovertemplate: '%{y:.1f} %<extra>Humedad</extra>' },
+        ], mkLayout({ y1: '°C', y2: '%' }), cfg);
+    } else { noData('chart-temp-hum'); }
+}
 
 // ── Precipitación ─────────────────────────────────────────────────────────────
-if (hasVal(rain)) {
-    var rainColors = rain.map(function (v) {
-        if (!v) return 'rgba(0,0,0,0)';
-        return v > 20 ? 'rgba(0,80,158,.85)' : v > 5 ? 'rgba(44,122,123,.78)' : 'rgba(100,185,182,.65)';
-    });
-    Plotly.newPlot('chart-rain', [
-        { x: dates, y: rain, customdata: displayDates, name: 'Precipitación', type: 'bar',
-          marker: { color: rainColors, line: { color: '#2c7a7b', width: 0.4 } },
-          hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} mm<extra>Precipitación</extra>' },
-    ], mkLayout({ y1: 'mm' }), cfg);
-} else { noData('chart-rain'); }
+if (HAS_RAIN) {
+    if (hasVal(rain)) {
+        var rainColors = rain.map(function (v) {
+            if (!v) return 'rgba(0,0,0,0)';
+            return v > 20 ? 'rgba(0,80,158,.85)' : v > 5 ? 'rgba(44,122,123,.78)' : 'rgba(100,185,182,.65)';
+        });
+        Plotly.newPlot('chart-rain', [
+            { x: dates, y: rain, customdata: displayDates, name: 'Precipitación', type: 'bar',
+              marker: { color: rainColors, line: { color: '#2c7a7b', width: 0.4 } },
+              hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} mm<extra>Precipitación</extra>' },
+        ], mkLayout({ y1: 'mm' }), cfg);
+    } else { noData('chart-rain'); }
+}
 
 // ── Radiación Solar ───────────────────────────────────────────────────────────
-if (hasVal(rad)) {
-    Plotly.newPlot('chart-rad', [
-        { x: dates, y: rad, customdata: displayDates, name: 'Radiación Solar',
-          type: 'scatter', mode: 'lines',
-          fill: 'tozeroy', line: { color: '#dd6b20', width: 2, shape: 'spline' },
-          fillcolor: 'rgba(221,107,32,.13)', connectgaps: false,
-          hovertemplate: '<b>%{customdata}</b><br>%{y:.0f} W/m²<extra>Radiación</extra>' },
-    ], mkLayout({ y1: 'W/m²' }), cfg);
-} else { noData('chart-rad'); }
+if (HAS_RAD) {
+    if (hasVal(rad)) {
+        Plotly.newPlot('chart-rad', [
+            { x: dates, y: rad, customdata: displayDates, name: 'Radiación Solar',
+              type: 'scatter', mode: 'lines',
+              fill: 'tozeroy', line: { color: '#dd6b20', width: 2, shape: 'spline' },
+              fillcolor: 'rgba(221,107,32,.13)', connectgaps: false,
+              hovertemplate: '<b>%{customdata}</b><br>%{y:.0f} W/m²<extra>Radiación</extra>' },
+        ], mkLayout({ y1: 'W/m²' }), cfg);
+    } else { noData('chart-rad'); }
+}
 
-// ── Viento + Batería ──────────────────────────────────────────────────────────
-if (hasVal(wind) || hasVal(bat)) {
-    Plotly.newPlot('chart-wind-bat', [
-        { x: dates, y: wind, customdata: displayDates, name: 'Viento (m/s)',
-          type: 'scatter', mode: 'lines+markers',
-          line: { color: '#4a5568', width: 2, shape: 'spline' }, marker: { size: 3, color: '#4a5568' },
-          connectgaps: false,
-          hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} m/s<extra>Viento</extra>' },
+// ── Viento (velocidad + dirección en eje secundario) ─────────────────────────
+if (HAS_WIND) {
+    if (hasVal(wind)) {
+        var windTraces = [
+            { x: dates, y: wind, customdata: displayDates, name: 'Velocidad (m/s)',
+              type: 'scatter', mode: 'lines+markers',
+              line: { color: '#4a5568', width: 2, shape: 'spline' }, marker: { size: 3, color: '#4a5568' },
+              connectgaps: false,
+              hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} m/s<extra>Viento</extra>' },
+        ];
+        var windLayout = mkLayout({ y1: 'm/s' });
+        if (hasVal(windDir)) {
+            windTraces.push({
+                x: dates, y: windDir, customdata: displayDates, name: 'Dirección (°)',
+                type: 'scatter', mode: 'markers', yaxis: 'y2',
+                marker: { size: 5, color: '#718096', symbol: 'arrow', angle: windDir,
+                          line: { color: '#4a5568', width: 1 } },
+                hovertemplate: '%{y:.0f}°<extra>Dirección</extra>',
+            });
+            windLayout = mkLayout({ y1: 'm/s', y2: '°' });
+        }
+        Plotly.newPlot('chart-wind', windTraces, windLayout, cfg);
+    } else { noData('chart-wind'); }
+}
+
+// ── Batería ───────────────────────────────────────────────────────────────────
+if (hasVal(bat)) {
+    Plotly.newPlot('chart-bat', [
         { x: dates, y: bat, customdata: displayDates, name: 'Batería (V)',
-          type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
-          line: { color: '#2f855a', width: 2, dash: 'dash', shape: 'spline' },
-          marker: { size: 3, color: '#2f855a', symbol: 'triangle-up' },
+          type: 'scatter', mode: 'lines+markers',
+          line: { color: '#2f855a', width: 2, shape: 'spline' },
+          marker: {
+              size: 5, color: bat.map(function(v) {
+                  return v !== null && v < 3.5 ? '#e53e3e' : '#2f855a';
+              }),
+          },
           connectgaps: false,
-          hovertemplate: '%{y:.2f} V<extra>Batería</extra>' },
-    ], mkLayout({ y1: 'm/s', y2: 'V' }), cfg);
-} else { noData('chart-wind-bat'); }
+          hovertemplate: '<b>%{customdata}</b><br>%{y:.2f} V<extra>Batería</extra>' },
+    ], mkLayout({ y1: 'V' }), cfg);
+} else { noData('chart-bat'); }
 
-// ── Tabla de datos (generada desde los arrays del gráfico) ────────────────────
+// ── Tabla de datos ────────────────────────────────────────────────────────────
 (function buildTable() {
     var tbody = document.getElementById('table-body');
     var count = document.getElementById('row-count');
+    // Número de columnas = 2 fijas + las habilitadas
+    var ncols = 2 + (HAS_TEMP ? 2 : 0) + (HAS_RAIN ? 1 : 0) + (HAS_RAD ? 1 : 0) + (HAS_WIND ? 3 : 0) + 1;
     if (!dates || dates.length === 0) {
         tbody.innerHTML =
-            '<tr><td colspan="8" class="text-center text-secondary py-4 text-xs">' +
+            '<tr><td colspan="' + ncols + '" class="text-center text-secondary py-4 text-xs">' +
             '<i class="fas fa-inbox d-block mb-1" style="font-size:1.5rem;opacity:.2;"></i>' +
             'Sin registros para el período seleccionado</td></tr>';
         if (count) count.textContent = '0 registros';
         return;
     }
     var rows = '';
-    /* Los datos del gráfico vienen ordenados ASC; la tabla muestra DESC (más reciente primero) */
     for (var i = dates.length - 1; i >= 0; i--) {
         var n = dates.length - i;
-        rows +=
-            '<tr>' +
+        rows += '<tr>' +
             '<td class="text-xxs text-secondary">' + n + '</td>' +
-            '<td class="font-weight-bold text-xs" style="white-space:nowrap;">' + displayDates[i] + '</td>' +
-            '<td class="text-center ' +
+            '<td class="font-weight-bold text-xs" style="white-space:nowrap;">' + displayDates[i] + '</td>';
+        if (HAS_TEMP) {
+            rows +=
+                '<td class="text-center ' +
                 (temp[i] > 35 ? 'text-danger' : temp[i] > 28 ? 'text-warning' : 'text-primary') +
                 ' font-weight-bold">' + fmt(temp[i]) + '</td>' +
-            '<td class="text-center text-info font-weight-bold">'  + fmt(hum[i])  + '</td>' +
-            '<td class="text-center font-weight-bold" style="color:#2c7a7b;">' + fmt(rain[i]) + '</td>' +
-            '<td class="text-center font-weight-bold" style="color:#dd6b20;">'  + fmt(rad[i], 0) + '</td>' +
-            '<td class="text-center text-dark font-weight-bold">'   + fmt(wind[i]) + '</td>' +
+                '<td class="text-center text-info font-weight-bold">' + fmt(hum[i]) + '</td>';
+        }
+        if (HAS_RAIN) {
+            rows += '<td class="text-center font-weight-bold" style="color:#2c7a7b;">' + fmt(rain[i]) + '</td>';
+        }
+        if (HAS_RAD) {
+            rows += '<td class="text-center font-weight-bold" style="color:#dd6b20;">' + fmt(rad[i], 0) + '</td>';
+        }
+        if (HAS_WIND) {
+            rows +=
+                '<td class="text-center text-dark font-weight-bold">' + fmt(wind[i]) + '</td>' +
+                '<td class="text-center text-secondary">' + fmt(windDir[i], 0) + '</td>' +
+                '<td class="text-center text-secondary font-weight-bold">' + degToCompass(windDir[i]) + '</td>';
+        }
+        rows +=
             '<td class="text-center font-weight-bold ' +
-                (bat[i] !== null && bat[i] < 3.5 ? 'text-danger' : 'text-success') +
-                '">' + fmt(bat[i], 2) + '</td>' +
+            (bat[i] !== null && bat[i] < 3.5 ? 'text-danger' : 'text-success') +
+            '">' + fmt(bat[i], 2) + '</td>' +
             '</tr>';
     }
     tbody.innerHTML = rows;
-    if (count) count.textContent = dates.length + ' registro' + (dates.length !== 1 ? 's' : '');
+
+    // Paginación con simpleDatatables
+    new simpleDatatables.DataTable('#readings-table', {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 10,
+        perPageSelect: [10, 25, 50, 100],
+        labels: {
+            placeholder: 'Buscar...',
+            perPage: '{select} por página',
+            noRows: 'Sin registros',
+            info: 'Mostrando {start} a {end} de {rows} registros',
+        },
+    });
 }());
 
 // ── Descarga CSV ──────────────────────────────────────────────────────────────
@@ -546,20 +744,21 @@ function triggerDownload(csv, filename) {
 }
 
 function downloadCSV() {
-    var header = ['Fecha', 'Temperatura_C', 'Humedad_pct', 'Precipitacion_mm',
-                  'Radiacion_Wm2', 'Viento_ms', 'Bateria_V'];
-    var rows   = [header.join(',')];
-    /* CSV en orden ASC (cronológico) */
+    var header = ['Fecha'];
+    if (HAS_TEMP)  { header.push('Temperatura_C', 'Humedad_pct'); }
+    if (HAS_RAIN)  { header.push('Precipitacion_mm'); }
+    if (HAS_RAD)   { header.push('Radiacion_Wm2'); }
+    if (HAS_WIND)  { header.push('Viento_ms', 'Direccion_deg'); }
+    header.push('Bateria_V');
+    var rows = [header.join(',')];
     for (var i = 0; i < dates.length; i++) {
-        rows.push([
-            '"' + displayDates[i] + '"',
-            temp[i] !== null && temp[i] !== undefined ? temp[i] : '',
-            hum[i]  !== null && hum[i]  !== undefined ? hum[i]  : '',
-            rain[i] !== null && rain[i] !== undefined ? rain[i] : '',
-            rad[i]  !== null && rad[i]  !== undefined ? rad[i]  : '',
-            wind[i] !== null && wind[i] !== undefined ? wind[i] : '',
-            bat[i]  !== null && bat[i]  !== undefined ? bat[i]  : '',
-        ].join(','));
+        var row = ['"' + displayDates[i] + '"'];
+        if (HAS_TEMP)  { row.push(temp[i] != null ? temp[i] : '', hum[i] != null ? hum[i] : ''); }
+        if (HAS_RAIN)  { row.push(rain[i] != null ? rain[i] : ''); }
+        if (HAS_RAD)   { row.push(rad[i]  != null ? rad[i]  : ''); }
+        if (HAS_WIND)  { row.push(wind[i] != null ? wind[i] : '', windDir[i] != null ? windDir[i] : ''); }
+        row.push(bat[i] != null ? bat[i] : '');
+        rows.push(row.join(','));
     }
     var suffix   = SHOW_ALL ? 'todo' : DAYS + 'd';
     var filename = STATION_NAME.replace(/\s+/g, '_') + '_' + suffix + '.csv';

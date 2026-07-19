@@ -1,5 +1,6 @@
 {% extends 'FAUNA/weatherStation/base_weatherstation.html' %}
 {% load static %}
+{% load fauna_tags %}
 
 {% block title %}All Readings{% endblock title %}
 {% block company %}{{ CompanyName }}{% endblock company %}
@@ -73,6 +74,7 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Prec mm</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Wind m/s</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Dir °</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Dir cardinal</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -117,10 +119,15 @@
                                     {{ r.WindDirection|floatformat:0 }}
                                     {% else %}—{% endif %}
                                 </td>
+                                <td class="text-xs">
+                                    {% if r.WindDirection is not None %}
+                                    {{ r.WindDirection|wind_compass }}
+                                    {% else %}—{% endif %}
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="8" class="text-center text-secondary py-5">
+                                <td colspan="9" class="text-center text-secondary py-5">
                                     <i class="fas fa-thermometer-half d-block mb-2" style="font-size:3rem;opacity:.3;"></i>
                                     No readings found.
                                     <a href="{% url 'weather_app:reading_add' %}" class="btn btn-sm bg-gradient-success ms-2">

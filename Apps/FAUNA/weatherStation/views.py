@@ -127,21 +127,19 @@ class PublicWeatherDetailView(TemplateView):
         show_all = (days_param == '0')
         days = 0 if show_all else int(days_param)
 
+        _fields = ('DateCreate', 'Temperature', 'Humidity',
+                   'SolarRadiation', 'Precipitation', 'WindSpeed', 'WindDirection', 'VoltageBattery')
         if show_all:
             readings = list(
                 WeatherReading.objects.filter(Station__id=station.id)
-                .order_by('DateCreate')
-                .values('DateCreate', 'Temperature', 'Humidity',
-                        'SolarRadiation', 'Precipitation', 'WindSpeed', 'VoltageBattery')
+                .order_by('DateCreate').values(*_fields)
             )
         else:
             date_from = _today_lima() - timedelta(days=days)
             date_to = _today_lima()
             readings = list(WeatherReading.objects.get_range_by_station(
                 station.id, date_from, date_to
-            ).order_by('DateCreate')
-             .values('DateCreate', 'Temperature', 'Humidity',
-                     'SolarRadiation', 'Precipitation', 'WindSpeed', 'VoltageBattery'))
+            ).order_by('DateCreate').values(*_fields))
 
         # ISO para Plotly (type:'date'), formato legible para la tabla
         chart_dates   = [_to_lima(r['DateCreate']).strftime('%Y-%m-%d %H:%M:%S') for r in readings]
@@ -159,6 +157,7 @@ class PublicWeatherDetailView(TemplateView):
             'chart_radiation': json.dumps([r['SolarRadiation'] for r in readings]),
             'chart_precipitation': json.dumps([r['Precipitation'] for r in readings]),
             'chart_wind': json.dumps([r['WindSpeed'] for r in readings]),
+            'chart_wind_direction': json.dumps([r['WindDirection'] for r in readings]),
             'chart_battery': json.dumps([r['VoltageBattery'] for r in readings]),
         })
         return context

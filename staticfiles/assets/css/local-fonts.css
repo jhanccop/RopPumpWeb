@@ -1,0 +1,31 @@
+/* ============================================================
+   LOCAL FONTS — No external CDN requests
+   ============================================================ */
+
+/* Roboto */
+@font-face { font-family: 'Roboto'; font-weight: 300; font-style: normal; font-display: swap;
+  src: url('../fonts/roboto/Roboto-300.ttf') format('truetype'); }
+@font-face { font-family: 'Roboto'; font-weight: 400; font-style: normal; font-display: swap;
+  src: url('../fonts/roboto/Roboto-400.ttf') format('truetype'); }
+@font-face { font-family: 'Roboto'; font-weight: 500; font-style: normal; font-display: swap;
+  src: url('../fonts/roboto/Roboto-500.ttf') format('truetype'); }
+@font-face { font-family: 'Roboto'; font-weight: 700; font-style: normal; font-display: swap;
+  src: url('../fonts/roboto/Roboto-700.ttf') format('truetype'); }
+@font-face { font-family: 'Roboto'; font-weight: 900; font-style: normal; font-display: swap;
+  src: url('../fonts/roboto/Roboto-900.ttf') format('truetype'); }
+
+/* Roboto Slab */
+@font-face { font-family: 'Roboto Slab'; font-weight: 400; font-style: normal; font-display: swap;
+  src: url('../fonts/roboto/RobotoSlab-400.otf') format('opentype'); }
+@font-face { font-family: 'Roboto Slab'; font-weight: 700; font-style: normal; font-display: swap;
+  src: url('../fonts/roboto/RobotoSlab-700.otf') format('opentype'); }
+
+/* Material Icons Round */
+@font-face { font-family: 'Material Icons'; font-weight: 400; font-style: normal; font-display: block;
+  src: url('../fonts/MaterialIcons-Regular.woff2') format('woff2'),
+       url('../fonts/MaterialIcons-Regular.woff')  format('woff'); }
+@font-face { font-family: 'Material Icons Round'; font-weight: 400; font-style: normal; font-display: block;
+  src: url('../fonts/MaterialIcons-Regular.woff2') format('woff2'),
+       url('../fonts/MaterialIcons-Regular.woff')  format('woff'); }
+
+/* Font Awesome — loaded via font-awesome.min.css (assets/css/) */

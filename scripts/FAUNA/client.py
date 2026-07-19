@@ -20,7 +20,13 @@ weatherStationSetting:
 
 weatherStationData:
   {"type":"weatherStationData","mac":"AA:BB:CC:DD:EE:FF",
-   "T":25.3,"H":60.1,"WV":2.5,"WD":180,"RA":850,"P":1.2}
+   "conn":"LTE","timestamp":"2026-07-19T15:39:26",
+   "T":25.3,"H":60.1,"WV":2.5,"WD":180,"RA":850,"P":1.2,"vB":4.05}
+
+  Fields:
+    conn      → TypeConn  (WIFI | LTE)
+    timestamp → LocalTimestamp  (device local time, ISO 8601)
+    DateCreate is set by the server at message arrival (two timestamps total)
 
 cameraStationSetting:
   {"type":"cameraStationSetting","mac":"AA:BB:CC:DD:EE:FF"}
@@ -193,8 +199,27 @@ def _save_image(raw_bytes: bytes, filename: str) -> str | None:
 
 
 # ── Weather Station handlers ──────────────────────────────────
+def _parse_device_timestamp(raw: str | None) -> datetime | None:
+    """Parse ISO 8601 timestamp sent by the device; returns None if missing or invalid."""
+    if not raw:
+        return None
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M"):
+        try:
+            return datetime.strptime(raw, fmt)
+        except ValueError:
+            continue
+    return None
+
+
 def _handle_ws_data(client, data):
-    """Store a WeatherReading, then reply with station config."""
+    """Store a WeatherReading, then reply with station config.
+
+    Two timestamps:
+      DateCreate     – set by the server at message arrival (UTC naive, consistent with existing rows)
+      LocalTimestamp – ISO timestamp reported by the device (field "timestamp"), stored as-is
+    Extra field:
+      TypeConn       – connection type reported by the device (field "conn"): WIFI | LTE
+    """
     mac = data.get("mac", "")
     rows = db_get(
         """SELECT id,"Status","TimeSleep",
@@ -208,26 +233,32 @@ def _handle_ws_data(client, data):
         return
 
     station_id, status, timesleep, a_th, a_ws, a_rd, a_pr = rows[0]
-    dt = datetime.now()
+    server_dt      = datetime.now()                          # marca del servidor
+    local_ts       = _parse_device_timestamp(data.get("timestamp"))  # marca del nodo
+    type_conn      = data.get("conn") or None                # WIFI | LTE | None
 
     db_exec(
         """INSERT INTO "weatherStation_weatherreading"
-           ("Station_id","DateCreate",
+           ("Station_id","DateCreate","LocalTimestamp","TypeConn",
             "Temperature","Humidity","SolarRadiation",
             "Precipitation","WindSpeed","WindDirection","VoltageBattery")
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
         (
-            station_id, dt,
+            station_id, server_dt, local_ts, type_conn,
             _float(data.get("T")),
             _float(data.get("H")),
-            _float(data.get("RS")),
+            _float(data.get("RA")),   # campo radiación solar en payload
             _float(data.get("P")),
             _float(data.get("WV")),
             _float(data.get("WD")),
             _float(data.get("vB")),
         ),
     )
-    print(f"[ws-data] station={station_id}  T={data.get('T')}  H={data.get('H')}  vB={data.get('vB')}")
+    print(
+        f"[ws-data] station={station_id}  conn={type_conn}"
+        f"  server={server_dt:%H:%M:%S}  device={local_ts}"
+        f"  T={data.get('T')}  H={data.get('H')}  RA={data.get('RA')}  vB={data.get('vB')}"
+    )
 
     payload = json.dumps({
         "status":   status == "Active",

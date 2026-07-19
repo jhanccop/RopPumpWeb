@@ -6,6 +6,29 @@ register = template.Library()
 
 _LIMA_TZ = ZoneInfo('America/Lima')
 
+_COMPASS_POINTS = (
+    ('NNE', 11.25), ('NE', 33.75), ('ENE', 56.25), ('E', 78.75),
+    ('ESE', 101.25), ('SE', 123.75), ('SSE', 146.25), ('S', 168.75),
+    ('SSO', 191.25), ('SO', 213.75), ('OSO', 236.25), ('O', 258.75),
+    ('ONO', 281.25), ('NO', 303.75), ('NNO', 326.25), ('N', 348.75),
+    ('N', 360),
+)
+
+
+@register.filter
+def wind_compass(deg):
+    """Convierte grados (0-360) a punto cardinal (N, NNE, NE, ... NNO)."""
+    if deg is None:
+        return None
+    try:
+        d = float(deg) % 360
+    except (TypeError, ValueError):
+        return None
+    for name, upper_bound in _COMPASS_POINTS:
+        if d < upper_bound:
+            return name
+    return 'N'
+
 
 @register.filter
 def lima_date(dt, fmt='d/m/Y H:i'):

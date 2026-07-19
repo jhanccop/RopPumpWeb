@@ -66,7 +66,9 @@ class WeatherReading(models.Model):
         on_delete=models.CASCADE,
         related_name='readings'
     )
-    DateCreate = models.DateTimeField('Date / Time', auto_now_add=False, auto_now=False)
+    DateCreate      = models.DateTimeField('Server Timestamp', auto_now_add=False, auto_now=False)
+    LocalTimestamp  = models.DateTimeField('Device Timestamp', null=True, blank=True)
+    TypeConn        = models.CharField('Connection Type', max_length=10, null=True, blank=True)
 
     Temperature = models.FloatField('Temperature (°C)', null=True, blank=True)
     Humidity = models.FloatField('Humidity (%)', null=True, blank=True)
