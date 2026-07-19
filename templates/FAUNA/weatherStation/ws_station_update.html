@@ -29,7 +29,7 @@
 
           <div class="row">
             <div class="col-12 col-sm-8">
-              <div class="input-group input-group-outline mb-3">
+              <div class="input-group input-group-outline is-filled mb-3">
                 <label class="form-label">Station Name *</label>
                 {{ form.StationName }}
               </div>
@@ -43,7 +43,7 @@
               {% if form.Status.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Status.errors.0 }}</p>{% endif %}
             </div>
             <div class="col-12">
-              <div class="input-group input-group-outline mb-3">
+              <div class="input-group input-group-outline is-filled mb-3">
                 <label class="form-label">Description</label>
                 {{ form.Description }}
               </div>
@@ -58,21 +58,21 @@
 
           <div class="row">
             <div class="col-12 col-sm-4">
-              <div class="input-group input-group-outline mb-3">
+              <div class="input-group input-group-outline is-filled mb-3">
                 <label class="form-label">Latitude</label>
                 {{ form.Latitude }}
               </div>
               {% if form.Latitude.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Latitude.errors.0 }}</p>{% endif %}
             </div>
             <div class="col-12 col-sm-4">
-              <div class="input-group input-group-outline mb-3">
+              <div class="input-group input-group-outline is-filled mb-3">
                 <label class="form-label">Longitude</label>
                 {{ form.Longitude }}
               </div>
               {% if form.Longitude.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Longitude.errors.0 }}</p>{% endif %}
             </div>
             <div class="col-12 col-sm-4">
-              <div class="input-group input-group-outline mb-3">
+              <div class="input-group input-group-outline is-filled mb-3">
                 <label class="form-label">Altitude (m)</label>
                 {{ form.Altitude }}
               </div>
@@ -87,7 +87,7 @@
 
           <div class="row">
             <div class="col-12 col-sm-6">
-              <div class="input-group input-group-outline mb-3">
+              <div class="input-group input-group-outline is-filled mb-3">
                 <label class="form-label">MAC Address</label>
                 {{ form.MacAddress }}
               </div>

@@ -1,9 +1,21 @@
-from django.contrib import admin
+from datetime import datetime, timezone as dt_utc
+from zoneinfo import ZoneInfo
 
+from django.contrib import admin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 
 from .models import WeatherStation, WeatherReading
+
+_LIMA_TZ = ZoneInfo('America/Lima')
+
+def _fmt_lima(dt):
+    """Formatea datetime naive (asumido UTC) o aware a hora Lima."""
+    if dt is None:
+        return '—'
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=dt_utc.utc)
+    return dt.astimezone(_LIMA_TZ).strftime('%Y-%m-%d %H:%M')
 
 
 # =================== Weather Station =====================
@@ -17,7 +29,7 @@ class WeatherStationAdmin(ImportExportModelAdmin):
     resource_class = WeatherStationResource
 
     def DateCreatedFormat(self, obj):
-        from django.utils.timezone import localtime; return localtime(obj.DateCreate).strftime("%Y-%m-%d %H:%M:%S")
+        return _fmt_lima(obj.DateCreate)
     DateCreatedFormat.admin_order_field = 'DateCreate'
     DateCreatedFormat.short_description = 'Date Create'
 

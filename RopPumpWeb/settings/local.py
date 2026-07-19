@@ -33,7 +33,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR.child('static')]
 
 STATIC_ROOT = BASE_DIR.child('staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR.child('media')
 
