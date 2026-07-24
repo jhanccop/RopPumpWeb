@@ -127,7 +127,7 @@ class PublicWeatherDetailView(TemplateView):
         show_all = (days_param == '0')
         days = 0 if show_all else int(days_param)
 
-        _fields = ('DateCreate', 'Temperature', 'Humidity',
+        _fields = ('DateCreate', 'LocalTimestamp', 'Temperature', 'Humidity',
                    'SolarRadiation', 'Precipitation', 'WindSpeed', 'WindDirection', 'VoltageBattery')
         if show_all:
             readings = list(
@@ -142,8 +142,17 @@ class PublicWeatherDetailView(TemplateView):
             ).order_by('DateCreate').values(*_fields))
 
         # ISO para Plotly (type:'date'), formato legible para la tabla
-        chart_dates   = [_to_lima(r['DateCreate']).strftime('%Y-%m-%d %H:%M:%S') for r in readings]
-        display_dates = [_to_lima(r['DateCreate']).strftime('%d/%m/%Y %H:%M') for r in readings]
+        chart_dates        = [_to_lima(r['DateCreate']).strftime('%Y-%m-%d %H:%M:%S') for r in readings]
+        display_dates      = [_to_lima(r['DateCreate']).strftime('%d/%m/%Y %H:%M') for r in readings]
+        # Marca de tiempo del dispositivo (puede ser null)
+        chart_dates_dev    = [
+            _to_lima(r['LocalTimestamp']).strftime('%Y-%m-%d %H:%M:%S') if r['LocalTimestamp'] else None
+            for r in readings
+        ]
+        display_dates_dev  = [
+            _to_lima(r['LocalTimestamp']).strftime('%d/%m/%Y %H:%M') if r['LocalTimestamp'] else '—'
+            for r in readings
+        ]
         context.update({
             'station': station,
             'days': days,
@@ -152,6 +161,8 @@ class PublicWeatherDetailView(TemplateView):
             'latest': WeatherReading.objects.get_latest_by_station(station.id),
             'chart_dates': json.dumps(chart_dates),
             'display_dates': json.dumps(display_dates),
+            'chart_dates_dev': json.dumps(chart_dates_dev),
+            'display_dates_dev': json.dumps(display_dates_dev),
             'chart_temperature': json.dumps([r['Temperature'] for r in readings]),
             'chart_humidity': json.dumps([r['Humidity'] for r in readings]),
             'chart_radiation': json.dumps([r['SolarRadiation'] for r in readings]),

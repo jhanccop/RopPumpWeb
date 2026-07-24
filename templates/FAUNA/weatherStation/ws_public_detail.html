@@ -281,6 +281,23 @@
     </div>
     {% endif %}
 
+    <!-- ── TOGGLE TIMESTAMP ─────────────────────────────────────────────── -->
+    <div class="d-flex align-items-center justify-content-end mb-2 gap-2" style="flex-wrap:wrap;">
+        <span class="text-xs text-secondary me-1">Eje X de los gráficos:</span>
+        <div class="btn-group btn-group-sm" role="group" id="ts-toggle">
+            <button type="button" class="btn btn-sm active" id="btn-ts-server"
+                    style="font-size:.72rem; padding:3px 12px; border-radius:20px 0 0 20px;
+                           background:#344767; color:#fff; border:1px solid #344767;">
+                <i class="fas fa-server me-1"></i>Servidor
+            </button>
+            <button type="button" class="btn btn-sm" id="btn-ts-device"
+                    style="font-size:.72rem; padding:3px 12px; border-radius:0 20px 20px 0;
+                           background:#fff; color:#344767; border:1px solid #344767;">
+                <i class="fas fa-microchip me-1"></i>Dispositivo
+            </button>
+        </div>
+    </div>
+
     <!-- ── GRÁFICOS ─────────────────────────────────────────────────────── -->
     <div class="row g-3 mb-3 chart-row">
 
@@ -422,7 +439,8 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Fecha / Hora</th>
+                            <th>Fecha / Hora<br><span class="text-xxs font-weight-normal opacity-6">Servidor</span></th>
+                            <th>Fecha / Hora<br><span class="text-xxs font-weight-normal opacity-6">Dispositivo</span></th>
                             {% if station.HasTempHumidity %}<th>🌡 Temp (°C)</th>{% endif %}
                             {% if station.HasTempHumidity %}<th>💧 Hum (%)</th>{% endif %}
                             {% if station.HasPrecipitation %}<th title="Descargas del pluviómetro&#10;Ø 130 mm · 4.3 ml/descarga ≈ 0.324 mm/descarga">🌧 n descargas</th>{% endif %}
@@ -478,10 +496,13 @@ var STATION_NAME = '{{ station.StationName|escapejs }}';
 var DAYS         = {{ days }};
 var SHOW_ALL     = {{ show_all|yesno:"true,false" }};
 
-// dates: ISO "YYYY-MM-DD HH:MM:SS" — Plotly los interpreta como línea de tiempo
-// displayDates: "dd/mm/YYYY HH:MM" — para la tabla y hover tooltip
-var dates        = {{ chart_dates|safe }};
-var displayDates = {{ display_dates|safe }};
+// Timestamps servidor
+var datesServer        = {{ chart_dates|safe }};
+var displayDatesServer = {{ display_dates|safe }};
+// Timestamps dispositivo (LocalTimestamp, puede contener nulls)
+var datesDevice        = {{ chart_dates_dev|safe }};
+var displayDatesDevice = {{ display_dates_dev|safe }};
+
 var temp    = {{ chart_temperature|safe }};
 var hum     = {{ chart_humidity|safe }};
 var rain    = {{ chart_precipitation|safe }};
@@ -597,101 +618,139 @@ var cfg = {
     },
 };
 
-// ── Temperatura + Humedad ─────────────────────────────────────────────────────
-if (HAS_TEMP) {
-    if (hasVal(temp) || hasVal(hum)) {
-        Plotly.newPlot('chart-temp-hum', [
-            { x: dates, y: temp, customdata: displayDates, name: 'Temperatura (°C)',
-              type: 'scatter', mode: 'lines+markers',
-              line: { color: '#e53e3e', width: 2, shape: 'spline' }, marker: { size: 3, color: '#e53e3e' },
-              connectgaps: false,
-              hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} °C<extra>Temperatura</extra>' },
-            { x: dates, y: hum, customdata: displayDates, name: 'Humedad (%)',
-              type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
-              line: { color: '#3182ce', width: 2, dash: 'dot', shape: 'spline' },
-              marker: { size: 3, color: '#3182ce', symbol: 'diamond' },
-              connectgaps: false,
-              hovertemplate: '%{y:.1f} %<extra>Humedad</extra>' },
-        ], mkLayout({ y1: '°C', y2: '%' }), cfg);
-    } else { noData('chart-temp-hum'); }
-}
+// ── Renderizado de gráficos (reutilizable al cambiar timestamp) ───────────────
+function renderCharts(xDates, xDisplay) {
 
-// ── Precipitación ─────────────────────────────────────────────────────────────
-if (HAS_RAIN) {
-    if (hasVal(rain)) {
-        var rainColors = rain.map(function (v) {
-            if (!v) return 'rgba(0,0,0,0)';
-            return v > 20 ? 'rgba(0,80,158,.85)' : v > 5 ? 'rgba(44,122,123,.78)' : 'rgba(100,185,182,.65)';
-        });
-        Plotly.newPlot('chart-rain', [
-            { x: dates, y: rain, customdata: displayDates, name: 'Descargas (n)', type: 'bar',
-              marker: { color: rainColors, line: { color: '#2c7a7b', width: 0.4 } },
-              hovertemplate: '<b>%{customdata}</b><br>%{y:.0f} descargas<extra>Pluviómetro</extra>' },
-        ], mkLayout({ y1: 'n descargas' }), cfg);
-    } else { noData('chart-rain'); }
-}
+    // Temperatura + Humedad
+    if (HAS_TEMP) {
+        if (hasVal(temp) || hasVal(hum)) {
+            Plotly.react('chart-temp-hum', [
+                { x: xDates, y: temp, customdata: xDisplay, name: 'Temperatura (°C)',
+                  type: 'scatter', mode: 'lines+markers',
+                  line: { color: '#e53e3e', width: 2, shape: 'spline' }, marker: { size: 3, color: '#e53e3e' },
+                  connectgaps: false,
+                  hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} °C<extra>Temperatura</extra>' },
+                { x: xDates, y: hum, customdata: xDisplay, name: 'Humedad (%)',
+                  type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
+                  line: { color: '#3182ce', width: 2, dash: 'dot', shape: 'spline' },
+                  marker: { size: 3, color: '#3182ce', symbol: 'diamond' },
+                  connectgaps: false,
+                  hovertemplate: '%{y:.1f} %<extra>Humedad</extra>' },
+            ], mkLayout({ y1: '°C', y2: '%' }), cfg);
+        } else { noData('chart-temp-hum'); }
+    }
 
-// ── Radiación Solar ───────────────────────────────────────────────────────────
-if (HAS_RAD) {
-    if (hasVal(rad)) {
-        Plotly.newPlot('chart-rad', [
-            { x: dates, y: rad, customdata: displayDates, name: 'Radiación Solar',
-              type: 'scatter', mode: 'lines',
-              fill: 'tozeroy', line: { color: '#dd6b20', width: 2, shape: 'spline' },
-              fillcolor: 'rgba(221,107,32,.13)', connectgaps: false,
-              hovertemplate: '<b>%{customdata}</b><br>%{y:.0f} W/m²<extra>Radiación</extra>' },
-        ], mkLayout({ y1: 'W/m²' }), cfg);
-    } else { noData('chart-rad'); }
-}
-
-// ── Viento (velocidad + dirección en eje secundario) ─────────────────────────
-if (HAS_WIND) {
-    if (hasVal(wind)) {
-        var windTraces = [
-            { x: dates, y: wind, customdata: displayDates, name: 'Velocidad (m/s)',
-              type: 'scatter', mode: 'lines+markers',
-              line: { color: '#4a5568', width: 2, shape: 'spline' }, marker: { size: 3, color: '#4a5568' },
-              connectgaps: false,
-              hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} m/s<extra>Viento</extra>' },
-        ];
-        var windLayout = mkLayout({ y1: 'm/s' });
-        if (hasVal(windDir)) {
-            windTraces.push({
-                x: dates, y: windDir, customdata: displayDates, name: 'Dirección (°)',
-                type: 'scatter', mode: 'markers', yaxis: 'y2',
-                marker: { size: 5, color: '#718096', symbol: 'arrow', angle: windDir,
-                          line: { color: '#4a5568', width: 1 } },
-                hovertemplate: '%{y:.0f}°<extra>Dirección</extra>',
+    // Precipitación
+    if (HAS_RAIN) {
+        if (hasVal(rain)) {
+            var rainColors = rain.map(function (v) {
+                if (!v) return 'rgba(0,0,0,0)';
+                return v > 20 ? 'rgba(0,80,158,.85)' : v > 5 ? 'rgba(44,122,123,.78)' : 'rgba(100,185,182,.65)';
             });
-            windLayout = mkLayout({ y1: 'm/s', y2: '°' });
-        }
-        Plotly.newPlot('chart-wind', windTraces, windLayout, cfg);
-    } else { noData('chart-wind'); }
+            Plotly.react('chart-rain', [
+                { x: xDates, y: rain, customdata: xDisplay, name: 'Descargas (n)', type: 'bar',
+                  marker: { color: rainColors, line: { color: '#2c7a7b', width: 0.4 } },
+                  hovertemplate: '<b>%{customdata}</b><br>%{y:.0f} descargas<extra>Pluviómetro</extra>' },
+            ], mkLayout({ y1: 'n descargas' }), cfg);
+        } else { noData('chart-rain'); }
+    }
+
+    // Radiación Solar
+    if (HAS_RAD) {
+        if (hasVal(rad)) {
+            Plotly.react('chart-rad', [
+                { x: xDates, y: rad, customdata: xDisplay, name: 'Radiación Solar',
+                  type: 'scatter', mode: 'lines',
+                  fill: 'tozeroy', line: { color: '#dd6b20', width: 2, shape: 'spline' },
+                  fillcolor: 'rgba(221,107,32,.13)', connectgaps: false,
+                  hovertemplate: '<b>%{customdata}</b><br>%{y:.0f} W/m²<extra>Radiación</extra>' },
+            ], mkLayout({ y1: 'W/m²' }), cfg);
+        } else { noData('chart-rad'); }
+    }
+
+    // Viento
+    if (HAS_WIND) {
+        if (hasVal(wind)) {
+            var windTraces = [
+                { x: xDates, y: wind, customdata: xDisplay, name: 'Velocidad (m/s)',
+                  type: 'scatter', mode: 'lines+markers',
+                  line: { color: '#4a5568', width: 2, shape: 'spline' }, marker: { size: 3, color: '#4a5568' },
+                  connectgaps: false,
+                  hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} m/s<extra>Viento</extra>' },
+            ];
+            var windLayout = mkLayout({ y1: 'm/s' });
+            if (hasVal(windDir)) {
+                windTraces.push({
+                    x: xDates, y: windDir, customdata: xDisplay, name: 'Dirección (°)',
+                    type: 'scatter', mode: 'markers', yaxis: 'y2',
+                    marker: { size: 5, color: '#718096', symbol: 'arrow', angle: windDir,
+                              line: { color: '#4a5568', width: 1 } },
+                    hovertemplate: '%{y:.0f}°<extra>Dirección</extra>',
+                });
+                windLayout = mkLayout({ y1: 'm/s', y2: '°' });
+            }
+            Plotly.react('chart-wind', windTraces, windLayout, cfg);
+        } else { noData('chart-wind'); }
+    }
+
+    // Batería
+    if (hasVal(bat)) {
+        Plotly.react('chart-bat', [
+            { x: xDates, y: bat, customdata: xDisplay, name: 'Batería (V)',
+              type: 'scatter', mode: 'lines+markers',
+              line: { color: '#2f855a', width: 2, shape: 'spline' },
+              marker: {
+                  size: 5, color: bat.map(function(v) {
+                      return v !== null && v < 3.5 ? '#e53e3e' : '#2f855a';
+                  }),
+              },
+              connectgaps: false,
+              hovertemplate: '<b>%{customdata}</b><br>%{y:.2f} V<extra>Batería</extra>' },
+        ], mkLayout({ y1: 'V' }), cfg);
+    } else { noData('chart-bat'); }
 }
 
-// ── Batería ───────────────────────────────────────────────────────────────────
-if (hasVal(bat)) {
-    Plotly.newPlot('chart-bat', [
-        { x: dates, y: bat, customdata: displayDates, name: 'Batería (V)',
-          type: 'scatter', mode: 'lines+markers',
-          line: { color: '#2f855a', width: 2, shape: 'spline' },
-          marker: {
-              size: 5, color: bat.map(function(v) {
-                  return v !== null && v < 3.5 ? '#e53e3e' : '#2f855a';
-              }),
-          },
-          connectgaps: false,
-          hovertemplate: '<b>%{customdata}</b><br>%{y:.2f} V<extra>Batería</extra>' },
-    ], mkLayout({ y1: 'V' }), cfg);
-} else { noData('chart-bat'); }
+// Primer render con timestamps de servidor
+renderCharts(datesServer, displayDatesServer);
+
+// ── Toggle servidor / dispositivo ─────────────────────────────────────────────
+(function() {
+    var btnSrv = document.getElementById('btn-ts-server');
+    var btnDev = document.getElementById('btn-ts-device');
+    var activeStyle   = { background: '#344767', color: '#fff', border: '1px solid #344767' };
+    var inactiveStyle = { background: '#fff',    color: '#344767', border: '1px solid #344767' };
+    var hasDevTs = datesDevice && datesDevice.some(function(d) { return d !== null; });
+
+    if (!hasDevTs) {
+        btnDev.disabled = true;
+        btnDev.title = 'No hay timestamps del dispositivo registrados';
+        btnDev.style.opacity = '0.45';
+        btnDev.style.cursor  = 'not-allowed';
+    }
+
+    function setActive(useDevice) {
+        if (useDevice) {
+            Object.assign(btnDev.style, activeStyle);
+            Object.assign(btnSrv.style, inactiveStyle);
+            renderCharts(datesDevice, displayDatesDevice);
+        } else {
+            Object.assign(btnSrv.style, activeStyle);
+            Object.assign(btnDev.style, inactiveStyle);
+            renderCharts(datesServer, displayDatesServer);
+        }
+    }
+
+    btnSrv.addEventListener('click', function() { setActive(false); });
+    btnDev.addEventListener('click', function() { if (hasDevTs) setActive(true); });
+})();
 
 // ── Tabla de datos ────────────────────────────────────────────────────────────
 (function buildTable() {
     var tbody = document.getElementById('table-body');
     var count = document.getElementById('row-count');
     // Número de columnas = 2 fijas + las habilitadas
-    var ncols = 2 + (HAS_TEMP ? 2 : 0) + (HAS_RAIN ? 1 : 0) + (HAS_RAD ? 1 : 0) + (HAS_WIND ? 3 : 0) + 1;
-    if (!dates || dates.length === 0) {
+    var ncols = 3 + (HAS_TEMP ? 2 : 0) + (HAS_RAIN ? 1 : 0) + (HAS_RAD ? 1 : 0) + (HAS_WIND ? 3 : 0) + 1;
+    if (!datesServer || datesServer.length === 0) {
         tbody.innerHTML =
             '<tr><td colspan="' + ncols + '" class="text-center text-secondary py-4 text-xs">' +
             '<i class="fas fa-inbox d-block mb-1" style="font-size:1.5rem;opacity:.2;"></i>' +
@@ -700,11 +759,13 @@ if (hasVal(bat)) {
         return;
     }
     var rows = '';
-    for (var i = dates.length - 1; i >= 0; i--) {
-        var n = dates.length - i;
+    for (var i = datesServer.length - 1; i >= 0; i--) {
+        var n = datesServer.length - i;
+        var devTs = displayDatesDevice[i];
         rows += '<tr>' +
             '<td class="text-xxs text-secondary">' + n + '</td>' +
-            '<td class="font-weight-bold text-xs" style="white-space:nowrap;">' + displayDates[i] + '</td>';
+            '<td class="font-weight-bold text-xs" style="white-space:nowrap;">' + displayDatesServer[i] + '</td>' +
+            '<td class="text-xs text-secondary" style="white-space:nowrap;">' + (devTs && devTs !== '—' ? devTs : '<span class="tbl-null">—</span>') + '</td>';
         if (HAS_TEMP) {
             rows +=
                 '<td class="text-center ' +
@@ -765,8 +826,8 @@ function downloadCSV() {
     if (HAS_WIND)  { header.push('Viento_ms', 'Direccion_deg'); }
     header.push('Bateria_V');
     var rows = [header.join(',')];
-    for (var i = 0; i < dates.length; i++) {
-        var row = ['"' + displayDates[i] + '"'];
+    for (var i = 0; i < datesServer.length; i++) {
+        var row = ['"' + displayDatesServer[i] + '"'];
         if (HAS_TEMP)  { row.push(temp[i] != null ? temp[i] : '', hum[i] != null ? hum[i] : ''); }
         if (HAS_RAIN)  { row.push(rain[i] != null ? rain[i] : ''); }
         if (HAS_RAD)   { row.push(rad[i]  != null ? rad[i]  : ''); }
