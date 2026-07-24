@@ -193,10 +193,11 @@
                         {% endif %}
 
                         {% if latest.Precipitation is not None %}
-                        <div class="val-chip" style="border-color:#2c7a7b;">
-                            <span class="val-chip-label" style="color:#2c7a7b;">🌧 Lluvia</span>
-                            <span class="val-chip-val" style="color:#2c7a7b;">{{ latest.Precipitation|floatformat:1 }}</span>
-                            <span class="val-chip-unit">mm</span>
+                        <div class="val-chip" style="border-color:#2c7a7b;"
+                             title="Pluviómetro de cubeta basculante&#10;Ø colector: 130 mm&#10;Vol. por descarga: 4.3 ml&#10;Equivalencia: 1 descarga ≈ 0.324 mm">
+                            <span class="val-chip-label" style="color:#2c7a7b;">🌧 Descargas</span>
+                            <span class="val-chip-val" style="color:#2c7a7b;">{{ latest.Precipitation|floatformat:0 }}</span>
+                            <span class="val-chip-unit">n</span>
                         </div>
                         {% endif %}
 
@@ -312,12 +313,25 @@
                          style="background:linear-gradient(195deg,#1a5276,#2980b9); box-shadow:0 4px 16px rgba(26,82,118,.4);">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-cloud-rain text-white me-2"></i>
-                            <h6 class="text-white mb-0 text-sm">Precipitación</h6>
+                            <h6 class="text-white mb-0 text-sm">Descargas del Pluviómetro</h6>
+                            <span class="ms-2 text-white-50 text-xs" title="Pluviómetro de cubeta basculante&#10;Ø colector: 130 mm&#10;Vol. por descarga: 4.3 ml&#10;Equivalencia: 1 descarga ≈ 0.324 mm" style="cursor:help;">ⓘ</span>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
                     <div id="chart-rain" style="height:250px;"></div>
+                    <div class="mx-1 mb-1 mt-2 px-3 py-2 border-radius-lg"
+                         style="background:#eaf4fb; border-left:3px solid #2980b9;">
+                        <p class="mb-0 text-xs text-secondary" style="line-height:1.6;">
+                            <strong style="color:#1a5276;">Pluviómetro de cubeta basculante</strong><br>
+                            Ø colector: <strong>130 mm</strong> &nbsp;·&nbsp;
+                            Vol. por descarga: <strong>4.3 ml</strong><br>
+                            <span style="color:#555;">
+                                Equivalencia: 1 descarga &asymp; 0.324 mm de precipitación<br>
+                                <em>P (mm) = n &times; 4.3 / (&pi; &times; 65&sup2; / 1000)</em>
+                            </span>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -411,7 +425,7 @@
                             <th>Fecha / Hora</th>
                             {% if station.HasTempHumidity %}<th>🌡 Temp (°C)</th>{% endif %}
                             {% if station.HasTempHumidity %}<th>💧 Hum (%)</th>{% endif %}
-                            {% if station.HasPrecipitation %}<th>🌧 Lluvia (mm)</th>{% endif %}
+                            {% if station.HasPrecipitation %}<th title="Descargas del pluviómetro&#10;Ø 130 mm · 4.3 ml/descarga ≈ 0.324 mm/descarga">🌧 n descargas</th>{% endif %}
                             {% if station.HasSolarRadiation %}<th>☀️ Rad. (W/m²)</th>{% endif %}
                             {% if station.HasWind %}<th>🌬 Viento (m/s)</th>{% endif %}
                             {% if station.HasWind %}<th>🧭 Dir. (°)</th>{% endif %}
@@ -610,10 +624,10 @@ if (HAS_RAIN) {
             return v > 20 ? 'rgba(0,80,158,.85)' : v > 5 ? 'rgba(44,122,123,.78)' : 'rgba(100,185,182,.65)';
         });
         Plotly.newPlot('chart-rain', [
-            { x: dates, y: rain, customdata: displayDates, name: 'Precipitación', type: 'bar',
+            { x: dates, y: rain, customdata: displayDates, name: 'Descargas (n)', type: 'bar',
               marker: { color: rainColors, line: { color: '#2c7a7b', width: 0.4 } },
-              hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} mm<extra>Precipitación</extra>' },
-        ], mkLayout({ y1: 'mm' }), cfg);
+              hovertemplate: '<b>%{customdata}</b><br>%{y:.0f} descargas<extra>Pluviómetro</extra>' },
+        ], mkLayout({ y1: 'n descargas' }), cfg);
     } else { noData('chart-rain'); }
 }
 

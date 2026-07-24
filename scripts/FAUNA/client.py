@@ -24,8 +24,10 @@ weatherStationData:
    "T":25.3,"H":60.1,"WV":2.5,"WD":180,"RA":850,"P":1.2,"vB":4.05}
 
   Fields:
-    conn      → TypeConn  (WIFI | LTE)
-    timestamp → LocalTimestamp  (device local time, ISO 8601)
+    conn      → TypeConn       (WIFI | LTE)
+    timestamp → LocalTimestamp (device local time, ISO 8601)
+    RA        → Precipitation  (vaciadas del pluviómetro — campo "Rain")
+    P         → SolarRadiation (equipo pendiente de implementar, envía null)
     DateCreate is set by the server at message arrival (two timestamps total)
 
 cameraStationSetting:
@@ -247,8 +249,8 @@ def _handle_ws_data(client, data):
             station_id, server_dt, local_ts, type_conn,
             _float(data.get("T")),
             _float(data.get("H")),
-            _float(data.get("RA")),   # campo radiación solar en payload
-            _float(data.get("P")),
+            _float(data.get("P")),    # radiación solar (equipo pendiente, envía campo "P")
+            _float(data.get("RA")),   # precipitación: vaciadas del pluviómetro (campo "RA")
             _float(data.get("WV")),
             _float(data.get("WD")),
             _float(data.get("vB")),
@@ -257,7 +259,7 @@ def _handle_ws_data(client, data):
     print(
         f"[ws-data] station={station_id}  conn={type_conn}"
         f"  server={server_dt:%H:%M:%S}  device={local_ts}"
-        f"  T={data.get('T')}  H={data.get('H')}  RA={data.get('RA')}  vB={data.get('vB')}"
+        f"  T={data.get('T')}  H={data.get('H')}  rain={data.get('RA')}  vB={data.get('vB')}"
     )
 
     payload = json.dumps({

@@ -393,7 +393,7 @@ class ReportView(FaunaAccessMixin, CompanyMixin, FormView):
         writer.writerow([
             'Station', 'Date/Time',
             'Temperature (°C)', 'Humidity (%)',
-            'Solar Radiation (W/m²)', 'Precipitation (mm)',
+            'Solar Radiation (W/m²)', 'Precipitation (n descargas)',
             'Wind Speed (m/s)', 'Wind Direction (°)',
         ])
         for r in readings:

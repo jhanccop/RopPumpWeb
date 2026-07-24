@@ -154,7 +154,7 @@
                                     <th class="text-uppercase text-secondary font-weight-bolder text-center"
                                         style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px;" title="Humedad">💧</th>
                                     <th class="text-uppercase text-secondary font-weight-bolder text-center"
-                                        style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px;" title="Precipitación">🌧</th>
+                                        style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px;" title="Descargas del pluviómetro (n)&#10;Ø 130 mm · 4.3 ml/descarga">🌧 n</th>
                                     <th class="text-uppercase text-secondary font-weight-bolder text-center"
                                         style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px;" title="Radiación">☀️</th>
                                     <th class="text-uppercase text-secondary font-weight-bolder text-center"
@@ -206,8 +206,9 @@
                                 <!-- Precipitación -->
                                 <td class="text-center">
                                     {% if r.Precipitation is not None %}
-                                    <span class="font-weight-bold" style="color:#2c7a7b;">
-                                        {{ r.Precipitation|floatformat:1 }}<span style="font-size:.6rem;opacity:.6;">mm</span>
+                                    <span class="font-weight-bold" style="color:#2c7a7b;"
+                                          title="{{ r.Precipitation|floatformat:0 }} descargas ≈ {{ r.Precipitation|floatformat:0 }}×0.324 mm">
+                                        {{ r.Precipitation|floatformat:0 }}<span style="font-size:.6rem;opacity:.6;">n</span>
                                     </span>
                                     {% else %}<span style="color:#ccc;">—</span>{% endif %}
                                 </td>
@@ -313,7 +314,7 @@
                     : '<p style="height:5px"></p>') +
             '<div class="p-row"><span class="p-label">🌡 Temperatura</span>' + v(p.temp, '°C') + '</div>' +
             '<div class="p-row"><span class="p-label">💧 Humedad</span>'     + v(p.hum,  '%')  + '</div>' +
-            '<div class="p-row"><span class="p-label">🌧 Lluvia</span>'      + v(p.rain, 'mm') + '</div>' +
+            '<div class="p-row"><span class="p-label">🌧 Descargas</span>'    + v(p.rain, 'n') + '</div>' +
             '<div class="p-row"><span class="p-label">☀️ Radiación</span>'  + v(p.rad,  'W/m²') + '</div>' +
             '<div class="p-row"><span class="p-label">🌬 Viento</span>'      + v(p.wind, 'm/s') + '</div>' +
             '<a href="' + detailUrl + '" style="display:block;margin-top:8px;font-size:11px;' +
