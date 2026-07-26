@@ -46,7 +46,7 @@ import os
 import queue
 import random
 import threading
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 import psycopg2
@@ -142,7 +142,134 @@ def _timesleep_int(val: str) -> int:
     return _TIMESLEEP_MAP.get(str(val), 30)
 
 
-# Pending sensor metadata keyed by MAC (populated by cameraData)
+# ── Weather Station batch buffer ──────────────────────────────
+# Accumulates rapid messages from the same MAC; flushed after BATCH_WINDOW
+# seconds of inactivity to detect offline-queue bursts.
+BATCH_WINDOW = 5.0   # seconds of inactivity before flushing a MAC's buffer
+
+_ws_batch: dict[str, dict] = {}
+# {mac: {
+#   'messages'     : [{'data': dict, 'server_dt': datetime, 'local_ts': datetime|None}],
+#   'station_id'   : int,
+#   'status'       : str,
+#   'timesleep'    : str,    raw DB value e.g. "30m"
+#   'timesleep_min': int,
+#   'sensors'      : tuple,  (a_th, a_ws, a_rd, a_pr)
+#   'timer'        : threading.Timer,
+# }}
+_ws_batch_lock = threading.Lock()
+
+
+def _ws_reply(client, mac: str, status: str, timesleep: str,
+              a_th, a_ws, a_rd, a_pr):
+    """Publish station config reply to the device (immediate, always)."""
+    payload = json.dumps({
+        "status":    status == "Active",
+        "timesleep": _timesleep_int(timesleep),
+        "A_TH":      bool(a_th),
+        "A_WS":      bool(a_ws),
+        "A_RD":      bool(a_rd),
+        "A_PR":      bool(a_pr),
+    })
+    mac_norm = mac.replace(":", "")
+    client.publish(f"{TOPIC_PUB}/{mac_norm}", payload)
+    print(f"[ws-reply] → {mac_norm}  {payload}")
+
+
+def _save_ws_reading(station_id: int, server_dt: datetime,
+                     local_ts: datetime | None, type_conn: str | None,
+                     data: dict):
+    """Insert one WeatherReading row."""
+    db_exec(
+        """INSERT INTO "weatherStation_weatherreading"
+           ("Station_id","DateCreate","LocalTimestamp","TypeConn",
+            "Temperature","Humidity","SolarRadiation",
+            "Precipitation","WindSpeed","WindDirection","VoltageBattery")
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+        (
+            station_id, server_dt, local_ts, type_conn,
+            _float(data.get("T")),
+            _float(data.get("H")),
+            _float(data.get("P")),
+            _float(data.get("RA")),
+            _float(data.get("WV")),
+            _float(data.get("WD")),
+            _float(data.get("vB")),
+        ),
+    )
+
+
+def _flush_ws_batch(mac: str, client):
+    """
+    Timer callback: process all buffered messages for one MAC.
+
+    Single message  → normal mode, save with device LocalTimestamp as-is.
+    Multiple msgs   → batch/queue mode: redistribute LocalTimestamp uniformly
+                      over [last_db_DateCreate .. server_dt_of_last_msg].
+    """
+    with _ws_batch_lock:
+        entry = _ws_batch.pop(mac, None)
+    if not entry:
+        return
+
+    messages    = entry['messages']
+    station_id  = entry['station_id']
+    tsleep_min  = entry['timesleep_min']
+    n           = len(messages)
+
+    if n == 1:
+        # ── Normal single message ────────────────────────────────────────────
+        msg = messages[0]
+        _save_ws_reading(station_id, msg['server_dt'],
+                         msg['local_ts'], msg['data'].get("conn") or None,
+                         msg['data'])
+        print(
+            f"[ws] station={station_id}  conn={msg['data'].get('conn')}"
+            f"  server={msg['server_dt']:%H:%M:%S}  device={msg['local_ts']}"
+            f"  T={msg['data'].get('T')}  H={msg['data'].get('H')}"
+            f"  rain={msg['data'].get('RA')}  vB={msg['data'].get('vB')}"
+        )
+        return
+
+    # ── Batch mode: N > 1 messages arrived in rapid succession ──────────────
+    # Paso fijo = timesleep del dispositivo. Se inicia en T_last + step,
+    # incrementando sucesivamente: T_last+1×step, T_last+2×step, ...
+    step = timedelta(minutes=tsleep_min)
+
+    # Último DateCreate registrado en BD para esta estación
+    rows = db_get(
+        'SELECT "DateCreate" FROM "weatherStation_weatherreading" '
+        'WHERE "Station_id"=%s ORDER BY "DateCreate" DESC LIMIT 1',
+        (station_id,),
+    )
+    if rows:
+        T_last = rows[0][0]
+        # psycopg2 devuelve TIMESTAMPTZ como aware; normalizar a naive
+        if T_last.tzinfo is not None:
+            T_last = T_last.replace(tzinfo=None)
+    else:
+        # Sin registros previos: estimar hacia atrás desde la hora de llegada
+        T_last = messages[0]['server_dt'] - step * n
+
+    print(
+        f"[ws-batch] BATCH detected  station={station_id}  n={n}"
+        f"  T_last={T_last:%H:%M:%S}  step={tsleep_min} min"
+        f"  → rango {T_last + step:%H:%M:%S} .. {T_last + step * n:%H:%M:%S}"
+    )
+
+    for i, msg in enumerate(messages):
+        redistributed_ts = T_last + step * (i + 1)
+        type_conn = msg['data'].get("conn") or None
+        _save_ws_reading(station_id, msg['server_dt'],
+                         redistributed_ts, type_conn, msg['data'])
+        print(
+            f"[ws-batch]   [{i+1}/{n}]"
+            f"  orig={msg['local_ts']}  →  redist={redistributed_ts:%H:%M:%S}"
+            f"  T={msg['data'].get('T')}  rain={msg['data'].get('RA')}"
+        )
+
+
+# ── Pending sensor metadata keyed by MAC (populated by cameraData)
 _pending: dict = {}
 
 # Partial image bytes accumulator keyed by MAC (chunks until JPEG EOI FF D9)
@@ -214,13 +341,15 @@ def _parse_device_timestamp(raw: str | None) -> datetime | None:
 
 
 def _handle_ws_data(client, data):
-    """Store a WeatherReading, then reply with station config.
+    """Buffer incoming WeatherReading and reply immediately to the device.
 
-    Two timestamps:
-      DateCreate     – set by the server at message arrival (UTC naive, consistent with existing rows)
-      LocalTimestamp – ISO timestamp reported by the device (field "timestamp"), stored as-is
-    Extra field:
-      TypeConn       – connection type reported by the device (field "conn"): WIFI | LTE
+    Each message is added to a per-MAC buffer.  A timer (BATCH_WINDOW seconds)
+    is reset on every arrival.  When it fires with a single message → normal
+    save; with multiple messages → batch detected, LocalTimestamp redistributed.
+
+    Two timestamps (always):
+      DateCreate     – server time at message arrival (UTC naive)
+      LocalTimestamp – device ISO timestamp, redistributed when batch detected
     """
     mac = data.get("mac", "")
     rows = db_get(
@@ -235,44 +364,47 @@ def _handle_ws_data(client, data):
         return
 
     station_id, status, timesleep, a_th, a_ws, a_rd, a_pr = rows[0]
-    server_dt      = datetime.now()                          # marca del servidor
-    local_ts       = _parse_device_timestamp(data.get("timestamp"))  # marca del nodo
-    type_conn      = data.get("conn") or None                # WIFI | LTE | None
+    server_dt = datetime.now()
+    local_ts  = _parse_device_timestamp(data.get("timestamp"))
 
-    db_exec(
-        """INSERT INTO "weatherStation_weatherreading"
-           ("Station_id","DateCreate","LocalTimestamp","TypeConn",
-            "Temperature","Humidity","SolarRadiation",
-            "Precipitation","WindSpeed","WindDirection","VoltageBattery")
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-        (
-            station_id, server_dt, local_ts, type_conn,
-            _float(data.get("T")),
-            _float(data.get("H")),
-            _float(data.get("P")),    # radiación solar (equipo pendiente, envía campo "P")
-            _float(data.get("RA")),   # precipitación: vaciadas del pluviómetro (campo "RA")
-            _float(data.get("WV")),
-            _float(data.get("WD")),
-            _float(data.get("vB")),
-        ),
-    )
+    # ── 1. Reply immediately so the device is not blocked ───────────────────
+    _ws_reply(client, mac, status, timesleep, a_th, a_ws, a_rd, a_pr)
+
+    # ── 2. Buffer message and (re)start inactivity timer ────────────────────
+    with _ws_batch_lock:
+        if mac not in _ws_batch:
+            _ws_batch[mac] = {
+                'messages':      [],
+                'station_id':    station_id,
+                'status':        status,
+                'timesleep':     timesleep,
+                'timesleep_min': _timesleep_int(timesleep),
+                'sensors':       (a_th, a_ws, a_rd, a_pr),
+                'timer':         None,
+            }
+        else:
+            # Cancel previous timer — more messages still arriving
+            old = _ws_batch[mac].get('timer')
+            if old:
+                old.cancel()
+
+        _ws_batch[mac]['messages'].append({
+            'data':      data,
+            'server_dt': server_dt,
+            'local_ts':  local_ts,
+        })
+        n_buffered = len(_ws_batch[mac]['messages'])
+
+        t = threading.Timer(BATCH_WINDOW, _flush_ws_batch, args=(mac, client))
+        t.daemon = True
+        t.start()
+        _ws_batch[mac]['timer'] = t
+
     print(
-        f"[ws-data] station={station_id}  conn={type_conn}"
+        f"[ws-data] buffered  station={station_id}  n={n_buffered}"
         f"  server={server_dt:%H:%M:%S}  device={local_ts}"
-        f"  T={data.get('T')}  H={data.get('H')}  rain={data.get('RA')}  vB={data.get('vB')}"
+        f"  T={data.get('T')}  rain={data.get('RA')}  vB={data.get('vB')}"
     )
-
-    payload = json.dumps({
-        "status":   status == "Active",
-        "timesleep": _timesleep_int(timesleep),
-        "A_TH":     bool(a_th),
-        "A_WS":     bool(a_ws),
-        "A_RD":     bool(a_rd),
-        "A_PR":     bool(a_pr),
-    })
-    mac_norm = mac.replace(":", "")
-    client.publish(f"{TOPIC_PUB}/{mac_norm}", payload)
-    print(f"[ws-data] → {mac_norm}  {payload}")
 
 
 # ── Camera Station handlers ───────────────────────────────────

@@ -328,10 +328,28 @@
                 <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                     <div class="border-radius-lg py-2 px-3"
                          style="background:linear-gradient(195deg,#1a5276,#2980b9); box-shadow:0 4px 16px rgba(26,82,118,.4);">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-cloud-rain text-white me-2"></i>
-                            <h6 class="text-white mb-0 text-sm">Descargas del Pluviómetro</h6>
-                            <span class="ms-2 text-white-50 text-xs" title="Pluviómetro de cubeta basculante&#10;Ø colector: 130 mm&#10;Vol. por descarga: 4.3 ml&#10;Equivalencia: 1 descarga ≈ 0.324 mm" style="cursor:help;">ⓘ</span>
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-cloud-rain text-white me-2"></i>
+                                <h6 class="text-white mb-0 text-sm">Descargas del Pluviómetro</h6>
+                                <span class="ms-2 text-white-50 text-xs" title="Pluviómetro de cubeta basculante&#10;Ø colector: 130 mm&#10;Vol. por descarga: 4.3 ml&#10;Equivalencia: 1 descarga ≈ 0.324 mm" style="cursor:help;">ⓘ</span>
+                            </div>
+                            <div class="btn-group btn-group-sm ms-2" id="rain-mode-toggle" role="group">
+                                <button id="btn-rain-n" type="button"
+                                        onclick="setRainMode('n')"
+                                        style="font-size:.68rem;padding:2px 9px;border-radius:12px 0 0 12px;
+                                               background:#fff;color:#1a5276;border:1px solid rgba(255,255,255,.6);
+                                               font-weight:600;cursor:pointer;">
+                                    n
+                                </button>
+                                <button id="btn-rain-mm" type="button"
+                                        onclick="setRainMode('mm')"
+                                        style="font-size:.68rem;padding:2px 9px;border-radius:0 12px 12px 0;
+                                               background:rgba(255,255,255,.2);color:rgba(255,255,255,.75);
+                                               border:1px solid rgba(255,255,255,.4);cursor:pointer;">
+                                    mm
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -444,6 +462,7 @@
                             {% if station.HasTempHumidity %}<th>🌡 Temp (°C)</th>{% endif %}
                             {% if station.HasTempHumidity %}<th>💧 Hum (%)</th>{% endif %}
                             {% if station.HasPrecipitation %}<th title="Descargas del pluviómetro&#10;Ø 130 mm · 4.3 ml/descarga ≈ 0.324 mm/descarga">🌧 n descargas</th>{% endif %}
+                            {% if station.HasPrecipitation %}<th title="Precipitación estimada en el intervalo&#10;ΔP (mm) = Δn × 0.324">🌧 P (mm)</th>{% endif %}
                             {% if station.HasSolarRadiation %}<th>☀️ Rad. (W/m²)</th>{% endif %}
                             {% if station.HasWind %}<th>🌬 Viento (m/s)</th>{% endif %}
                             {% if station.HasWind %}<th>🧭 Dir. (°)</th>{% endif %}
@@ -510,6 +529,30 @@ var rad     = {{ chart_radiation|safe }};
 var wind    = {{ chart_wind|safe }};
 var windDir = {{ chart_wind_direction|safe }};
 var bat     = {{ chart_battery|safe }};
+
+// Precipitación en mm: delta entre lecturas consecutivas × 0.324 mm/descarga
+// (Ø colector 130 mm → área 13 273 mm² → 4.3 ml / 13 273 mm² ≈ 0.324 mm)
+var MM_PER_TIP = 4.3 / (Math.PI * 65 * 65 / 1000);  // ≈ 0.324
+var rainMm = (function() {
+    var out = new Array(rain.length).fill(null);
+    for (var i = 0; i < rain.length; i++) {
+        if (rain[i] === null) continue;
+        var prev = null;
+        for (var j = i - 1; j >= 0; j--) {
+            if (rain[j] !== null) { prev = rain[j]; break; }
+        }
+        if (prev === null) {
+            out[i] = null;         // primer valor sin referencia anterior
+        } else {
+            var delta = rain[i] - prev;
+            out[i] = Math.max(0, delta) * MM_PER_TIP;   // reset = 0 mm
+        }
+    }
+    return out;
+}());
+
+// Modo activo del gráfico de lluvia: 'n' (descargas) | 'mm'
+var rainMode = 'n';
 
 // Flags de sensores habilitados
 var HAS_TEMP  = {{ station.HasTempHumidity|yesno:"true,false" }};
@@ -618,6 +661,53 @@ var cfg = {
     },
 };
 
+// ── Gráfico de lluvia (n descargas ↔ mm) ─────────────────────────────────────
+function renderRainChart(xDates, xDisplay, mode) {
+    if (!HAS_RAIN) return;
+    var useMm   = (mode === 'mm');
+    var yData   = useMm ? rainMm : rain;
+    var yLabel  = useMm ? 'Precipitación (mm)' : 'Descargas (n)';
+    var yUnit   = useMm ? 'mm' : 'descargas';
+    var yFmt    = useMm ? '.2f' : '.0f';
+    var yAxis   = useMm ? 'mm' : 'n descargas';
+
+    if (hasVal(yData)) {
+        var colors = yData.map(function(v) {
+            if (!v) return 'rgba(0,0,0,0)';
+            if (useMm) return v > 5 ? 'rgba(0,80,158,.85)' : v > 1 ? 'rgba(44,122,123,.78)' : 'rgba(100,185,182,.65)';
+            return v > 20 ? 'rgba(0,80,158,.85)' : v > 5 ? 'rgba(44,122,123,.78)' : 'rgba(100,185,182,.65)';
+        });
+        Plotly.react('chart-rain', [
+            { x: xDates, y: yData, customdata: xDisplay, name: yLabel, type: 'bar',
+              marker: { color: colors, line: { color: '#2c7a7b', width: 0.4 } },
+              hovertemplate: '<b>%{customdata}</b><br>%{y:' + yFmt + '} ' + yUnit + '<extra>Pluviómetro</extra>' },
+        ], mkLayout({ y1: yAxis }), cfg);
+    } else { noData('chart-rain'); }
+
+    // Actualizar estilos de botones
+    var btnN  = document.getElementById('btn-rain-n');
+    var btnMm = document.getElementById('btn-rain-mm');
+    if (btnN && btnMm) {
+        if (useMm) {
+            btnN.style.background  = 'rgba(255,255,255,.2)'; btnN.style.color  = 'rgba(255,255,255,.75)';
+            btnMm.style.background = '#fff';                 btnMm.style.color = '#1a5276';
+        } else {
+            btnN.style.background  = '#fff';                 btnN.style.color  = '#1a5276';
+            btnMm.style.background = 'rgba(255,255,255,.2)'; btnMm.style.color = 'rgba(255,255,255,.75)';
+        }
+    }
+}
+
+function setRainMode(mode) {
+    rainMode = mode;
+    // Usa las fechas activas según el toggle de timestamp
+    var activeDates   = document.getElementById('btn-ts-device') &&
+                        document.getElementById('btn-ts-device').style.background === 'rgb(52, 71, 103)'
+                        ? datesDevice : datesServer;
+    var activeDisplay = activeDates === datesDevice ? displayDatesDevice : displayDatesServer;
+    renderRainChart(activeDates, activeDisplay, mode);
+}
+
 // ── Renderizado de gráficos (reutilizable al cambiar timestamp) ───────────────
 function renderCharts(xDates, xDisplay) {
 
@@ -640,20 +730,8 @@ function renderCharts(xDates, xDisplay) {
         } else { noData('chart-temp-hum'); }
     }
 
-    // Precipitación
-    if (HAS_RAIN) {
-        if (hasVal(rain)) {
-            var rainColors = rain.map(function (v) {
-                if (!v) return 'rgba(0,0,0,0)';
-                return v > 20 ? 'rgba(0,80,158,.85)' : v > 5 ? 'rgba(44,122,123,.78)' : 'rgba(100,185,182,.65)';
-            });
-            Plotly.react('chart-rain', [
-                { x: xDates, y: rain, customdata: xDisplay, name: 'Descargas (n)', type: 'bar',
-                  marker: { color: rainColors, line: { color: '#2c7a7b', width: 0.4 } },
-                  hovertemplate: '<b>%{customdata}</b><br>%{y:.0f} descargas<extra>Pluviómetro</extra>' },
-            ], mkLayout({ y1: 'n descargas' }), cfg);
-        } else { noData('chart-rain'); }
-    }
+    // Precipitación — delegado a renderRainChart para poder reutilizarlo en el toggle
+    if (HAS_RAIN) { renderRainChart(xDates, xDisplay, rainMode); }
 
     // Radiación Solar
     if (HAS_RAD) {
@@ -749,7 +827,7 @@ renderCharts(datesServer, displayDatesServer);
     var tbody = document.getElementById('table-body');
     var count = document.getElementById('row-count');
     // Número de columnas = 2 fijas + las habilitadas
-    var ncols = 3 + (HAS_TEMP ? 2 : 0) + (HAS_RAIN ? 1 : 0) + (HAS_RAD ? 1 : 0) + (HAS_WIND ? 3 : 0) + 1;
+    var ncols = 3 + (HAS_TEMP ? 2 : 0) + (HAS_RAIN ? 2 : 0) + (HAS_RAD ? 1 : 0) + (HAS_WIND ? 3 : 0) + 1;
     if (!datesServer || datesServer.length === 0) {
         tbody.innerHTML =
             '<tr><td colspan="' + ncols + '" class="text-center text-secondary py-4 text-xs">' +
@@ -774,7 +852,10 @@ renderCharts(datesServer, displayDatesServer);
                 '<td class="text-center text-info font-weight-bold">' + fmt(hum[i]) + '</td>';
         }
         if (HAS_RAIN) {
-            rows += '<td class="text-center font-weight-bold" style="color:#2c7a7b;">' + fmt(rain[i]) + '</td>';
+            var mmVal = rainMm[i];
+            rows += '<td class="text-center font-weight-bold" style="color:#2c7a7b;">' + fmt(rain[i], 0) + '</td>' +
+                    '<td class="text-center" style="color:#1a5276;">' +
+                    (mmVal !== null ? mmVal.toFixed(2) : '<span class="tbl-null">—</span>') + '</td>';
         }
         if (HAS_RAD) {
             rows += '<td class="text-center font-weight-bold" style="color:#dd6b20;">' + fmt(rad[i], 0) + '</td>';
@@ -821,7 +902,7 @@ function triggerDownload(csv, filename) {
 function downloadCSV() {
     var header = ['Fecha'];
     if (HAS_TEMP)  { header.push('Temperatura_C', 'Humedad_pct'); }
-    if (HAS_RAIN)  { header.push('Precipitacion_mm'); }
+    if (HAS_RAIN)  { header.push('Descargas_n', 'Precipitacion_mm'); }
     if (HAS_RAD)   { header.push('Radiacion_Wm2'); }
     if (HAS_WIND)  { header.push('Viento_ms', 'Direccion_deg'); }
     header.push('Bateria_V');
@@ -829,7 +910,7 @@ function downloadCSV() {
     for (var i = 0; i < datesServer.length; i++) {
         var row = ['"' + displayDatesServer[i] + '"'];
         if (HAS_TEMP)  { row.push(temp[i] != null ? temp[i] : '', hum[i] != null ? hum[i] : ''); }
-        if (HAS_RAIN)  { row.push(rain[i] != null ? rain[i] : ''); }
+        if (HAS_RAIN)  { row.push(rain[i] != null ? rain[i] : '', rainMm[i] != null ? rainMm[i].toFixed(2) : ''); }
         if (HAS_RAD)   { row.push(rad[i]  != null ? rad[i]  : ''); }
         if (HAS_WIND)  { row.push(wind[i] != null ? wind[i] : '', windDir[i] != null ? windDir[i] : ''); }
         row.push(bat[i] != null ? bat[i] : '');

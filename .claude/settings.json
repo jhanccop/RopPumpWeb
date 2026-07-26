@@ -23,7 +23,8 @@
       "Bash(python manage.py check)",
       "Bash(pip show *)",
       "Bash(git checkout *)",
-      "Bash(python manage.py makemigrations TRANSFORMADOR --name=\"monitoring_variables_hotspot_pressure_oilhumidity\")"
+      "Bash(python manage.py makemigrations TRANSFORMADOR --name=\"monitoring_variables_hotspot_pressure_oilhumidity\")",
+      "Bash(python -c \"import scripts.FAUNA.client\")"
     ],
     "additionalDirectories": [
       "/home/jh/Documentos/webs/PO/RopPumpWeb/Apps/TRANSFORMADOR/migrations"
