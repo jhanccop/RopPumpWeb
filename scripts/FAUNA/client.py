@@ -20,14 +20,14 @@ weatherStationSetting:
 
 weatherStationData:
   {"type":"weatherStationData","mac":"AA:BB:CC:DD:EE:FF",
-   "conn":"LTE","timestamp":"2026-07-19T15:39:26",
-   "T":25.3,"H":60.1,"WV":2.5,"WD":180,"RA":850,"P":1.2,"vB":4.05}
+   "conn":"WIFI","timestamp":"2026-08-05T14:53:28",
+   "T":21.27,"H":87.74,"WV":1.10,"WD":106.5,"RA":1,"RAD":260,"vB":1.94}
 
   Fields:
     conn      → TypeConn       (WIFI | LTE)
     timestamp → LocalTimestamp (device local time, ISO 8601)
-    RA        → Precipitation  (vaciadas del pluviómetro — campo "Rain")
-    P         → SolarRadiation (equipo pendiente de implementar, envía null)
+    RA        → Precipitation  (descargas del pluviómetro)
+    RAD       → SolarRadiation (W/m² — campo "RAD"; ausente si sensor no habilitado)
     DateCreate is set by the server at message arrival (two timestamps total)
 
 cameraStationSetting:
@@ -190,8 +190,8 @@ def _save_ws_reading(station_id: int, server_dt: datetime,
             station_id, server_dt, local_ts, type_conn,
             _float(data.get("T")),
             _float(data.get("H")),
-            _float(data.get("P")),
-            _float(data.get("RA")),
+            _float(data.get("RAD")),   # radiación solar (campo "RAD"; antes "P" — campo incorrecto)
+            _float(data.get("RA")),    # precipitación: descargas del pluviómetro (campo "RA")
             _float(data.get("WV")),
             _float(data.get("WD")),
             _float(data.get("vB")),
