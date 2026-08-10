@@ -142,222 +142,6 @@ def _timesleep_int(val: str) -> int:
     return _TIMESLEEP_MAP.get(str(val), 30)
 
 
-# ══════════════════════════════════════════════════════════════
-# CORRECCIÓN DE LA MARCA DE TIEMPO DEL DISPOSITIVO
-# ══════════════════════════════════════════════════════════════
-# El reloj de la estación tiene tres patologías comprobadas en los datos de
-# producción de EST-02 y SAUCES (3.728 lecturas, 13-jul a 05-ago 2026):
-#
-#   1) OFFSET      adelanta unos minutos respecto del servidor
-#                  (EST-02 ~1 min, SAUCES ~4 min).
-#   2) DERIVA      offline y sin NTP el error crece: SAUCES acumula ~16 min
-#                  tras 20 h sin enlace.
-#   3) GLITCH RTC  devuelve valores basura. El id 6626 llegó el 04-ago fechado
-#                  el 21-ago: 17 días en el futuro. Hay 8 casos así.
-#
-# Y el firmware añade dos más al vaciar el buffer:
-#
-#   4) VOLCADO PARCIAL  el buffer se vacía en varias tandas: el último registro
-#                       de un lote NO es necesariamente contemporáneo del envío.
-#                       EST-02 envía a las 14:14 lecturas que llegan solo hasta
-#                       las 07:52.
-#   5) REETIQUETADO     a veces resella hacia adelante desde "ahora": EST-02
-#                       envía a las 17:03 lecturas fechadas hasta las 19:05.
-#
-# La lógica anterior guardaba tal cual el timestamp del dispositivo cuando
-# llegaba un mensaje suelto (que es el 98% del tráfico), por lo que los glitches
-# de RTC entraban intactos: 147 filas de SAUCES quedaron fechadas DESPUÉS de su
-# propia recepción, una de ellas 16 días en el futuro. Y en modo lote descartaba
-# el timestamp del equipo y repartía desde MAX(DateCreate), mezclando el reloj
-# del servidor con el del dispositivo y rompiendo la monotonía de la serie.
-#
-# ESTRATEGIA
-# ──────────
-# Se mantiene un OFFSET DE RELOJ por estación:
-#
-#     t_real = t_dispositivo + offset      offset = T_servidor − T_dispositivo
-#
-# Lo delicado es CUÁNDO recalibrar ese offset, y el criterio es ASIMÉTRICO a
-# propósito. Solo se recalibra si el registro más nuevo del lote es
-# contemporáneo del envío:
-#
-#   · si el equipo va ADELANTADO, la lectura no puede ser antigua —nadie mide en
-#     el futuro—, luego es DESVÍO DE RELOJ y hay que medirlo (hasta 2 h);
-#   · si va ATRASADO solo se aceptan unos minutos. Un atraso de horas es un
-#     VOLCADO PARCIAL: lecturas legítimamente viejas. Calibrar con ellas
-#     desplazaría varias horas todo el histórico posterior.
-#
-# Los volcados parciales heredan el offset vigente sin recalibrarlo, con lo que
-# se preserva el espaciado relativo medido por el equipo: la información valiosa
-# que aporta el buffer.
-#
-# Resultado sobre los datos reales (R² del ciclo diurno de temperatura, métrica
-# independiente: si la marca es correcta el ciclo se repite día a día):
-#
-#                  DateCreate   dispositivo crudo   lógica anterior   corregido
-#     EST-02          0,709           0,920                 —           0,929
-#     SAUCES          0,457           0,660              0,803          0,938
-#
-# y 0 marcas posteriores a su recepción, frente a 147 antes.
-
-_LIVE_TOL_S      = 5 * 60      # antigüedad máxima de una lectura "contemporánea"
-_MAX_CLOCK_ERR_S = 2 * 3600    # desvío de reloj máximo creíble
-_FUTURE_TOL_S    = 15 * 60     # margen de futuro base
-_DRIFT_TOL_FRAC  = 0.03        # + 3% del tiempo sin contacto (deriva sin NTP)
-_MAX_BUFFER_DAYS = 14          # antigüedad máxima creíble de un buffer
-_MAX_STEP_FACTOR = 6           # salto intra-lote máximo, en intervalos nominales
-
-SRC_DEVICE, SRC_ADJUSTED, SRC_ESTIMATED = "DEVICE", "ADJUSTED", "ESTIMATED"
-
-
-class ClockCorrector:
-    """
-    Modelo de reloj de UNA estación. Se alimenta lote a lote, en orden de
-    llegada. Mantiene el offset y el último timestamp emitido, que es lo que
-    garantiza que la serie nunca retroceda.
-    """
-
-    def __init__(self, nominal_minutes=30, offset=None, last_emitted=None):
-        self.nominal      = timedelta(minutes=nominal_minutes or 30)
-        self.offset       = offset or timedelta(0)
-        self.last_emitted = last_emitted
-        self.last_contact = None
-
-    # ---------------------------------------------------------- validación
-    def _future_tolerance(self, srv_recv):
-        """
-        Cuánto puede adelantar el reloj del equipo respecto del modelo. Crece
-        con el tiempo sin contacto: offline y sin NTP el reloj deriva, y
-        rechazar esa deriva como basura destruiría el volcado entero.
-        """
-        gap = 0.0
-        if self.last_contact is not None and srv_recv > self.last_contact:
-            gap = (srv_recv - self.last_contact).total_seconds()
-        return timedelta(seconds=_FUTURE_TOL_S + _DRIFT_TOL_FRAC * gap)
-
-    def _plausible(self, dev, srv_recv):
-        if dev is None:
-            return False
-        est = dev + self.offset
-        if est > srv_recv + self._future_tolerance(srv_recv):
-            return False                                   # lectura del futuro
-        if srv_recv - est > timedelta(days=_MAX_BUFFER_DAYS):
-            return False                                   # buffer irreal
-        return True
-
-    # ---------------------------------------------------------- corrección
-    def correct_batch(self, rows):
-        """
-        rows: lista de dicts con 'id' (índice de adquisición, creciente),
-              'server' (datetime de recepción) y 'device' (datetime|None).
-        Añade 'fixed' (datetime) y 'source' (str) a cada uno.
-        """
-        rows = sorted(rows, key=lambda r: r["id"])
-        if not rows:
-            return rows
-        srv_recv = max(r["server"] for r in rows)
-
-        # 1) descartar marcas no creíbles: glitches de RTC y reetiquetadas
-        for r in rows:
-            r["_ok"] = self._plausible(r.get("device"), srv_recv)
-
-        # 2) coherencia interna: el reloj del equipo debe crecer de forma
-        #    monótona y a pasos del orden del intervalo nominal
-        prev = None
-        for r in rows:
-            if not r["_ok"]:
-                continue
-            if prev is not None:
-                step = r["device"] - prev
-                if step < timedelta(0) or step > _MAX_STEP_FACTOR * self.nominal:
-                    r["_ok"] = False
-                    continue
-            prev = r["device"]
-
-        valid = [r for r in rows if r["_ok"]]
-
-        # 3) recalibrar solo si el registro más nuevo es contemporáneo del envío
-        if valid:
-            fresh = valid[-1]
-            lag = (fresh["server"] - fresh["device"]).total_seconds()
-            if -_MAX_CLOCK_ERR_S <= lag <= _LIVE_TOL_S:
-                self.offset = fresh["server"] - fresh["device"]
-                fresh["_live"] = True
-
-        # 4) aplicar el offset vigente
-        for r in rows:
-            if r["_ok"]:
-                r["fixed"]  = r["device"] + self.offset
-                r["source"] = SRC_DEVICE if r.get("_live") else SRC_ADJUSTED
-            else:
-                r["fixed"], r["source"] = None, SRC_ESTIMATED
-
-        # 5) reconstruir huecos por posición dentro del lote. Si el lote entero
-        #    es inválido se ancla el más nuevo en la hora de recepción y se
-        #    retrocede un intervalo nominal por cada registro anterior.
-        n = len(rows)
-        for i, r in enumerate(rows):
-            if r["fixed"] is not None:
-                continue
-            nxt = next((j for j in range(i + 1, n) if rows[j]["fixed"]), None)
-            if nxt is not None:
-                r["fixed"] = rows[nxt]["fixed"] - (nxt - i) * self.nominal
-            else:
-                prv = next((j for j in range(i - 1, -1, -1) if rows[j]["fixed"]), None)
-                r["fixed"] = (rows[prv]["fixed"] + (i - prv) * self.nominal) if prv is not None \
-                             else srv_recv - (n - 1 - i) * self.nominal
-
-        # 6a) techo: ninguna lectura puede ser posterior a su propia recepción.
-        #     Se recorre hacia atrás para que, si hay que recortar varias, se
-        #     escalonen un intervalo nominal en vez de amontonarse en un instante.
-        ceiling = None
-        for r in reversed(rows):
-            cap = r["server"] if ceiling is None else min(r["server"], ceiling)
-            if r["fixed"] > cap:
-                r["fixed"], r["source"] = cap, SRC_ESTIMATED
-                ceiling = r["fixed"] - self.nominal
-            else:
-                ceiling = None
-
-        # 6b) suelo: la serie no puede retroceder respecto de lo ya emitido
-        for r in rows:
-            if self.last_emitted is not None and r["fixed"] <= self.last_emitted:
-                r["fixed"], r["source"] = self.last_emitted + timedelta(seconds=1), SRC_ESTIMATED
-            r["fixed"] = r["fixed"].replace(microsecond=0)
-            self.last_emitted = r["fixed"]
-            r.pop("_ok", None)
-            r.pop("_live", None)
-
-        self.last_contact = srv_recv
-        return rows
-
-
-# Estado del reloj por MAC. Vive en memoria: al arrancar se siembra desde la BD
-# con el último LocalTimestamp guardado, lo justo para no romper la monotonía.
-# El offset se recalibra solo con el primer mensaje en vivo que llegue.
-_ws_clocks: dict[str, ClockCorrector] = {}
-
-
-def _get_clock(mac: str, station_id: int, tsleep_min: int) -> ClockCorrector:
-    clock = _ws_clocks.get(mac)
-    if clock is not None:
-        return clock
-
-    rows = db_get(
-        'SELECT MAX("LocalTimestamp") FROM "weatherStation_weatherreading" '
-        'WHERE "Station_id" = %s',
-        (station_id,),
-    )
-    last = rows[0][0] if rows and rows[0][0] else None
-    if last is not None and last.tzinfo is not None:
-        last = last.replace(tzinfo=None)
-
-    clock = ClockCorrector(nominal_minutes=tsleep_min, last_emitted=last)
-    _ws_clocks[mac] = clock
-    print(f"[ws-clock] estado inicial  mac={mac}  último registro={last}")
-    return clock
-
-
 # ── Weather Station batch buffer ──────────────────────────────
 # Accumulates rapid messages from the same MAC; flushed after BATCH_WINDOW
 # seconds of inactivity to detect offline-queue bursts.
@@ -386,10 +170,6 @@ def _ws_reply(client, mac: str, status: str, timesleep: str,
         "A_WS":      bool(a_ws),
         "A_RD":      bool(a_rd),
         "A_PR":      bool(a_pr),
-        # Hora del servidor: permite al firmware poner en hora su RTC al
-        # reconectar. Es la solución de raíz; todo lo de arriba es red de
-        # seguridad. Con esto desaparecen en origen las patologías 1, 2, 4 y 5.
-        "serverTime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
     })
     mac_norm = mac.replace(":", "")
     client.publish(f"{TOPIC_PUB}/{mac_norm}", payload)
@@ -423,53 +203,69 @@ def _flush_ws_batch(mac: str, client):
     """
     Timer callback: process all buffered messages for one MAC.
 
-    Todos los mensajes —llegue uno suelto o un volcado de buffer— pasan por el
-    mismo corrector. Un mensaje suelto también puede traer un glitch de RTC, y
-    antes esos entraban intactos por saltarse la validación.
+    Single message  → normal mode, save with device LocalTimestamp as-is.
+    Multiple msgs   → batch/queue mode: redistribute LocalTimestamp uniformly
+                      over [last_db_DateCreate .. server_dt_of_last_msg].
     """
     with _ws_batch_lock:
         entry = _ws_batch.pop(mac, None)
     if not entry:
         return
 
-    messages   = entry['messages']
-    station_id = entry['station_id']
-    tsleep_min = entry['timesleep_min']
-    n          = len(messages)
+    messages    = entry['messages']
+    station_id  = entry['station_id']
+    tsleep_min  = entry['timesleep_min']
+    n           = len(messages)
 
-    clock = _get_clock(mac, station_id, tsleep_min)
-    rows = [
-        {'id': i, 'server': m['server_dt'], 'device': m['local_ts']}
-        for i, m in enumerate(messages)
-    ]
-    corrected = clock.correct_batch(rows)
-
-    if n > 1:
-        print(
-            f"[ws-batch] VOLCADO detectado  station={station_id}  n={n}"
-            f"  offset={clock.offset.total_seconds():.0f}s"
-            f"  → rango {corrected[0]['fixed']:%d %H:%M:%S}"
-            f" .. {corrected[-1]['fixed']:%d %H:%M:%S}"
-        )
-
-    for i, (msg, fix) in enumerate(zip(messages, corrected)):
-        data      = msg['data']
-        type_conn = data.get("conn") or None
+    if n == 1:
+        # ── Normal single message ────────────────────────────────────────────
+        msg = messages[0]
         _save_ws_reading(station_id, msg['server_dt'],
-                         fix['fixed'], type_conn, data)
-
-        tag = "ws-batch" if n > 1 else "ws"
-        pos = f"  [{i+1}/{n}]" if n > 1 else ""
-        shift = ""
-        if msg['local_ts'] is not None and fix['fixed'] != msg['local_ts']:
-            delta = (fix['fixed'] - msg['local_ts']).total_seconds() / 60
-            shift = f"  orig={msg['local_ts']:%d %H:%M:%S} ({delta:+.1f} min)"
+                         msg['local_ts'], msg['data'].get("conn") or None,
+                         msg['data'])
         print(
-            f"[{tag}]{pos}  station={station_id}  conn={data.get('conn')}"
-            f"  server={msg['server_dt']:%H:%M:%S}"
-            f"  device={fix['fixed']:%d %H:%M:%S} [{fix['source']}]{shift}"
-            f"  T={data.get('T')}  H={data.get('H')}"
-            f"  rain={data.get('RA')}  vB={data.get('vB')}"
+            f"[ws] station={station_id}  conn={msg['data'].get('conn')}"
+            f"  server={msg['server_dt']:%H:%M:%S}  device={msg['local_ts']}"
+            f"  T={msg['data'].get('T')}  H={msg['data'].get('H')}"
+            f"  rain={msg['data'].get('RA')}  vB={msg['data'].get('vB')}"
+        )
+        return
+
+    # ── Batch mode: N > 1 messages arrived in rapid succession ──────────────
+    # Paso fijo = timesleep del dispositivo. Se inicia en T_last + step,
+    # incrementando sucesivamente: T_last+1×step, T_last+2×step, ...
+    step = timedelta(minutes=tsleep_min)
+
+    # Último DateCreate registrado en BD para esta estación
+    rows = db_get(
+        'SELECT "DateCreate" FROM "weatherStation_weatherreading" '
+        'WHERE "Station_id"=%s ORDER BY "DateCreate" DESC LIMIT 1',
+        (station_id,),
+    )
+    if rows:
+        T_last = rows[0][0]
+        # psycopg2 devuelve TIMESTAMPTZ como aware; normalizar a naive
+        if T_last.tzinfo is not None:
+            T_last = T_last.replace(tzinfo=None)
+    else:
+        # Sin registros previos: estimar hacia atrás desde la hora de llegada
+        T_last = messages[0]['server_dt'] - step * n
+
+    print(
+        f"[ws-batch] BATCH detected  station={station_id}  n={n}"
+        f"  T_last={T_last:%H:%M:%S}  step={tsleep_min} min"
+        f"  → rango {T_last + step:%H:%M:%S} .. {T_last + step * n:%H:%M:%S}"
+    )
+
+    for i, msg in enumerate(messages):
+        redistributed_ts = T_last + step * (i + 1)
+        type_conn = msg['data'].get("conn") or None
+        _save_ws_reading(station_id, msg['server_dt'],
+                         redistributed_ts, type_conn, msg['data'])
+        print(
+            f"[ws-batch]   [{i+1}/{n}]"
+            f"  orig={msg['local_ts']}  →  redist={redistributed_ts:%H:%M:%S}"
+            f"  T={msg['data'].get('T')}  rain={msg['data'].get('RA')}"
         )
 
 
@@ -548,14 +344,12 @@ def _handle_ws_data(client, data):
     """Buffer incoming WeatherReading and reply immediately to the device.
 
     Each message is added to a per-MAC buffer.  A timer (BATCH_WINDOW seconds)
-    is reset on every arrival.  When it fires, the whole buffer pasa por el
-    corrector de reloj, llegue un mensaje o cuarenta.
+    is reset on every arrival.  When it fires with a single message → normal
+    save; with multiple messages → batch detected, LocalTimestamp redistributed.
 
     Two timestamps (always):
       DateCreate     – server time at message arrival (UTC naive)
-      LocalTimestamp – device ISO timestamp, corregido contra el reloj del
-                       servidor y validado (nunca posterior a DateCreate,
-                       nunca retrocediendo respecto del registro anterior)
+      LocalTimestamp – device ISO timestamp, redistributed when batch detected
     """
     mac = data.get("mac", "")
     rows = db_get(
