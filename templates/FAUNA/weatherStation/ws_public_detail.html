@@ -285,14 +285,14 @@
     <div class="d-flex align-items-center justify-content-end mb-2 gap-2" style="flex-wrap:wrap;">
         <span class="text-xs text-secondary me-1">Eje X de los gráficos:</span>
         <div class="btn-group btn-group-sm" role="group" id="ts-toggle">
-            <button type="button" class="btn btn-sm active" id="btn-ts-server"
+            <button type="button" class="btn btn-sm" id="btn-ts-server"
                     style="font-size:.72rem; padding:3px 12px; border-radius:20px 0 0 20px;
-                           background:#344767; color:#fff; border:1px solid #344767;">
+                           background:#fff; color:#344767; border:1px solid #344767;">
                 <i class="fas fa-server me-1"></i>Servidor
             </button>
-            <button type="button" class="btn btn-sm" id="btn-ts-device"
+            <button type="button" class="btn btn-sm active" id="btn-ts-device"
                     style="font-size:.72rem; padding:3px 12px; border-radius:0 20px 20px 0;
-                           background:#fff; color:#344767; border:1px solid #344767;">
+                           background:#344767; color:#fff; border:1px solid #344767;">
                 <i class="fas fa-microchip me-1"></i>Dispositivo
             </button>
         </div>
@@ -701,10 +701,11 @@ function renderRainChart(xDates, xDisplay, mode) {
 function setRainMode(mode) {
     rainMode = mode;
     // Usa las fechas activas según el toggle de timestamp
-    var activeDates   = document.getElementById('btn-ts-device') &&
-                        document.getElementById('btn-ts-device').style.background === 'rgb(52, 71, 103)'
-                        ? datesDevice : datesServer;
-    var activeDisplay = activeDates === datesDevice ? displayDatesDevice : displayDatesServer;
+    var useDevice     = document.getElementById('btn-ts-device') &&
+                        !document.getElementById('btn-ts-device').disabled &&
+                        document.getElementById('btn-ts-device').style.background !== 'rgb(255, 255, 255)';
+    var activeDates   = useDevice ? datesDevice : datesServer;
+    var activeDisplay = useDevice ? displayDatesDevice : displayDatesServer;
     renderRainChart(activeDates, activeDisplay, mode);
 }
 
@@ -788,8 +789,8 @@ function renderCharts(xDates, xDisplay) {
     } else { noData('chart-bat'); }
 }
 
-// Primer render con timestamps de servidor
-renderCharts(datesServer, displayDatesServer);
+// Primer render: dispositivo por defecto, servidor como fallback si no hay datos de dispositivo
+renderCharts(datesDevice, displayDatesDevice);
 
 // ── Toggle servidor / dispositivo ─────────────────────────────────────────────
 (function() {
@@ -798,13 +799,6 @@ renderCharts(datesServer, displayDatesServer);
     var activeStyle   = { background: '#344767', color: '#fff', border: '1px solid #344767' };
     var inactiveStyle = { background: '#fff',    color: '#344767', border: '1px solid #344767' };
     var hasDevTs = datesDevice && datesDevice.some(function(d) { return d !== null; });
-
-    if (!hasDevTs) {
-        btnDev.disabled = true;
-        btnDev.title = 'No hay timestamps del dispositivo registrados';
-        btnDev.style.opacity = '0.45';
-        btnDev.style.cursor  = 'not-allowed';
-    }
 
     function setActive(useDevice) {
         if (useDevice) {
@@ -816,6 +810,21 @@ renderCharts(datesServer, displayDatesServer);
             Object.assign(btnDev.style, inactiveStyle);
             renderCharts(datesServer, displayDatesServer);
         }
+    }
+
+    if (!hasDevTs) {
+        // Sin datos de dispositivo: deshabilitar botón y caer al servidor
+        btnDev.disabled = true;
+        btnDev.title = 'No hay timestamps del dispositivo registrados';
+        btnDev.style.opacity = '0.45';
+        btnDev.style.cursor  = 'not-allowed';
+        setActive(false);
+    }
+    // Si hay datos de dispositivo el render ya se hizo arriba con datesDevice;
+    // solo sincronizamos el estilo de los botones.
+    else {
+        Object.assign(btnDev.style, activeStyle);
+        Object.assign(btnSrv.style, inactiveStyle);
     }
 
     btnSrv.addEventListener('click', function() { setActive(false); });

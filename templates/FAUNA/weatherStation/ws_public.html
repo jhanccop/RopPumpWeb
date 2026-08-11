@@ -149,6 +149,10 @@
                                         style="font-size:.62rem; letter-spacing:.4px; padding:8px 10px; white-space:nowrap;">
                                         Estación
                                     </th>
+                                    <th class="text-uppercase text-secondary font-weight-bolder"
+                                        style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px; white-space:nowrap;">
+                                        Descripción
+                                    </th>
                                     <th class="text-uppercase text-secondary font-weight-bolder text-center"
                                         style="font-size:.62rem; letter-spacing:.4px; padding:8px 6px;" title="Temperatura">🌡</th>
                                     <th class="text-uppercase text-secondary font-weight-bolder text-center"
@@ -185,6 +189,13 @@
                                             </span>
                                         </div>
                                     </div>
+                                </td>
+                                <!-- Descripción -->
+                                <td style="max-width:110px;">
+                                    <span class="text-secondary" style="font-size:.68rem;"
+                                          title="{{ r.Station.Description|default:'' }}">
+                                        {{ r.Station.Description|default:"—"|truncatechars:20 }}
+                                    </span>
                                 </td>
                                 <!-- Temperatura -->
                                 <td class="text-center">
@@ -231,7 +242,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center text-secondary py-5">
+                                <td colspan="7" class="text-center text-secondary py-5">
                                     <i class="fas fa-broadcast-tower d-block mb-2" style="font-size:2.5rem;opacity:.15;"></i>
                                     <p class="text-sm mb-0">Sin lecturas disponibles.</p>
                                 </td>
@@ -255,8 +266,31 @@
 
     </div><!-- /row -->
 
+    <!-- Disclaimer -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="d-flex align-items-start gap-3 px-3 py-2 border-radius-lg"
+                 style="background:linear-gradient(135deg,rgba(255,193,7,.08),rgba(255,152,0,.06));
+                        border:1px solid rgba(255,193,7,.35);">
+                <i class="fas fa-flask mt-1 text-warning flex-shrink-0" style="font-size:1rem;"></i>
+                <div>
+                    <p class="mb-0 text-xs font-weight-bold" style="color:#856404;">
+                        Datos de entrenamiento y validación &mdash; uso experimental
+                    </p>
+                    <p class="mb-0 text-xs text-secondary mt-1" style="line-height:1.6;">
+                        Las lecturas mostradas corresponden a una red de estaciones meteorológicas
+                        en fase de <strong>prueba y calibración</strong>. Los datos son recopilados
+                        con fines de <strong>entrenamiento de modelos</strong> y desarrollo del
+                        sistema de monitoreo. No deben utilizarse como referencia oficial para
+                        toma de decisiones agronómicas, hidrológicas o climáticas.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer de la página -->
-    <div class="row mt-3 mb-4">
+    <div class="row mt-2 mb-4">
         <div class="col-12 text-center">
             <p class="text-secondary text-xs mb-0">
                 Datos públicos de solo lectura &middot;
