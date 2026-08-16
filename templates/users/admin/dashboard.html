@@ -1,5 +1,5 @@
 {% extends 'users/admin/base_admin.html' %}
-{% load static %}
+{% load static user_tags %}
 
 {% block title %}Dashboard{% endblock title %}
 
@@ -259,6 +259,39 @@
                     </div>
                     <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
                 </a>
+                {% endif %}
+
+                {% if request.user|has_app:'seguridad' %}
+                <a href="{% url 'seguridad:dashboard' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#ef5350,#c62828); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0"
+                         style="background: linear-gradient(195deg,#ef5350,#c62828);">
+                        <i class="fas fa-shield-alt text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Dashboard Seguridad</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Monitoreo en tiempo real</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+                {% if request.user.is_admin %}
+                <a href="{% url 'seguridad:device_list' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#868caf,#546e7a); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0"
+                         style="background: linear-gradient(195deg,#868caf,#546e7a);">
+                        <i class="fas fa-microchip text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Dispositivos</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Configurar sensores MQTT</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+                {% endif %}
                 {% endif %}
 
                 <a href="{{ request.user.get_first_app_url }}"

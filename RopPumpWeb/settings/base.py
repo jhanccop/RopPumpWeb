@@ -56,6 +56,9 @@ INSTALLED_APPS = [
     # OILFIELD app
     'Apps.OILFIELD',
 
+    # SEGURIDAD app
+    'Apps.SEGURIDAD',
+
     # third apps
     'multiselectfield',
     'rest_framework',

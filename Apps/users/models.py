@@ -9,6 +9,7 @@ class Application(models.Model):
         ('transformadores', 'Transformadores'),
         ('fauna', 'Fauna'),
         ('oilfield', 'Oilfield'),
+        ('seguridad', 'Seguridad'),
     ]
     Code = models.CharField('Código', max_length=50, unique=True, choices=CODE_CHOICES)
     Name = models.CharField('Nombre', max_length=100)
@@ -97,12 +98,12 @@ class User(AbstractBaseUser, PermissionsMixin):
             ctype = company.CompanyType
             # Oil production → oilfield first
             if ctype == '0':
-                preferred = ['oilfield', 'transformadores', 'fauna']
+                preferred = ['oilfield', 'transformadores', 'fauna', 'seguridad']
             # Agricultural → fauna first
             elif ctype == '1':
-                preferred = ['fauna', 'oilfield', 'transformadores']
+                preferred = ['fauna', 'oilfield', 'transformadores', 'seguridad']
             else:
-                preferred = ['transformadores', 'oilfield', 'fauna']
+                preferred = ['transformadores', 'oilfield', 'fauna', 'seguridad']
 
             for code in preferred:
                 app = apps.filter(Code=code).first()

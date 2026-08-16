@@ -1,0 +1,158 @@
+{% extends 'SEGURIDAD/base_seguridad.html' %}
+{% load static %}
+{% block title %}Log de Eventos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .log-table td, .log-table th { font-size:.78rem; padding:6px 10px; vertical-align:middle; }
+    .log-table th { font-size:.66rem; text-transform:uppercase; letter-spacing:.5px; color:#7b809a; }
+    .log-row-critico { background:rgba(239,83,80,.07); }
+    .log-row-alto    { background:rgba(255,152,0,.06); }
+    .filter-row select, .filter-row input { font-size:.8rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-dark border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center flex-wrap gap-2">
+          <i class="fas fa-list-alt text-white me-2"></i>
+          <h6 class="text-white mb-0">Log de Eventos</h6>
+          <span class="ms-2 badge" style="background:rgba(255,255,255,.2);font-size:.68rem;">
+            {{ events|length }} registros
+          </span>
+          <div class="ms-auto d-flex gap-2 flex-wrap">
+            <a href="{% url 'seguridad:event_log_csv' %}?device={{ device.pk|default:'' }}&days={{ days }}"
+               class="btn btn-sm btn-white">
+              <i class="fas fa-download me-1"></i>Descargar CSV
+            </a>
+            <button onclick="location.reload()" class="btn btn-sm btn-outline-light">
+              <i class="fas fa-sync-alt me-1"></i>Actualizar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card-body pb-0 pt-3">
+        <form method="get" class="row g-2 filter-row align-items-end mb-3">
+          <div class="col-auto">
+            <label class="text-xs text-secondary mb-1">Dispositivo</label>
+            <select name="device" class="form-select form-select-sm">
+              <option value="">Todos</option>
+              {% for d in devices %}
+              <option value="{{ d.pk }}" {% if device and device.pk == d.pk %}selected{% endif %}>{{ d.Name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-auto">
+            <label class="text-xs text-secondary mb-1">Período</label>
+            <select name="days" class="form-select form-select-sm">
+              <option value="1"   {% if days == 1   %}selected{% endif %}>Hoy</option>
+              <option value="7"   {% if days == 7   %}selected{% endif %}>Últimos 7 días</option>
+              <option value="30"  {% if days == 30  %}selected{% endif %}>Últimos 30 días</option>
+              <option value="90"  {% if days == 90  %}selected{% endif %}>Últimos 90 días</option>
+              <option value="0"   {% if days == 0   %}selected{% endif %}>Todo</option>
+            </select>
+          </div>
+          <div class="col-auto">
+            <label class="text-xs text-secondary mb-1">Categoría</label>
+            <select name="category" class="form-select form-select-sm">
+              <option value="">Todas</option>
+              <option value="critico"     {% if category == 'critico'     %}selected{% endif %}>Crítico</option>
+              <option value="alto"        {% if category == 'alto'        %}selected{% endif %}>Alto</option>
+              <option value="informativo" {% if category == 'informativo' %}selected{% endif %}>Informativo</option>
+            </select>
+          </div>
+          <div class="col-auto">
+            <label class="text-xs text-secondary mb-1">Estado</label>
+            <select name="estado" class="form-select form-select-sm">
+              <option value="">Todos</option>
+              <option value="activo" {% if estado == 'activo' %}selected{% endif %}>Activo</option>
+              <option value="normal" {% if estado == 'normal' %}selected{% endif %}>Normal</option>
+            </select>
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-sm bg-gradient-dark">
+              <i class="fas fa-filter me-1"></i>Filtrar
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tabla -->
+      <div class="card-body px-0 pt-0 pb-0">
+        <div class="table-responsive">
+          <table class="table log-table mb-0" id="log-table">
+            <thead style="position:sticky;top:0;background:#fff;z-index:1;box-shadow:0 1px 0 #f0f2f5;">
+              <tr>
+                <th>Hora (servidor)</th>
+                <th>Hora (disp.)</th>
+                <th>Dispositivo</th>
+                <th>Origen</th>
+                <th>Sensor</th>
+                <th>Estado</th>
+                <th>Categoría</th>
+                <th>Usuario</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in events %}
+              <tr class="{% if e.Category == 'critico' %}log-row-critico{% elif e.Category == 'alto' %}log-row-alto{% endif %}">
+                <td style="white-space:nowrap;" class="text-secondary">{{ e.ServerTimestamp|date:"d/m/Y H:i:s" }}</td>
+                <td style="white-space:nowrap;" class="text-secondary">
+                  {% if e.DeviceTimestamp %}{{ e.DeviceTimestamp|date:"d/m/Y H:i:s" }}{% else %}—{% endif %}
+                </td>
+                <td class="font-weight-bold">{{ e.Device.Name }}</td>
+                <td>{{ e.get_Origin_display }}</td>
+                <td class="font-weight-bold">{{ e.SensorName|default:e.SensorIndex }}</td>
+                <td>
+                  <span class="{% if e.Estado == 'activo' %}estado-activo{% else %}estado-normal{% endif %}">
+                    {% if e.Estado == 'activo' %}● activo{% else %}○ normal{% endif %}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-sm
+                    {% if e.Category == 'critico' %}badge-critico
+                    {% elif e.Category == 'alto' %}badge-alto
+                    {% else %}badge-informativo{% endif %}">
+                    {{ e.get_Category_display }}
+                  </span>
+                </td>
+                <td class="text-secondary">{{ e.User|default:"—" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" class="text-center text-secondary py-5">
+                  <i class="fas fa-inbox d-block mb-2" style="font-size:2.5rem;opacity:.15;"></i>
+                  Sin eventos en el período seleccionado.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block JSscripts %}
+<script>
+  if (document.getElementById('log-table')) {
+    new simpleDatatables.DataTable('#log-table', {
+      searchable: true, fixedHeight: false, perPage: 25,
+      perPageSelect: [25, 50, 100, 250],
+      labels: {
+        placeholder: 'Buscar...',
+        perPage: '{select} por página',
+        noRows: 'Sin registros',
+        info: 'Mostrando {start} a {end} de {rows} registros',
+      },
+    });
+  }
+</script>
+{% endblock %}

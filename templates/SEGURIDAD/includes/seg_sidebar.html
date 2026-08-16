@@ -1,0 +1,132 @@
+{% load static user_tags %}
+{% with view=request.resolver_match.url_name %}
+
+<aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 bg-gradient-dark"
+    id="sidenav-main">
+
+    <div class="sidenav-header">
+        <i class="fas fa-times p-3 cursor-pointer text-white opacity-5 position-absolute end-0 top-0 d-none d-xl-none"
+           aria-hidden="true" id="iconSidenav"></i>
+        <a class="navbar-brand d-flex align-items-center px-3 py-2" href="{% url 'seguridad:dashboard' %}">
+            <i class="fas fa-shield-alt text-white me-2" style="font-size:1.2rem;"></i>
+            <span class="font-weight-bold text-white text-sm">SEGURIDAD</span>
+        </a>
+    </div>
+    <hr class="horizontal light mt-0 mb-1">
+
+    <div class="collapse navbar-collapse w-auto h-auto" id="sidenav-collapse-main">
+        <ul class="navbar-nav">
+
+            <!-- ── Monitoreo ──────────────────────────────────────────────── -->
+            <li class="nav-item mt-1">
+                <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">Monitoreo</p>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white {% if view == 'dashboard' %}active bg-gradient-primary{% endif %}"
+                   href="{% url 'seguridad:dashboard' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-tv"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Dashboard</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white {% if view == 'event_log' %}active bg-gradient-primary{% endif %}"
+                   href="{% url 'seguridad:event_log' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-list-alt"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Log de eventos</span>
+                </a>
+            </li>
+
+            <!-- ── Configuración (solo admins) ───────────────────────────── -->
+            {% if request.user.is_admin %}
+            <li class="nav-item mt-2">
+                <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">Configuración</p>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if view == 'device_list' or view == 'device_add' or view == 'device_edit' %}active bg-gradient-primary{% endif %}"
+                   href="{% url 'seguridad:device_list' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Dispositivos</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <!-- ── Otros módulos habilitados ─────────────────────────────── -->
+            {% with user_apps=request.user.Applications.all %}
+            {% if user_apps %}
+            <hr class="horizontal light my-2">
+            <li class="nav-item">
+                <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">Mis módulos</p>
+            </li>
+
+            {% if request.user|has_app:'fauna' %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/camera/dashboard/">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Fauna</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user|has_app:'oilfield' %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/oilfield/">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Oilfield</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user|has_app:'transformadores' %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/transformer/">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Transformadores</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% endif %}
+            {% endwith %}
+
+            <!-- ── Acceso admin panel / cerrar sesión ─────────────────────── -->
+            <hr class="horizontal light my-2">
+
+            {% if request.user.is_admin %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'user_app:admin_dashboard' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Panel admin</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'user_app:user-logout' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Cerrar sesión</span>
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</aside>
+
+{% endwith %}

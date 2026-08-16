@@ -1,0 +1,204 @@
+{% extends 'SEGURIDAD/base_seguridad.html' %}
+{% load static %}
+{% block title %}Editar – {{ object.Name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .field-label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #7b809a;
+    margin-bottom: 4px;
+  }
+  .field-label .required { color: #ef5350; }
+  .form-control, .form-select {
+    font-size: .85rem;
+    border-radius: 8px;
+    border: 1px solid #d2d6da;
+    padding: 8px 12px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #344767;
+    box-shadow: 0 0 0 2px rgba(52,71,103,.12);
+    outline: none;
+  }
+  textarea.form-control { resize: vertical; min-height: 72px; }
+  .hint-text { font-size: .72rem; color: #9e9e9e; margin-top: 3px; }
+
+  /* Tabla de sensores */
+  .sensor-grid {
+    display: grid;
+    grid-template-columns: 1fr 80px 170px 90px;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 4px;
+    border-bottom: 1px solid #f0f2f5;
+  }
+  .sensor-grid:last-child { border-bottom: none; }
+  .sensor-hdr {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #7b809a;
+    display: grid;
+    grid-template-columns: 1fr 80px 170px 90px;
+    gap: 8px;
+    padding: 0 4px 8px 4px;
+    border-bottom: 2px solid #f0f2f5;
+    margin-bottom: 2px;
+  }
+  .sensor-name { font-size: .84rem; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9 col-md-11">
+
+    <div class="card mt-4 mb-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-warning border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+          <i class="fas fa-cog text-white me-2"></i>
+          <h6 class="text-white mb-0">Editar Dispositivo — {{ object.Name }}</h6>
+          <a href="{% url 'seguridad:dashboard' %}?device={{ object.pk }}"
+             class="btn btn-sm btn-white ms-auto mb-0">
+             <i class="fas fa-tv me-1"></i>Dashboard
+          </a>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">{% csrf_token %}
+
+          <!-- ── Información general ──────────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-0">
+            <i class="fas fa-info-circle me-1"></i> Información general
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-8">
+              <p class="field-label mb-1">Nombre del dispositivo <span class="required">*</span></p>
+              {{ form.Name }}
+              {% if form.Name.errors %}
+                <p class="text-danger text-xs mt-1 mb-0">{{ form.Name.errors.0 }}</p>
+              {% endif %}
+            </div>
+            <div class="col-12 col-sm-4">
+              <p class="field-label mb-1">Estado</p>
+              {{ form.Status }}
+            </div>
+            <div class="col-12">
+              <p class="field-label mb-1">Descripción</p>
+              {{ form.Description }}
+            </div>
+          </div>
+
+          <!-- ── Conexión ────────────────────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-network-wired me-1"></i> Conexión
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6">
+              <p class="field-label mb-1">MAC Address</p>
+              {{ form.MacAddress }}
+              <p class="hint-text">Formato: AA:BB:CC:DD:EE:FF</p>
+              {% if form.MacAddress.errors %}
+                <p class="text-danger text-xs mt-1 mb-0">{{ form.MacAddress.errors.0 }}</p>
+              {% endif %}
+            </div>
+            <div class="col-12 col-sm-6">
+              <p class="field-label mb-1">Ubicación / Instalación</p>
+              {{ form.Location }}
+            </div>
+          </div>
+
+          <!-- ── MQTT ───────────────────────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-broadcast-tower me-1"></i> Configuración MQTT
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          <div class="row g-3 mb-2">
+            <div class="col-12 col-sm-5">
+              <p class="field-label mb-1">Broker MQTT</p>
+              {{ form.MqttBroker }}
+              <p class="hint-text">IP o hostname, ej. 192.168.1.100</p>
+            </div>
+            <div class="col-12 col-sm-2">
+              <p class="field-label mb-1">Puerto</p>
+              {{ form.MqttPort }}
+            </div>
+            <div class="col-12 col-sm-5">
+              <p class="field-label mb-1">Topic de escucha</p>
+              {{ form.MqttTopic }}
+              <p class="hint-text">Ej. seguridad/maestro01/#</p>
+            </div>
+          </div>
+
+          <div class="alert alert-light border text-xs mb-3 p-2">
+            <i class="fas fa-info-circle me-1 text-info"></i>
+            Wildcards: <code>seguridad/maestro01/#</code> captura
+            <code>.../critico</code>, <code>.../alto</code>, <code>.../informativo</code>.
+          </div>
+
+          <!-- ── Sensores ────────────────────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
+            <i class="fas fa-satellite-dish me-1"></i> Sensores
+          </p>
+          <p class="text-xs text-secondary mb-2">
+            Habilitar/deshabilitar cada sensor y asignarle una categoría de alerta.
+          </p>
+          <hr class="horizontal dark mt-1 mb-3">
+
+          {{ sensor_formset.management_form }}
+
+          <div class="sensor-hdr">
+            <span>Sensor</span>
+            <span class="text-center">Habilitado</span>
+            <span>Categoría</span>
+            <span>Estado actual</span>
+          </div>
+
+          {% for sensor, sform in sensors_zip %}
+          <div class="sensor-grid">
+            <span class="sensor-name">{{ sensor.Name }}</span>
+            <div class="text-center">
+              {{ sform.Enabled }}
+              {% for hidden in sform.hidden_fields %}{{ hidden }}{% endfor %}
+            </div>
+            <div>{{ sform.Category }}</div>
+            <div>
+              {% if sensor.Enabled %}
+                {% if sensor.CurrentState == 'activo' %}
+                  <span class="badge badge-critico" style="font-size:.7rem;">● activo</span>
+                {% else %}
+                  <span style="color:#66bb6a; font-size:.75rem; font-weight:600;">○ normal</span>
+                {% endif %}
+              {% else %}
+                <span style="color:#9e9e9e; font-size:.75rem;">deshabilitado</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+
+          <div class="d-flex justify-content-between pt-4 mt-3 border-top">
+            <a href="{% url 'seguridad:device_list' %}" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-1"></i>Volver
+            </a>
+            <button type="submit" class="btn bg-gradient-warning">
+              <i class="fas fa-save me-1"></i>Guardar cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

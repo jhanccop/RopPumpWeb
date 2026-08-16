@@ -1,0 +1,284 @@
+{% extends 'SEGURIDAD/base_seguridad.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+    .sensor-table td, .sensor-table th { font-size: .8rem; padding: 7px 12px; vertical-align: middle; }
+    .sensor-table th { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: #7b809a; }
+    .log-row-critico { background: rgba(239,83,80,.06); }
+    .log-row-alto    { background: rgba(255,152,0,.05); }
+    .refresh-badge { font-size:.68rem; opacity:.7; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h5 class="mb-0 font-weight-bold">
+                <i class="fas fa-shield-alt me-2 text-primary"></i>Panel de Seguridad
+            </h5>
+            <p class="text-secondary text-xs mb-0">Ambiente controlado — tiempo real</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <!-- Selector de dispositivo -->
+            {% if devices %}
+            <form method="get" class="mb-0">
+                <select name="device" class="form-select form-select-sm" style="min-width:180px;"
+                        onchange="this.form.submit()">
+                    {% for d in devices %}
+                    <option value="{{ d.pk }}" {% if device and device.pk == d.pk %}selected{% endif %}>
+                        {{ d.Name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
+            {% if device %}
+            <span class="refresh-badge text-secondary">
+                <i class="fas fa-clock me-1"></i>Última conexión:
+                {{ device.LastSeen|date:"d/m/Y H:i:s"|default:"—" }}
+            </span>
+            <button class="btn btn-sm btn-outline-primary" onclick="pollStatus()">
+                <i class="fas fa-sync-alt me-1"></i>Actualizar
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if not device %}
+<div class="alert alert-info text-sm">
+    <i class="fas fa-info-circle me-2"></i>
+    No hay dispositivos registrados.
+    <a href="{% url 'seguridad:device_add' %}" class="alert-link ms-1">Añadir dispositivo</a>.
+</div>
+{% else %}
+
+<!-- ── TILES DE ESTADO ───────────────────────────────────────────────────── -->
+<div class="tile-grid mb-4" id="tiles">
+
+    <div class="tile-card">
+        <span class="tile-label">Buzzer</span>
+        <span class="tile-value {% if device.BuzzerState == 'reposo' %}tile-ok{% else %}tile-danger{% endif %}"
+              id="tile-buzzer">{{ device.BuzzerState|upper|default:"—" }}</span>
+    </div>
+
+    <div class="tile-card">
+        <span class="tile-label">Bypass</span>
+        <span class="tile-value {% if device.BypassState %}tile-warn{% else %}tile-ok{% endif %}"
+              id="tile-bypass">{% if device.BypassState %}SÍ{% else %}NO{% endif %}</span>
+    </div>
+
+    <div class="tile-card">
+        <span class="tile-label">Temperatura</span>
+        <span class="tile-value tile-muted" id="tile-temp">
+            {% if device.Temperature is not None %}{{ device.Temperature|floatformat:1 }} °C{% else %}—{% endif %}
+        </span>
+    </div>
+
+    <div class="tile-card">
+        <span class="tile-label">Humedad</span>
+        <span class="tile-value tile-muted" id="tile-hum">
+            {% if device.Humidity is not None %}{{ device.Humidity|floatformat:0 }} %{% else %}—{% endif %}
+        </span>
+    </div>
+
+    <div class="tile-card">
+        <span class="tile-label">SD</span>
+        <span class="tile-value {% if device.SDStatus %}tile-warn{% else %}tile-ok{% endif %}"
+              id="tile-sd">{{ device.SDStatus|upper|default:"OK" }}</span>
+    </div>
+
+    <div class="tile-card">
+        <span class="tile-label">Hora (RTC)</span>
+        <span class="tile-value {% if device.HasRTC %}tile-ok{% else %}tile-muted{% endif %}"
+              id="tile-rtc">{% if device.HasRTC %}CON RTC{% else %}SIN RTC{% endif %}</span>
+    </div>
+
+    <div class="tile-card">
+        <span class="tile-label">WiFi</span>
+        <span class="tile-value {% if device.WifiOK %}tile-ok{% else %}tile-danger{% endif %}"
+              id="tile-wifi">{% if device.WifiOK %}OK{% else %}CAÍDA{% endif %}</span>
+    </div>
+
+    <div class="tile-card">
+        <span class="tile-label">MQTT</span>
+        <span class="tile-value {% if device.MqttOK %}tile-ok{% else %}tile-danger{% endif %}"
+              id="tile-mqtt">{% if device.MqttOK %}OK{% else %}CAÍDA{% endif %}</span>
+    </div>
+
+</div>
+
+<div class="row g-3">
+    <!-- ── SENSORES TIEMPO REAL ─────────────────────────────────────────── -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark border-radius-lg py-2 px-3">
+                    <h6 class="text-white mb-0 text-sm">
+                        <i class="fas fa-satellite-dish me-2"></i>Sensores (tiempo real)
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <table class="table sensor-table mb-0" id="sensor-table">
+                    <thead>
+                        <tr>
+                            <th>Sensor</th>
+                            <th>Estado</th>
+                            <th>Categoría</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sensors %}
+                        <tr id="sensor-row-{{ s.SensorKey }}">
+                            <td>{{ s.Name }}</td>
+                            <td>
+                                {% if not s.Enabled %}
+                                    <span class="sensor-dot dot-deshabilitado"></span>
+                                    <span class="estado-deshabilitado">— deshabilitado</span>
+                                {% elif s.CurrentState == 'activo' %}
+                                    <span class="sensor-dot dot-activo"></span>
+                                    <span class="estado-activo">● activo</span>
+                                {% else %}
+                                    <span class="sensor-dot dot-normal"></span>
+                                    <span class="estado-normal">○ normal</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if s.Enabled %}
+                                <span class="badge badge-sm
+                                    {% if s.Category == 'critico' %}badge-critico
+                                    {% elif s.Category == 'alto' %}badge-alto
+                                    {% else %}badge-informativo{% endif %}">
+                                    {{ s.category_display }}
+                                </span>
+                                {% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center text-secondary py-4 text-xs">Sin sensores configurados</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── LOG RECIENTE ────────────────────────────────────────────────── -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark border-radius-lg py-2 px-3 d-flex align-items-center justify-content-between">
+                    <h6 class="text-white mb-0 text-sm">
+                        <i class="fas fa-list-alt me-2"></i>Últimos eventos
+                    </h6>
+                    <a href="{% url 'seguridad:event_log' %}?device={{ device.pk }}"
+                       class="text-white-50 text-xs">Ver todos →</a>
+                </div>
+            </div>
+            <div class="card-body p-0" style="max-height:380px; overflow-y:auto;">
+                <table class="table sensor-table mb-0" id="recent-log">
+                    <thead style="position:sticky;top:0;background:#fff;z-index:1;">
+                        <tr>
+                            <th>Hora</th>
+                            <th>Origen</th>
+                            <th>Sensor</th>
+                            <th>Estado</th>
+                            <th>Categoría</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-tbody">
+                        {% for e in recent_events %}
+                        <tr class="{% if e.Category == 'critico' %}log-row-critico{% elif e.Category == 'alto' %}log-row-alto{% endif %}">
+                            <td class="text-xs text-secondary" style="white-space:nowrap;">
+                                {{ e.ServerTimestamp|date:"H:i:s" }}
+                            </td>
+                            <td class="text-xs">{{ e.get_Origin_display }}</td>
+                            <td class="text-xs font-weight-bold">{{ e.SensorName|default:e.SensorIndex }}</td>
+                            <td>
+                                <span class="text-xs {% if e.Estado == 'activo' %}estado-activo{% else %}estado-normal{% endif %}">
+                                    {{ e.get_Estado_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-sm
+                                    {% if e.Category == 'critico' %}badge-critico
+                                    {% elif e.Category == 'alto' %}badge-alto
+                                    {% else %}badge-informativo{% endif %}">
+                                    {{ e.get_Category_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center text-secondary py-4 text-xs">Sin eventos registrados</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block JSscripts %}
+{% if device %}
+<script>
+var DEVICE_ID  = {{ device.pk }};
+var API_URL    = "{% url 'seguridad:device_status_api' device.pk %}";
+var POLL_MS    = 10000;  // 10 segundos
+
+function pollStatus() {
+    fetch(API_URL)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            // Tiles
+            document.getElementById('tile-buzzer').textContent = (d.buzzer || '—').toUpperCase();
+            document.getElementById('tile-bypass').textContent = d.bypass ? 'SÍ' : 'NO';
+            document.getElementById('tile-temp').textContent   = d.temperature != null ? d.temperature.toFixed(1) + ' °C' : '—';
+            document.getElementById('tile-hum').textContent    = d.humidity   != null ? d.humidity.toFixed(0)   + ' %' : '—';
+            document.getElementById('tile-sd').textContent     = (d.sd_status || 'OK').toUpperCase();
+            document.getElementById('tile-rtc').textContent    = d.has_rtc ? 'CON RTC' : 'SIN RTC';
+            document.getElementById('tile-wifi').textContent   = d.wifi_ok ? 'OK' : 'CAÍDA';
+            document.getElementById('tile-mqtt').textContent   = d.mqtt_ok ? 'OK' : 'CAÍDA';
+
+            // Colorear tiles dinámicamente
+            colorTile('tile-buzzer', d.buzzer === 'reposo' ? 'ok' : 'danger');
+            colorTile('tile-bypass', d.bypass ? 'warn' : 'ok');
+            colorTile('tile-wifi',   d.wifi_ok ? 'ok' : 'danger');
+            colorTile('tile-mqtt',   d.mqtt_ok ? 'ok' : 'danger');
+            colorTile('tile-rtc',    d.has_rtc ? 'ok' : 'muted');
+
+            // Sensores
+            d.sensors.forEach(function(s) {
+                var row = document.getElementById('sensor-row-' + s.SensorKey);
+                if (!row) return;
+                var td = row.cells[1];
+                if (!s.Enabled) {
+                    td.innerHTML = '<span class="sensor-dot dot-deshabilitado"></span><span class="estado-deshabilitado">— deshabilitado</span>';
+                } else if (s.CurrentState === 'activo') {
+                    td.innerHTML = '<span class="sensor-dot dot-activo"></span><span class="estado-activo">● activo</span>';
+                } else {
+                    td.innerHTML = '<span class="sensor-dot dot-normal"></span><span class="estado-normal">○ normal</span>';
+                }
+            });
+        })
+        .catch(function(e) { console.warn('[seg] poll error', e); });
+}
+
+function colorTile(id, level) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'tile-value tile-' + level;
+}
+
+// Polling automático
+setInterval(pollStatus, POLL_MS);
+</script>
+{% endif %}
+{% endblock %}

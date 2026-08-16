@@ -1,0 +1,131 @@
+{% load static user_tags %}
+<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl mb-4"
+     id="navbarBlur" navbar-scroll="true">
+    <div class="container-fluid py-1 px-3">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+                <li class="breadcrumb-item text-sm">
+                    <a class="opacity-5 text-dark" href="{% url 'seguridad:dashboard' %}">
+                        <i class="fas fa-shield-alt" style="font-size:.85rem; color:#ef5350;"></i>
+                    </a>
+                </li>
+                {% if CompanyName %}
+                <li class="breadcrumb-item text-sm">
+                    <span class="opacity-5 text-dark">{{ CompanyName }}</span>
+                </li>
+                {% endif %}
+                <li class="breadcrumb-item text-sm text-dark active" aria-current="page">
+                    {{ page_section|default:"Seguridad" }}
+                </li>
+                {% if page_view or request.resolver_match.url_name %}
+                <li class="breadcrumb-item text-sm text-dark" aria-current="page">
+                    {{ page_view|default:request.resolver_match.url_name|upper }}
+                </li>
+                {% endif %}
+            </ol>
+        </nav>
+
+        <!-- Right side -->
+        <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+            <ul class="navbar-nav ms-md-auto pe-md-3 d-flex align-items-center">
+
+                <!-- Shortcuts: solo módulos habilitados para este usuario -->
+                {% if request.user|has_app:'fauna' %}
+                <li class="nav-item d-none d-sm-flex align-items-center me-2">
+                    <a href="/camera/dashboard/"
+                       class="btn btn-sm mb-0 py-2 px-3 d-flex align-items-center gap-1"
+                       style="background: linear-gradient(195deg,#66bb6a,#43a047); color:#fff;"
+                       title="Fauna">
+                        <i class="fas fa-leaf" style="font-size:.8rem;"></i>
+                        <span class="d-none d-lg-inline ms-1" style="font-size:.75rem;">Fauna</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if request.user|has_app:'oilfield' %}
+                <li class="nav-item d-none d-sm-flex align-items-center me-2">
+                    <a href="/oilfield/"
+                       class="btn btn-sm mb-0 py-2 px-3 d-flex align-items-center gap-1"
+                       style="background: linear-gradient(195deg,#49a3f1,#1a73e8); color:#fff;"
+                       title="Oilfield">
+                        <i class="fas fa-industry" style="font-size:.8rem;"></i>
+                        <span class="d-none d-lg-inline ms-1" style="font-size:.75rem;">Oilfield</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if request.user|has_app:'transformadores' %}
+                <li class="nav-item d-none d-sm-flex align-items-center me-2">
+                    <a href="/transformer/"
+                       class="btn btn-sm mb-0 py-2 px-3 d-flex align-items-center gap-1"
+                       style="background: linear-gradient(195deg,#ffa726,#fb8c00); color:#fff;"
+                       title="Transformadores">
+                        <i class="fas fa-bolt" style="font-size:.8rem;"></i>
+                        <span class="d-none d-lg-inline ms-1" style="font-size:.75rem;">Transf.</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Admin Panel shortcut -->
+                {% if user.is_admin %}
+                <li class="nav-item d-flex align-items-center me-2">
+                    <a href="{% url 'user_app:admin_dashboard' %}"
+                       class="btn btn-sm bg-gradient-dark mb-0 py-2 px-3 d-flex align-items-center gap-1"
+                       title="Panel de Administración">
+                        <i class="fas fa-user-cog" style="font-size:.8rem;"></i>
+                        <span class="d-none d-lg-inline ms-1" style="font-size:.75rem;">Admin</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Separator -->
+                <li class="nav-item d-none d-sm-flex align-items-center me-2">
+                    <span class="text-secondary opacity-4" style="font-size:1rem;">|</span>
+                </li>
+
+                <!-- User badge -->
+                <li class="nav-item d-flex align-items-center me-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center justify-content-center shadow border-radius-md"
+                             style="width:30px; height:30px; flex-shrink:0;
+                                    background: linear-gradient(195deg,#ef5350,#c62828);">
+                            <i class="fas fa-user text-white" style="font-size:.7rem;"></i>
+                        </div>
+                        <div class="d-none d-md-block lh-1">
+                            <p class="mb-0 text-xs font-weight-bold text-dark" style="line-height:1.3;">
+                                {{ request.user.Name|default:request.user.UserName }}
+                            </p>
+                            <p class="mb-0 text-secondary" style="font-size:.68rem; line-height:1.3;">
+                                {{ request.user.get_role_display|default:request.user.Role }}
+                            </p>
+                        </div>
+                    </div>
+                </li>
+
+                <!-- Logout -->
+                <li class="nav-item d-flex align-items-center ms-2">
+                    <a href="{% url 'user_app:user-logout' %}"
+                       class="btn btn-sm btn-outline-secondary mb-0 py-2 px-3 d-flex align-items-center gap-1"
+                       title="Cerrar sesión">
+                        <i class="fas fa-sign-out-alt" style="font-size:.8rem;"></i>
+                        <span class="d-none d-lg-inline ms-1" style="font-size:.75rem;">Salir</span>
+                    </a>
+                </li>
+
+                <!-- Mobile sidenav toggle -->
+                <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
+                    <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
+                        <div class="sidenav-toggler-inner">
+                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line"></i>
+                        </div>
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>
