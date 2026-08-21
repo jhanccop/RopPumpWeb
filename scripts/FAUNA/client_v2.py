@@ -199,11 +199,6 @@ def _timesleep_int(val: str) -> int:
 #     SAUCES          0,457           0,660              0,803          0,938
 #
 # y 0 marcas posteriores a su recepción, frente a 147 antes.
-#
-# Validado adicionalmente el 21-ago-2026 sobre los CSV completos de las tres
-# estaciones (7.767 lecturas): 733 violaciones en SAUCES (máx. 21,6 días en el
-# futuro), 362 en Vergel y 1.014 en EST-05 quedan en 0 tras pasar por esta
-# misma lógica, y la serie resultante es monótona creciente en los tres casos.
 
 _LIVE_TOL_S      = 5 * 60      # antigüedad máxima de una lectura "contemporánea"
 _MAX_CLOCK_ERR_S = 2 * 3600    # desvío de reloj máximo creíble
@@ -634,7 +629,7 @@ def _cam_reply(client, mac: str):
     # Obtener hora actual en zona Perú
     peru_tz = ZoneInfo('America/Lima')
     now_peru = datetime.now(peru_tz)
-
+    
     # Función para convertir a time si es necesario
     def to_time(value):
         if value is None:
@@ -650,13 +645,13 @@ def _cam_reply(client, mac: str):
                     continue
             raise ValueError(f"Invalid time format: {value}")
         return value
-
+    
     ton_time = to_time(ton)
     toff_time = to_time(toff)
-
+    
     if ton_time and toff_time:
         now_time = now_peru.time()
-
+        
         # Comparar usando hora Perú
         if ton_time <= toff_time:
             active = ton_time <= now_time <= toff_time
@@ -828,17 +823,17 @@ def _process(client, topic, payload):
             print(f"[{datetime.now():%H:%M:%S}] trapViewImage  no pending cameraData — dropped")
             return
         mac = next(iter(_pending))
-
+        
         buf = _img_buf.setdefault(mac, bytearray())
         buf.extend(payload)
-
+        
         starts_ok = buf[:2] == _JPEG_SOI
         ends_ok   = buf[-2:] == _JPEG_EOI
-
+        
         print(f"[{datetime.now():%H:%M:%S}] trapViewImage  mac={mac}"
             f"  chunk={len(payload)}B  total={len(buf)}B"
             f"  SOI={'✓' if starts_ok else '✗'}  EOI={'✓' if ends_ok else '…'}")
-
+        
         # Si está completo O si el chunk actual ya contiene EOI (caso mensaje único)
         if ends_ok or (payload[-2:] == _JPEG_EOI and len(buf) == len(payload)):
             _cancel_img_timer(mac)
