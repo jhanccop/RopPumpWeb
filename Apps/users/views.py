@@ -19,6 +19,14 @@ from .forms import UserRegisterForm, LoginForm
 from .models import User, Application
 from Apps.company.models import Company
 
+# Importaciones opcionales de sub-apps IoT (pueden no estar migradas aún)
+try:
+    from Apps.OILFIELD.tank.models import TankStation
+    from Apps.OILFIELD.wellAnalyzer.models import WellAnalyzerStation
+    _OILFIELD_AVAILABLE = True
+except Exception:
+    _OILFIELD_AVAILABLE = False
+
 
 class UserRegisterView(FormView):
     template_name = 'users/register.html'
@@ -84,6 +92,12 @@ class AdminDashboardView(AdminRequiredMixin, TemplateView):
             context['total_users'] = User.objects.filter(CompanyId=company).count()
             context['active_users'] = User.objects.filter(CompanyId=company, IsActive=True).count()
         context['applications'] = Application.objects.all()
+        # Conteo de dispositivos IoT OILFIELD
+        if _OILFIELD_AVAILABLE:
+            context['tank_stations_count']    = TankStation.objects.count()
+            context['analyzer_stations_count'] = WellAnalyzerStation.objects.count()
+            context['tank_active_count']      = TankStation.objects.filter(Status='active').count()
+            context['analyzer_active_count']  = WellAnalyzerStation.objects.filter(Status='active').count()
         return context
 
 

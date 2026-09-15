@@ -132,6 +132,101 @@
 
 </div>
 
+<!-- ── OILFIELD IoT Section ───────────────────────────────────────────────── -->
+{% if request.user|has_app:'oilfield' %}
+<div class="row mb-4">
+    <div class="col-12 mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-gradient-info px-3 py-2" style="font-size:.78rem;">
+                <i class="fas fa-industry me-1"></i>OILFIELD — Dispositivos IoT
+            </span>
+        </div>
+    </div>
+
+    <!-- Tank stations total -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center">
+                    <i class="fas fa-database text-white" style="font-size:1.3rem;"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Estaciones Tanque</p>
+                    <h4 class="mb-0 font-weight-bolder">{{ tank_stations_count|default:"0" }}</h4>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-success font-weight-bolder">{{ tank_active_count|default:"0" }}</span>
+                    <span class="text-secondary"> activas · </span>
+                    <a href="{% url 'oilfield_tank:list' %}" class="text-info text-xs font-weight-bold">Ver todas →</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analyzer stations total -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center">
+                    <i class="fas fa-broadcast-tower text-white" style="font-size:1.3rem;"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">Analizadores Pozo</p>
+                    <h4 class="mb-0 font-weight-bolder">{{ analyzer_stations_count|default:"0" }}</h4>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-success font-weight-bolder">{{ analyzer_active_count|default:"0" }}</span>
+                    <span class="text-secondary"> activos · </span>
+                    <a href="{% url 'oilfield_wellanalyzer:list' %}" class="text-success text-xs font-weight-bold">Ver todos →</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shortcut: Tank stations -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <a href="{% url 'oilfield_tank:list' %}" class="card h-100 text-decoration-none"
+           style="background:linear-gradient(195deg,#49a3f1,#1a73e8);">
+            <div class="card-body d-flex align-items-center gap-3 p-3">
+                <div class="icon icon-md icon-shape d-flex align-items-center justify-content-center border-radius-md flex-shrink-0"
+                     style="background:rgba(255,255,255,.15); width:3rem; height:3rem;">
+                    <i class="fas fa-database text-white"></i>
+                </div>
+                <div>
+                    <p class="text-white text-sm font-weight-bold mb-0">Medidores de Tanque</p>
+                    <p class="text-white text-xs opacity-8 mb-0">Nivel · Volumen · Temperatura</p>
+                </div>
+                <i class="fas fa-chevron-right text-white ms-auto opacity-6"></i>
+            </div>
+        </a>
+    </div>
+
+    <!-- Shortcut: Well analyzers -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <a href="{% url 'oilfield_wellanalyzer:list' %}" class="card h-100 text-decoration-none"
+           style="background:linear-gradient(195deg,#66bb6a,#43a047);">
+            <div class="card-body d-flex align-items-center gap-3 p-3">
+                <div class="icon icon-md icon-shape d-flex align-items-center justify-content-center border-radius-md flex-shrink-0"
+                     style="background:rgba(255,255,255,.15); width:3rem; height:3rem;">
+                    <i class="fas fa-broadcast-tower text-white"></i>
+                </div>
+                <div>
+                    <p class="text-white text-sm font-weight-bold mb-0">Analizadores Dinamométricos</p>
+                    <p class="text-white text-xs opacity-8 mb-0">SPM · Fillage · Producción</p>
+                </div>
+                <i class="fas fa-chevron-right text-white ms-auto opacity-6"></i>
+            </div>
+        </a>
+    </div>
+</div>
+{% endif %}
+
 <!-- Middle row: Apps table + Quick actions -->
 <div class="row mb-4">
 
@@ -256,6 +351,51 @@
                     <div>
                         <p class="mb-0 text-white text-sm font-weight-bold">Ver compañías</p>
                         <p class="mb-0 text-white text-xs opacity-7">Gestionar organizaciones</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+                {% endif %}
+
+                {% if request.user|has_app:'oilfield' %}
+                <a href="{% url 'oilfield_app:dashboard' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#49a3f1,#1a73e8); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0"
+                         style="background:rgba(255,255,255,.2);">
+                        <i class="fas fa-industry text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Dashboard Oilfield</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Panel principal de producción</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+                <a href="{% url 'oilfield_tank:list' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#26c6da,#0097a7); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0"
+                         style="background:rgba(255,255,255,.2);">
+                        <i class="fas fa-database text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Estaciones de Tanque</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Medición de nivel IoT</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+                <a href="{% url 'oilfield_wellanalyzer:list' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#66bb6a,#43a047); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0"
+                         style="background:rgba(255,255,255,.2);">
+                        <i class="fas fa-broadcast-tower text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Analizadores Dinamométricos</p>
+                        <p class="mb-0 text-white text-xs opacity-7">SPM · Fillage · Producción</p>
                     </div>
                     <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
                 </a>

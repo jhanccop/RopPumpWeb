@@ -55,6 +55,8 @@ INSTALLED_APPS = [
 
     # OILFIELD app
     'Apps.OILFIELD',
+    'Apps.OILFIELD.tank',
+    'Apps.OILFIELD.wellAnalyzer',
 
     # SEGURIDAD app
     'Apps.SEGURIDAD',

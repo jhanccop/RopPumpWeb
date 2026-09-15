@@ -73,7 +73,7 @@
                 </li>
                 {% endif %}
 
-                {% if request.user|has_app:'seguridad' %}
+                {% if request.user|has_app:'oilfield' or request.user|has_app:'seguridad' %}
                 <hr class="horizontal light my-2">
 
                 <li class="nav-item">
@@ -81,6 +81,36 @@
                         MÓDULOS
                     </p>
                 </li>
+
+                {% if request.user|has_app:'oilfield' %}
+                <li class="nav-item">
+                    <a class="nav-link text-white {% if request.resolver_match.app_name == 'oilfield_app' %}active bg-gradient-primary{% endif %}"
+                       href="{% url 'oilfield_app:dashboard' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-industry"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Oilfield</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white {% if request.resolver_match.app_name == 'oilfield_tank' %}active bg-gradient-primary{% endif %}"
+                       href="{% url 'oilfield_tank:list' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-database" style="font-size:.75rem;"></i>
+                        </div>
+                        <span class="nav-link-text ms-1" style="font-size:.8rem;">› Estaciones de Tanque</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white {% if request.resolver_match.app_name == 'oilfield_wellanalyzer' %}active bg-gradient-primary{% endif %}"
+                       href="{% url 'oilfield_wellanalyzer:list' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-broadcast-tower" style="font-size:.75rem;"></i>
+                        </div>
+                        <span class="nav-link-text ms-1" style="font-size:.8rem;">› Analizadores de Pozo</span>
+                    </a>
+                </li>
+                {% endif %}
 
                 {% if request.user|has_app:'seguridad' %}
                 <li class="nav-item">

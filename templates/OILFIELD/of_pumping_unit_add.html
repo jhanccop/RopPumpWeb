@@ -1,139 +1,137 @@
 {% extends 'OILFIELD/base_oilfield.html' %}
 {% load static %}
-
-{% block title %}Nueva Unidad de Bombeo{% endblock title %}
-{% block company %}{{ CompanyName }}{% endblock %}
-{% block appName %}OILFIELD{% endblock %}
-{% block Type %}Nueva Unidad de Bombeo{% endblock %}
+{% block title %}{% if form.instance.pk %}Editar Unidad de Bombeo{% else %}Nueva Unidad de Bombeo{% endif %}{% endblock %}
 
 {% block content %}
-
-<div class="row justify-content-center">
-  <div class="col-lg-9 col-md-11 col-12">
-    <div class="card mt-4">
-      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-        <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
-          <i class="fas fa-plus text-white me-2"></i>
-          <h6 class="text-white mb-0">NUEVA UNIDAD DE BOMBEO</h6>
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card mt-n4 bg-gradient-dark">
+            <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-white mb-0 font-weight-bolder">
+                        <i class="fas fa-cogs me-2"></i>{% if form.instance.pk %}Editar: {{ form.instance.Code }}{% else %}Nueva Unidad de Bombeo{% endif %}
+                    </h6>
+                    <p class="text-white opacity-7 text-xs mb-0">Equipamiento de extracción</p>
+                </div>
+                <a href="{% url 'oilfield_app:pumping_unit_list' %}" class="btn btn-sm btn-white mb-0">
+                    <i class="fas fa-arrow-left me-1"></i>Volver
+                </a>
+            </div>
         </div>
-      </div>
-      <div class="card-body p-4">
-        <form method="POST">{% csrf_token %}
-
-          <!-- ── Información General ──────────────────────────── -->
-          <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-0">
-            <i class="fas fa-info-circle me-1"></i> Información General
-          </p>
-          <hr class="horizontal dark mt-1 mb-3">
-
-          <div class="row">
-            <div class="col-6 col-sm-3">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Código *</label>
-                {{ form.Code }}
-              </div>
-              {% if form.Code.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Code.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-6 col-sm-5">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Nombre *</label>
-                {{ form.Name }}
-              </div>
-              {% if form.Name.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Name.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-12 col-sm-4">
-              <div class="input-group input-group-outline is-focused mb-3">
-                <label class="form-label">Tipo</label>
-                {{ form.Type }}
-              </div>
-              {% if form.Type.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Type.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-12 col-sm-4">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Fabricante</label>
-                {{ form.Manufacturer }}
-              </div>
-              {% if form.Manufacturer.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Manufacturer.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-12 col-sm-4">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Modelo</label>
-                {{ form.Model }}
-              </div>
-              {% if form.Model.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Model.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-12 col-sm-4">
-              <div class="input-group input-group-outline is-focused mb-3">
-                <label class="form-label">Estado</label>
-                {{ form.Status }}
-              </div>
-              {% if form.Status.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Status.errors.0 }}</p>{% endif %}
-            </div>
-          </div>
-
-          <!-- ── Especificaciones Técnicas ───────────────────── -->
-          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-2 mb-0">
-            <i class="fas fa-cogs me-1"></i> Especificaciones Técnicas
-          </p>
-          <hr class="horizontal dark mt-1 mb-3">
-
-          <div class="row">
-            <div class="col-6 col-sm-3">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">SPM Máximo</label>
-                {{ form.MaxSPM }}
-              </div>
-              {% if form.MaxSPM.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.MaxSPM.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-6 col-sm-3">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Long. Carrera (pulg)</label>
-                {{ form.StrokeLength }}
-              </div>
-              {% if form.StrokeLength.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.StrokeLength.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-6 col-sm-3">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Carga Máx. (klb)</label>
-                {{ form.MaxLoad }}
-              </div>
-              {% if form.MaxLoad.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.MaxLoad.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-6 col-sm-3">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Potencia Motor (HP)</label>
-                {{ form.MotorPower }}
-              </div>
-              {% if form.MotorPower.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.MotorPower.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-6 col-sm-4">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Rating Caja (ft-lb)</label>
-                {{ form.GearboxRating }}
-              </div>
-              {% if form.GearboxRating.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.GearboxRating.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-6 col-sm-4">
-              <div class="input-group input-group-outline is-focused mb-3">
-                <label class="form-label">Fecha de Instalación</label>
-                {{ form.InstallationDate }}
-              </div>
-              {% if form.InstallationDate.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.InstallationDate.errors.0 }}</p>{% endif %}
-            </div>
-          </div>
-
-          <div class="d-flex justify-content-between pt-3 mt-2 border-top">
-            <a class="btn btn-outline-secondary" href="{% url 'oilfield_app:pumping_unit_list' %}">
-              <i class="fas fa-arrow-left me-1"></i> Volver
-            </a>
-            <button class="btn bg-gradient-success" type="submit">
-              <i class="fas fa-save me-1"></i> Guardar
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
-  </div>
 </div>
 
-{% endblock content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-0 mt-2">Identificación</p>
+                    <hr class="horizontal dark mt-1 mb-0">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Code.label }}</label>
+                                {{ form.Code }}
+                            </div>
+                            {% if form.Code.errors %}<p class="text-danger text-xs mt-n2">{{ form.Code.errors|join:", " }}</p>{% endif %}
+                        </div>
+                        <div class="col-md-5">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Name.label }}</label>
+                                {{ form.Name }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Type.label }}</label>
+                                {{ form.Type }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Brand.label }}</label>
+                                {{ form.Brand }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Model.label }}</label>
+                                {{ form.Model }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Status.label }}</label>
+                                {{ form.Status }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-0 mt-2">Parámetros Técnicos</p>
+                    <hr class="horizontal dark mt-1 mb-0">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.StrokeLength.label }}</label>
+                                {{ form.StrokeLength }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.MaxSPM.label }}</label>
+                                {{ form.MaxSPM }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.GearboxRating.label }}</label>
+                                {{ form.GearboxRating }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.MotorPower.label }}</label>
+                                {{ form.MotorPower }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.InstallationDate.label }}</label>
+                                {{ form.InstallationDate }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.SerialNumber.label }}</label>
+                                {{ form.SerialNumber }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Owner.label }}</label>
+                                {{ form.Owner }}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Notes.label }}</label>
+                                {{ form.Notes }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-2">
+                        <button type="submit" class="btn btn-primary mb-0">
+                            <i class="fas fa-save me-1"></i>{% if form.instance.pk %}Guardar cambios{% else %}Crear unidad{% endif %}
+                        </button>
+                        <a href="{% url 'oilfield_app:pumping_unit_list' %}" class="btn btn-outline-secondary mb-0">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

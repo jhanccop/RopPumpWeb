@@ -1,104 +1,97 @@
 {% extends 'OILFIELD/base_oilfield.html' %}
 {% load static %}
-
-{% block title %}Nueva Batería{% endblock title %}
-{% block company %}{{ CompanyName }}{% endblock %}
-{% block appName %}OILFIELD{% endblock %}
-{% block Type %}Nueva Batería{% endblock %}
+{% block title %}{% if form.instance.pk %}Editar Batería{% else %}Nueva Batería{% endif %}{% endblock %}
 
 {% block content %}
-
-<div class="row justify-content-center">
-  <div class="col-lg-9 col-md-11 col-12">
-    <div class="card mt-4">
-      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-        <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
-          <i class="fas fa-plus text-white me-2"></i>
-          <h6 class="text-white mb-0">NUEVA BATERÍA</h6>
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card mt-n4 bg-gradient-dark">
+            <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-white mb-0 font-weight-bolder">
+                        <i class="fas fa-sitemap me-2"></i>{% if form.instance.pk %}Editar: {{ form.instance.Code }}{% else %}Nueva Batería{% endif %}
+                    </h6>
+                    <p class="text-white opacity-7 text-xs mb-0">Estación de recolección</p>
+                </div>
+                <a href="{% url 'oilfield_app:battery_list' %}" class="btn btn-sm btn-white mb-0">
+                    <i class="fas fa-arrow-left me-1"></i>Volver
+                </a>
+            </div>
         </div>
-      </div>
-      <div class="card-body p-4">
-        <form method="POST">{% csrf_token %}
-
-          <div hidden>{{ form.Owner }}</div>
-
-          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
-            <i class="fas fa-id-card me-1"></i> Identificación
-          </p>
-          <hr class="horizontal dark mt-1 mb-3">
-
-          <div class="row">
-            <div class="col-12 col-sm-4">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Código *</label>
-                {{ form.Code }}
-              </div>
-              {% if form.Code.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Code.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-12 col-sm-8">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Nombre *</label>
-                {{ form.Name }}
-              </div>
-              {% if form.Name.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Name.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-12">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Descripción</label>
-                {{ form.Description }}
-              </div>
-              {% if form.Description.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Description.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-12 col-sm-4">
-              <div class="input-group input-group-outline is-focused mb-3">
-                <label class="form-label">Estado</label>
-                {{ form.Status }}
-              </div>
-              {% if form.Status.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Status.errors.0 }}</p>{% endif %}
-            </div>
-          </div>
-
-          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-3 mb-0">
-            <i class="fas fa-map-marker-alt me-1"></i> Ubicación
-          </p>
-          <hr class="horizontal dark mt-1 mb-3">
-
-          <div class="row">
-            <div class="col-12">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Ubicación</label>
-                {{ form.Location }}
-              </div>
-              {% if form.Location.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Location.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-12 col-sm-6">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Latitud</label>
-                {{ form.Latitude }}
-              </div>
-              {% if form.Latitude.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Latitude.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="col-12 col-sm-6">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Longitud</label>
-                {{ form.Longitude }}
-              </div>
-              {% if form.Longitude.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Longitude.errors.0 }}</p>{% endif %}
-            </div>
-          </div>
-
-          <div class="d-flex justify-content-between pt-3 mt-3 border-top">
-            <a class="btn btn-outline-secondary" href="{% url 'oilfield_app:battery_list' %}">
-              <i class="fas fa-arrow-left me-1"></i> Volver
-            </a>
-            <button class="btn bg-gradient-success" type="submit">
-              <i class="fas fa-save me-1"></i> Guardar
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
-  </div>
 </div>
 
-{% endblock content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-0 mt-2">Identificación</p>
+                    <hr class="horizontal dark mt-1 mb-0">
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Code.label }}</label>
+                                {{ form.Code }}
+                            </div>
+                            {% if form.Code.errors %}<p class="text-danger text-xs mt-n2 mb-2">{{ form.Code.errors|join:", " }}</p>{% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Name.label }}</label>
+                                {{ form.Name }}
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Location.label }}</label>
+                                {{ form.Location }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Status.label }}</label>
+                                {{ form.Status }}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Description.label }}</label>
+                                {{ form.Description }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-0 mt-2">Coordenadas GPS</p>
+                    <hr class="horizontal dark mt-1 mb-0">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Latitude.label }}</label>
+                                {{ form.Latitude }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline my-3">
+                                <label class="form-label">{{ form.Longitude.label }}</label>
+                                {{ form.Longitude }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-2">
+                        <button type="submit" class="btn btn-primary mb-0">
+                            <i class="fas fa-save me-1"></i>{% if form.instance.pk %}Guardar cambios{% else %}Crear batería{% endif %}
+                        </button>
+                        <a href="{% url 'oilfield_app:battery_list' %}" class="btn btn-outline-secondary mb-0">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

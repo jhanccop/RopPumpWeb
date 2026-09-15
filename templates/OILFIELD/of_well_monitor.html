@@ -1,277 +1,123 @@
 {% extends 'OILFIELD/base_oilfield.html' %}
 {% load static %}
-
-{% block title %}Monitor{% endblock %}
-{% block company %}{{ CompanyName }}{% endblock %}
-{% block appName %}OILFIELD{% endblock %}
-{% block Type %}Monitor{% endblock %}
+{% block title %}Monitor en Vivo{% endblock %}
 
 {% block extra_css %}
 <style>
-.monitor-card { border-radius: 12px; overflow: hidden; transition: box-shadow .2s; }
-.monitor-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.12); }
-.gauge-bar { height: 6px; border-radius: 3px; background: #e9ecef; overflow: hidden; }
-.gauge-fill { height: 100%; border-radius: 3px; transition: width .4s; }
-.stat-chip { display: inline-flex; align-items: center; gap: 4px;
-             padding: 2px 10px; border-radius: 50px; font-size: .7rem; font-weight: 600; }
-.tank-level-bar { height: 8px; border-radius: 4px; background: #e9ecef; overflow: hidden; }
-.tank-level-fill { height: 100%; border-radius: 4px; }
+    .monitor-card { transition:.12s; cursor:pointer; }
+    .monitor-card:hover { transform:translateY(-2px); box-shadow:0 8px 26px rgba(0,0,0,.13)!important; }
+    .pulse-dot { width:10px; height:10px; border-radius:50%; display:inline-block; animation:pulse 1.8s infinite; }
+    @keyframes pulse {
+        0%,100%{opacity:1;} 50%{opacity:.4;}
+    }
+    .pd-active { background:#66bb6a; }
+    .pd-fault  { background:#ef5350; }
+    .pd-warn   { background:#ffa726; }
+    .pd-off    { background:#9e9e9e; animation:none; }
+    .gauge-wrap { position:relative; display:flex; align-items:center; gap:8px; }
+    .gauge-bar  { flex:1; height:8px; background:#e0e0e0; border-radius:4px; overflow:hidden; }
+    .gauge-fill { height:100%; border-radius:4px; transition: width .6s; }
 </style>
-{% endblock extra_css %}
+{% endblock %}
 
 {% block content %}
-
-<!-- Header KPIs -->
 <div class="row mb-3">
     <div class="col-12">
-        <div class="card"
-             style="background: linear-gradient(195deg,#42424a,#191919); border-radius:12px;">
-            <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <div>
-                        <h6 class="text-white mb-0">
-                            <i class="fas fa-broadcast-tower me-2"></i>Monitor en Tiempo Real
-                        </h6>
-                        <p class="text-white opacity-7 text-xs mb-0">
-                            {{ wells_data|length }} pozo{{ wells_data|length|pluralize:"s" }} ·
-                            {{ tanks_data|length }} tanque{{ tanks_data|length|pluralize:"s" }}
-                        </p>
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a href="{% url 'oilfield_app:production_add' %}"
-                           class="btn btn-sm bg-gradient-success mb-0">
-                            <i class="fas fa-plus me-1"></i> Nueva Producción
-                        </a>
-                        <a href="{% url 'oilfield_app:tank_reading_add' %}"
-                           class="btn btn-sm bg-gradient-info mb-0">
-                            <i class="fas fa-plus me-1"></i> Lectura Tanque
-                        </a>
-                    </div>
+        <div class="card mt-n4 bg-gradient-dark">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-white mb-0 font-weight-bolder">
+                        <i class="fas fa-satellite-dish me-2"></i>Monitor en Vivo — Pozos y Tanques
+                    </h6>
+                    <p class="text-white opacity-7 text-xs mb-0">Última telemetría IoT · Actualización cada 60 s</p>
                 </div>
+                <span class="badge bg-success px-3 py-2 text-xs">
+                    <span class="pulse-dot pd-active me-1"></span>EN VIVO
+                </span>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Tanks section -->
-<div class="row mb-2">
-    <div class="col-12">
-        <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-2">
-            <i class="fas fa-database me-1"></i> Tanques
-        </p>
+<!-- Resumen de estado -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center py-3">
+            <h4 class="font-weight-bolder mb-0 text-success">{{ producing_count }}</h4>
+            <p class="text-xs text-secondary mb-0">Produciendo</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center py-3">
+            <h4 class="font-weight-bolder mb-0 text-danger">{{ stopped_count }}</h4>
+            <p class="text-xs text-secondary mb-0">Detenidos</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center py-3">
+            <h4 class="font-weight-bolder mb-0 text-warning">{{ problem_count }}</h4>
+            <p class="text-xs text-secondary mb-0">Con problema</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center py-3">
+            <h4 class="font-weight-bolder mb-0">{{ total_wells }}</h4>
+            <p class="text-xs text-secondary mb-0">Total pozos</p>
+        </div>
     </div>
 </div>
 
-<div class="row mb-4">
-    {% for entry in tanks_data %}
-    {% with t=entry.tank lr=entry.last_reading %}
-    <div class="col-xl-3 col-lg-4 col-sm-6 mb-3">
-        <div class="card monitor-card h-100">
-            <div class="card-body p-3">
-
+<!-- Tarjetas de pozos -->
+<div class="row g-3 mb-4">
+    {% for well in wells %}
+    {% with lr=well.latest_reading %}
+    <div class="col-xl-3 col-md-4 col-sm-6">
+        <div class="card monitor-card h-100" onclick="window.location='{% url 'oilfield_app:well_detail' well.pk %}'">
+            <div class="card-body pb-2">
                 <!-- Header -->
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
-                        <h6 class="mb-0 text-sm font-weight-bold">{{ t.Code }}</h6>
-                        <p class="text-xs text-secondary mb-0">{{ t.Name }}</p>
-                        {% if t.Battery %}
-                        <p class="text-xs text-secondary mb-0">
-                            <i class="fas fa-sitemap me-1" style="font-size:.6rem;"></i>{{ t.Battery.Name }}
-                        </p>
-                        {% endif %}
+                        <h6 class="mb-0 font-weight-bolder text-sm">{{ well.Code }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ well.Battery.Code|default:"—" }}</p>
                     </div>
-                    <span class="badge badge-sm {% if t.Status == 'operational' or t.Status == 'active' %}bg-gradient-success{% elif t.Status == 'maintenance' %}bg-gradient-warning{% else %}bg-gradient-secondary{% endif %}">
-                        {{ t.get_Status_display|default:t.Status }}
-                    </span>
+                    <span class="pulse-dot {% if lr %}{% if lr.OperationalStatus == 'producing' %}pd-active{% elif lr.OperationalStatus in 'gas_lock,fault_mech' %}pd-fault{% elif lr.OperationalStatus in 'pump_off,low_fillage,overloaded' %}pd-warn{% else %}pd-off{% endif %}{% else %}pd-off{% endif %}"></span>
                 </div>
-
+                <!-- Estado op -->
                 {% if lr %}
-                <!-- Level bar -->
-                {% if t.NominalCapacity and lr.Volume %}
-                {% widthratio lr.Volume t.NominalCapacity 100 as pct %}
                 <div class="mb-2">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-xs text-secondary">Nivel</span>
-                        <span class="text-xs font-weight-bold">{{ pct }}%</span>
-                    </div>
-                    <div class="tank-level-bar">
-                        <div class="tank-level-fill {% if pct >= 90 %}bg-gradient-danger{% elif pct >= 60 %}bg-gradient-warning{% else %}bg-gradient-info{% endif %}"
-                             style="width:{{ pct }}%;"></div>
-                    </div>
+                    <span class="op-badge op-{{ lr.OperationalStatus }}">{{ lr.get_OperationalStatus_display }}</span>
                 </div>
-                {% endif %}
-
-                <!-- Stats row -->
-                <div class="d-flex gap-2 flex-wrap mt-2">
-                    {% if lr.Level is not None %}
-                    <span class="stat-chip bg-light text-dark">
-                        <i class="fas fa-tint text-info" style="font-size:.65rem;"></i>
-                        {{ lr.Level|floatformat:1 }} cm
-                    </span>
-                    {% endif %}
-                    {% if lr.Volume is not None %}
-                    <span class="stat-chip bg-light text-dark">
-                        <i class="fas fa-database text-primary" style="font-size:.65rem;"></i>
-                        {{ lr.Volume|floatformat:1 }} bbl
-                    </span>
-                    {% endif %}
-                    {% if lr.Temperature is not None %}
-                    <span class="stat-chip bg-light text-dark">
-                        <i class="fas fa-thermometer-half text-warning" style="font-size:.65rem;"></i>
-                        {{ lr.Temperature|floatformat:1 }}°C
-                    </span>
-                    {% endif %}
-                </div>
-
-                <p class="text-xs text-secondary mb-0 mt-2">
-                    <i class="fas fa-clock me-1" style="font-size:.6rem;"></i>
-                    {{ lr.ReadingDate|date:"d/m/Y H:i" }}
-                </p>
-
-                {% else %}
-                <div class="text-center py-3">
-                    <i class="fas fa-database text-secondary mb-1 d-block" style="font-size:1.8rem;opacity:.25;"></i>
-                    <p class="text-xs text-secondary mb-0">Sin lecturas</p>
-                </div>
-                {% endif %}
-
-                <!-- Capacity info -->
-                {% if t.NominalCapacity %}
-                <hr class="horizontal dark my-2">
-                <div class="d-flex justify-content-between">
-                    <span class="text-xs text-secondary">Cap. Nominal</span>
-                    <span class="text-xs font-weight-bold">{{ t.NominalCapacity }} bbl</span>
-                </div>
-                {% endif %}
-
-            </div>
-            <div class="card-footer p-2 d-flex gap-2">
-                <a href="{% url 'oilfield_app:tank_detail' t.pk %}"
-                   class="btn btn-sm btn-outline-info mb-0 flex-grow-1 py-1">
-                    <i class="fas fa-eye me-1"></i> Detalle
-                </a>
-                <a href="{% url 'oilfield_app:tank_reading_add' %}?tank={{ t.pk }}"
-                   class="btn btn-sm bg-gradient-info mb-0 flex-grow-1 py-1">
-                    <i class="fas fa-plus me-1"></i> Lectura
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endwith %}
-    {% empty %}
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body text-center py-4 text-secondary">
-                <i class="fas fa-database fa-2x mb-2 d-block opacity-4"></i>
-                No hay tanques registrados.
-                <a href="{% url 'oilfield_app:tank_add' %}" class="ms-1">Agregar tanque</a>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
-<!-- Wells section -->
-<div class="row mb-2">
-    <div class="col-12">
-        <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-2">
-            <i class="fas fa-industry me-1"></i> Pozos con Analizador
-        </p>
-    </div>
-</div>
-
-<div class="row">
-    {% for entry in wells_data %}
-    {% with w=entry.well la=entry.last_analyzer lr=entry.last_reading %}
-    <div class="col-xl-4 col-lg-6 mb-3">
-        <div class="card monitor-card h-100">
-            <div class="card-body p-3">
-
-                <!-- Header -->
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h6 class="mb-0 text-sm font-weight-bold">{{ w.Code }}</h6>
-                        <p class="text-xs text-secondary mb-0">{{ w.Name }}</p>
-                        {% if w.Battery %}
-                        <p class="text-xs text-secondary mb-0">
-                            <i class="fas fa-sitemap me-1" style="font-size:.6rem;"></i>{{ w.Battery.Name }}
-                        </p>
-                        {% endif %}
-                    </div>
-                    {% if w.Status == 'active' %}
-                    <span class="badge badge-sm bg-gradient-success">Activo</span>
-                    {% elif w.Status == 'maintenance' %}
-                    <span class="badge badge-sm bg-gradient-warning">Mantenimiento</span>
-                    {% elif w.Status == 'abandoned' %}
-                    <span class="badge badge-sm bg-gradient-danger">Abandonado</span>
-                    {% elif w.Status == 'inactive' %}
-                    <span class="badge badge-sm bg-gradient-warning">Inactivo</span>
-                    {% else %}
-                    <span class="badge badge-sm bg-gradient-secondary">{{ w.get_Status_display }}</span>
-                    {% endif %}
-                </div>
-
-                {% if la or lr %}
                 <!-- Fillage bar -->
-                {% with pf=la.PumpFillage|default:lr.Fillage %}
-                {% if pf is not None %}
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-xs text-secondary">Llenado</span>
-                        <span class="text-xs font-weight-bold {% if pf >= 80 %}text-success{% elif pf >= 50 %}text-warning{% else %}text-danger{% endif %}">
-                            {{ pf|floatformat:1 }}%
-                        </span>
-                    </div>
+                <div class="gauge-wrap mb-2">
+                    <span class="text-xs text-secondary" style="width:40px;">Fill.</span>
                     <div class="gauge-bar">
-                        <div class="gauge-fill {% if pf >= 80 %}bg-gradient-success{% elif pf >= 50 %}bg-gradient-warning{% else %}bg-gradient-danger{% endif %}"
-                             style="width:{{ pf|floatformat:0 }}%;"></div>
+                        <div class="gauge-fill" style="width:{% if lr.Fillage %}{{ lr.Fillage|floatformat:0 }}{% else %}0{% endif %}%;background:{% if lr.Fillage and lr.Fillage < 40 %}#ef5350{% elif lr.Fillage and lr.Fillage < 70 %}#ffa726{% else %}#66bb6a{% endif %};"></div>
+                    </div>
+                    <span class="text-xs font-weight-bold" style="width:32px;text-align:right;">{% if lr.Fillage is not None %}{{ lr.Fillage|floatformat:0 }}%{% else %}—{% endif %}</span>
+                </div>
+                <!-- KPIs -->
+                <div class="row g-0 text-center border-top pt-2">
+                    <div class="col">
+                        <p class="text-xs text-secondary mb-0">SPM</p>
+                        <p class="text-sm font-weight-bold mb-0">{% if lr.SPM is not None %}{{ lr.SPM|floatformat:1 }}{% else %}—{% endif %}</p>
+                    </div>
+                    <div class="col border-start">
+                        <p class="text-xs text-secondary mb-0">Aceite</p>
+                        <p class="text-sm font-weight-bold mb-0 text-warning">{% if lr.OilProduction is not None %}{{ lr.OilProduction|floatformat:1 }}{% else %}—{% endif %}</p>
+                    </div>
+                    <div class="col border-start">
+                        <p class="text-xs text-secondary mb-0">Agua</p>
+                        <p class="text-sm font-weight-bold mb-0 text-info">{% if lr.WaterProduction is not None %}{{ lr.WaterProduction|floatformat:1 }}{% else %}—{% endif %}</p>
                     </div>
                 </div>
-                {% endif %}
-                {% endwith %}
-
-                <!-- Stats -->
-                <div class="d-flex gap-2 flex-wrap mt-2">
-                    {% with spm=la.SPM|default:lr.SPM %}
-                    {% if spm is not None %}
-                    <span class="stat-chip bg-light text-dark">
-                        <i class="fas fa-tachometer-alt text-primary" style="font-size:.65rem;"></i>
-                        {{ spm|floatformat:1 }} spm
-                    </span>
-                    {% endif %}
-                    {% endwith %}
-                    {% if la and la.Diagnosis %}
-                    <span class="stat-chip bg-light text-dark">
-                        <i class="fas fa-stethoscope text-info" style="font-size:.65rem;"></i>
-                        {{ la.get_Diagnosis_display|truncatechars:20 }}
-                    </span>
-                    {% endif %}
-                </div>
-
-                <p class="text-xs text-secondary mb-0 mt-2">
-                    <i class="fas fa-clock me-1" style="font-size:.6rem;"></i>
-                    {% if la %}{{ la.DateCreate|date:"d/m/Y H:i" }}
-                    {% elif lr %}{{ lr.DateCreate|date:"d/m/Y H:i" }}{% endif %}
+                <p class="text-xs text-secondary mt-2 mb-0">
+                    <i class="fas fa-clock me-1 opacity-6"></i>{{ lr.DateCreate|date:"d/m H:i" }}
                 </p>
-
                 {% else %}
-                <div class="text-center py-3">
-                    <i class="fas fa-industry text-secondary mb-1 d-block" style="font-size:1.8rem;opacity:.25;"></i>
-                    <p class="text-xs text-secondary mb-0">Sin datos de analizador</p>
+                <div class="text-center py-2">
+                    <span class="op-badge op-inactive">Sin señal IoT</span>
+                    <p class="text-xs text-secondary mt-1 mb-0">Estado: {{ well.get_Status_display }}</p>
                 </div>
-                {% endif %}
-
-            </div>
-            <div class="card-footer p-2 d-flex gap-2">
-                <a href="{% url 'oilfield_app:well_detail' w.pk %}"
-                   class="btn btn-sm btn-outline-secondary mb-0 flex-grow-1 py-1">
-                    <i class="fas fa-eye me-1"></i> Detalle
-                </a>
-                {% if w.AnalyzerDevice %}
-                <a href="{% url 'oilfield_app:dynamometer' w.pk %}"
-                   class="btn btn-sm bg-gradient-primary mb-0 flex-grow-1 py-1">
-                    <i class="fas fa-chart-area me-1"></i> Dinamómetro
-                </a>
                 {% endif %}
             </div>
         </div>
@@ -280,14 +126,67 @@
     {% empty %}
     <div class="col-12">
         <div class="card">
-            <div class="card-body text-center py-4 text-secondary">
-                <i class="fas fa-industry fa-2x mb-2 d-block opacity-4"></i>
-                No hay pozos registrados.
-                <a href="{% url 'oilfield_app:well_list' %}" class="ms-1">Ver pozos</a>
+            <div class="card-body text-center py-5">
+                <i class="fas fa-broadcast-tower fa-3x text-secondary opacity-4 mb-3"></i>
+                <h6 class="text-secondary">Sin pozos con telemetría IoT</h6>
+                <a href="{% url 'oilfield_wellanalyzer:add' %}" class="btn btn-sm btn-outline-success mt-2">
+                    Configurar analizador
+                </a>
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
 
-{% endblock content %}
+<!-- Tanques en vivo -->
+{% if tanks %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header pb-0">
+                <h6 class="mb-0 text-sm font-weight-bolder"><i class="fas fa-database me-2 text-info"></i>Tanques — Niveles en Vivo</h6>
+            </div>
+            <div class="card-body pt-3">
+                <div class="row g-3">
+                    {% for tank in tanks %}
+                    <div class="col-xl-3 col-md-4 col-sm-6">
+                        {% with lr=tank.latest_reading %}
+                        <div class="card border monitor-card" onclick="window.location='{% url 'oilfield_app:tank_detail' tank.pk %}'">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <p class="font-weight-bolder text-sm mb-0">{{ tank.Code }}</p>
+                                        <p class="text-xs text-secondary mb-0">{{ tank.get_Type_display }}</p>
+                                    </div>
+                                    {% if lr %}<span class="pulse-dot pd-active"></span>{% else %}<span class="pulse-dot pd-off"></span>{% endif %}
+                                </div>
+                                {% if lr %}
+                                {% with pct=lr.LevelPercent %}
+                                <div class="gauge-wrap mb-1">
+                                    <span class="text-xs text-secondary" style="width:36px;">Nivel</span>
+                                    <div class="gauge-bar">
+                                        <div class="gauge-fill" style="width:{% if pct %}{{ pct|floatformat:0 }}{% else %}0{% endif %}%;background:{% if pct and pct > 85 %}#ef5350{% elif pct and pct > 65 %}#ffa726{% else %}#26c6da{% endif %};"></div>
+                                    </div>
+                                    <span class="text-xs font-weight-bold" style="width:32px;text-align:right;">{% if pct %}{{ pct|floatformat:0 }}%{% else %}—{% endif %}</span>
+                                </div>
+                                {% endwith %}
+                                <div class="d-flex justify-content-between text-xs mt-1">
+                                    <span class="text-secondary">{{ lr.Level|floatformat:0 }} cm</span>
+                                    <span class="font-weight-bold text-warning">{% if lr.Volume %}{{ lr.Volume|floatformat:1 }} bbl{% endif %}</span>
+                                </div>
+                                {% else %}
+                                <p class="text-xs text-secondary text-center mt-1 mb-0">Sin señal</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endwith %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

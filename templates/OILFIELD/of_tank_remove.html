@@ -1,42 +1,20 @@
 {% extends 'OILFIELD/base_oilfield.html' %}
-{% load static %}
-
-{% block title %}Eliminar Tanque{% endblock title %}
-{% block company %}{{ CompanyName }}{% endblock %}
-{% block appName %}OILFIELD{% endblock %}
-{% block Type %}Eliminar Tanque{% endblock %}
-
+{% block title %}Eliminar Tanque{% endblock %}
 {% block content %}
-
-<div class="row justify-content-center">
-    <div class="col-lg-5">
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
         <div class="card">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-danger shadow-danger border-radius-lg pt-3 pb-2">
-                    <h6 class="text-white text-center mb-0">
-                        <i class="fas fa-trash me-1"></i> ELIMINAR TANQUE
-                    </h6>
-                </div>
-            </div>
-            <div class="card-body p-4 text-center">
-                <i class="fas fa-database mb-3" style="font-size:3rem;color:#dee2e6;"></i>
-                <p class="text-secondary mb-1">¿Está seguro que desea eliminar el tanque?</p>
-                <h5 class="font-weight-bold mb-0">{{ tank.Name }}</h5>
-                <p class="text-xs text-secondary mb-3">Código: <strong>{{ tank.Code }}</strong></p>
-                <p class="text-danger text-xs">
-                    <i class="fas fa-exclamation-triangle me-1"></i>
-                    Se eliminarán también todas las lecturas asociadas. Esta acción no se puede deshacer.
-                </p>
-                <form method="post" class="mt-3">
+            <div class="card-body text-center p-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <h5 class="font-weight-bolder mb-1">Eliminar Tanque</h5>
+                <p class="text-secondary mb-1">¿Deseas eliminar el tanque <strong>{{ object.Code }} – {{ object.Name }}</strong>?</p>
+                <form method="post" class="mt-3 d-flex justify-content-center gap-3">
                     {% csrf_token %}
-                    <a href="{% url 'oilfield_app:tank_list' %}" class="btn btn-secondary me-2">Cancelar</a>
-                    <button type="submit" class="btn bg-gradient-danger">
-                        <i class="fas fa-trash me-1"></i> Sí, eliminar
-                    </button>
+                    <button type="submit" class="btn btn-danger mb-0">Sí, eliminar</button>
+                    <a href="{% url 'oilfield_app:tank_list' %}" class="btn btn-outline-secondary mb-0">Cancelar</a>
                 </form>
             </div>
         </div>
     </div>
 </div>
-
-{% endblock content %}
+{% endblock %}

@@ -112,12 +112,35 @@ class DashboardView(OilfieldAccessMixin, CompanyMixin, TemplateView):
 
         tanks = list(
             Tank.objects.get_by_company(company)
-            .prefetch_related('readings')
             .select_related('Battery')
         )
+
+        # Cargar datos desde TankIoTReading (fuente unificada IoT + Manual)
+        try:
+            from Apps.OILFIELD.tank.models import TankStation as _TankStation, TankIoTReading as _TIR
+            from collections import defaultdict
+            iot_map = {s.Tank_id: s.pk for s in _TankStation.objects.filter(Tank__in=tanks).only('pk', 'Tank_id')}
+
+            # Últimas 12 lecturas por tanque (cualquier fuente)
+            all_readings = list(
+                _TIR.objects
+                .filter(Tank__in=tanks)
+                .order_by('Tank_id', '-ReadingDate')
+                .only('Tank_id', 'Station_id', 'ReadingDate', 'Level', 'Volume', 'VoltageBattery', 'Source')
+            )
+            readings_by_tank = defaultdict(list)
+            for r in all_readings:
+                if len(readings_by_tank[r.Tank_id]) < 12:
+                    readings_by_tank[r.Tank_id].append(r)
+        except Exception:
+            iot_map = {}
+            readings_by_tank = {}
+
         for tank in tanks:
-            readings = list(tank.readings.all())
-            tank.latest_reading = readings[0] if readings else None
+            tank.iot_station_pk = iot_map.get(tank.pk)
+            rdgs = readings_by_tank.get(tank.pk, [])
+            tank.latest_reading  = rdgs[0] if rdgs else None
+            tank.recent_readings = list(reversed(rdgs))  # cronológico para sparkline
 
         # Build GeoJSON FeatureCollection for wells
         features = []
@@ -867,8 +890,69 @@ class ReportView(OilfieldAccessMixin, CompanyMixin, TemplateView):
             )
             summary = list(well_summary)
 
-        context['filter_form'] = filter_form
-        context['summary']     = summary
+        # Productions list + chart data
+        productions = []
+        total_oil = total_water = 0
+        avg_daily_oil = None
+        chart_dates = chart_oil = chart_water = chart_spm = chart_fillage = []
+
+        if filter_form.is_valid():
+            qs_prod = WellDailyProduction.objects.get_by_company(company).select_related('Well', 'Tank').order_by('OperativeDate')
+            well_val    = filter_form.cleaned_data.get('well')
+            battery_val = filter_form.cleaned_data.get('battery')
+            date_from   = filter_form.cleaned_data.get('date_from')
+            date_to     = filter_form.cleaned_data.get('date_to')
+            cond_val    = filter_form.cleaned_data.get('OperationalCondition') if hasattr(filter_form.cleaned_data, 'get') else None
+            if well_val:
+                qs_prod = qs_prod.filter(Well=well_val)
+            if battery_val:
+                qs_prod = qs_prod.filter(Well__Battery=battery_val)
+            if date_from:
+                qs_prod = qs_prod.filter(OperativeDate__gte=date_from)
+            if date_to:
+                qs_prod = qs_prod.filter(OperativeDate__lte=date_to)
+            productions = list(qs_prod)
+            agg = qs_prod.aggregate(to=Sum('OilProduction'), tw=Sum('WaterProduction'))
+            total_oil   = agg['to'] or 0
+            total_water = agg['tw'] or 0
+            if productions:
+                avg_daily_oil = total_oil / len(productions)
+            chart_dates   = [str(p.OperativeDate) for p in productions]
+            chart_oil     = [p.OilProduction   or 0 for p in productions]
+            chart_water   = [p.WaterProduction  or 0 for p in productions]
+            chart_spm     = [p.SPM or None for p in productions]
+            chart_fillage = [p.Fillage or None for p in productions]
+        else:
+            # Default: last 30 days
+            qs_prod = WellDailyProduction.objects.get_by_company(company).order_by('OperativeDate')
+            from datetime import timedelta
+            qs_prod = qs_prod.filter(OperativeDate__gte=date.today() - timedelta(days=30))
+            productions = list(qs_prod)
+            agg = qs_prod.aggregate(to=Sum('OilProduction'), tw=Sum('WaterProduction'))
+            total_oil   = agg['to'] or 0
+            total_water = agg['tw'] or 0
+            if productions:
+                avg_daily_oil = total_oil / len(productions)
+            chart_dates   = [str(p.OperativeDate) for p in productions]
+            chart_oil     = [p.OilProduction   or 0 for p in productions]
+            chart_water   = [p.WaterProduction  or 0 for p in productions]
+            chart_spm     = [p.SPM or None for p in productions]
+            chart_fillage = [p.Fillage or None for p in productions]
+
+        context.update({
+            'filter_form':    filter_form,
+            'form':           filter_form,
+            'summary':        summary,
+            'productions':    productions,
+            'total_oil':      total_oil,
+            'total_water':    total_water,
+            'avg_daily_oil':  avg_daily_oil,
+            'chart_dates':    chart_dates,
+            'chart_oil':      chart_oil,
+            'chart_water':    chart_water,
+            'chart_spm':      chart_spm,
+            'chart_fillage':  chart_fillage,
+        })
         return context
 
 
@@ -881,45 +965,49 @@ class WellMonitorView(OilfieldAccessMixin, CompanyMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from Apps.data.models import RodPumpData, TankData
-        from datetime import timedelta
-
         company = self._company_name()
-        wells = (
+
+        wells = list(
             Well.objects.get_by_company(company)
-            .select_related('Battery', 'AnalyzerDevice')
+            .select_related('Battery', 'PumpingUnit')
             .prefetch_related('pumping_readings')
         )
-
-        wells_data = []
         for well in wells:
-            entry = {'well': well, 'last_analyzer': None, 'last_reading': None}
-            # Latest IoT pumping reading
             pr = list(well.pumping_readings.all())
-            entry['last_reading'] = pr[0] if pr else None
-            # Latest dynamometer data via linked analyzer device
-            if well.AnalyzerDevice_id:
-                entry['last_analyzer'] = (
-                    RodPumpData.objects
-                    .filter(IdDevice_id=well.AnalyzerDevice_id)
-                    .order_by('-DateCreate')
-                    .first()
-                )
-            wells_data.append(entry)
+            well.latest_reading = pr[0] if pr else None
 
-        # Latest tank data for company tanks
-        tanks = (
+        total_wells   = len(wells)
+        producing_count = sum(1 for w in wells if w.Status == 'producing')
+        stopped_count = sum(1 for w in wells if w.Status in ('stopped', 'fault_mech', 'maintenance'))
+        problem_count = sum(1 for w in wells if w.Status not in ('producing', 'inactive'))
+
+        tanks = list(
             Tank.objects.get_by_company(company)
             .select_related('Battery')
-            .prefetch_related('readings')
         )
-        tanks_data = []
-        for tank in tanks:
-            readings = list(tank.readings.all())
-            tanks_data.append({'tank': tank, 'last_reading': readings[0] if readings else None})
+        try:
+            from Apps.OILFIELD.tank.models import TankStation as _TS2, TankIoTReading as _TIR2
+            from collections import defaultdict as _dd2
+            _iot2 = {s.Tank_id: s.pk for s in _TS2.objects.filter(Tank__in=tanks).only('pk', 'Tank_id')}
+            _all2 = list(_TIR2.objects.filter(Tank__in=tanks).order_by('Tank_id', '-ReadingDate').only('Tank_id', 'ReadingDate', 'Level', 'Volume', 'VoltageBattery', 'Source'))
+            _rb2  = _dd2(list)
+            for r in _all2:
+                if len(_rb2[r.Tank_id]) < 12:
+                    _rb2[r.Tank_id].append(r)
+        except Exception:
+            _iot2, _rb2 = {}, {}
 
-        context['wells_data'] = wells_data
-        context['tanks_data'] = tanks_data
+        for tank in tanks:
+            tank.iot_station_pk = _iot2.get(tank.pk)
+            _rdgs = _rb2.get(tank.pk, [])
+            tank.latest_reading = _rdgs[0] if _rdgs else None
+            tank.recent_readings = list(reversed(_rdgs))
+
+        context.update({
+            'wells': wells, 'tanks': tanks,
+            'total_wells': total_wells, 'producing_count': producing_count,
+            'stopped_count': stopped_count, 'problem_count': problem_count,
+        })
         return context
 
 

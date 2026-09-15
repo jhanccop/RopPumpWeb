@@ -1,0 +1,494 @@
+{% extends 'OILFIELD/base_oilfield.html' %}
+{% load static tz %}
+
+{% block title %}{{ station.Name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge { padding:3px 12px; border-radius:20px; font-size:11px; font-weight:700; }
+    .status-active      { background:#e8f5e9; color:#2e7d32; }
+    .status-inactive    { background:#f5f5f5; color:#616161; }
+    .status-maintenance { background:#fff3e0; color:#e65100; }
+    .status-fault       { background:#fce4ec; color:#b71c1c; }
+
+    /* Unit toggle */
+    .unit-toggle { display:inline-flex; border:1.5px solid #1a73e8; border-radius:20px; overflow:hidden; }
+    .unit-toggle button { border:none; background:transparent; padding:3px 14px; font-size:11px; font-weight:700;
+                          color:#1a73e8; cursor:pointer; transition:.15s; }
+    .unit-toggle button.active { background:#1a73e8; color:#fff; }
+
+    /* KPI header row */
+    .kpi-inline { display:flex; gap:28px; align-items:baseline; flex-wrap:wrap; }
+    .kpi-inline .ki-val { font-size:1.5rem; font-weight:800; line-height:1; }
+    .kpi-inline .ki-unit { font-size:.8rem; color:#7b809a; font-weight:600; margin-left:2px; }
+    .kpi-inline .ki-lbl { font-size:.65rem; text-transform:uppercase; letter-spacing:.5px; color:#aaa; display:block; }
+    .kpi-inline .ki-sep { color:#dee2e6; font-size:1.4rem; }
+
+    /* Tank SVG card */
+    .tank-svg-container { position:relative; width:110px; }
+    .tank-svg-container svg { width:100%; height:auto; }
+    .tank-readings-row { display:flex; gap:24px; margin-top:10px; flex-wrap:wrap; justify-content:center; }
+    .tank-readings-row .tr-item { text-align:center; }
+    .tank-readings-row .tr-val  { font-size:1.4rem; font-weight:800; line-height:1; color:#344767; }
+    .tank-readings-row .tr-unit { font-size:.75rem; color:#7b809a; }
+    .tank-readings-row .tr-lbl  { font-size:.65rem; text-transform:uppercase; color:#aaa; letter-spacing:.4px; }
+
+    .chart-main { height:240px; }
+    .tbl-readings { font-size:12px; }
+    .days-btn.active { background:#1a73e8; color:#fff; border-color:#1a73e8; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% localtime on %}
+
+<!-- ── Header ─────────────────────────────────────────────────── -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card mt-n4 bg-gradient-dark">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h6 class="text-white mb-0 font-weight-bolder">
+                                <i class="fas fa-database me-2"></i>{{ station.Name }}
+                            </h6>
+                            <span class="status-badge status-{{ station.Status }}">{{ station.get_Status_display }}</span>
+                        </div>
+                        <p class="text-white opacity-7 text-xs mb-2">
+                            {{ station.Tank.Code|default:"Sin tanque" }} · MAC: {{ station.MacAddress }} · {{ station.get_SensorType_display }}
+                        </p>
+                        <!-- Last-reading KPIs in header -->
+                        {% if latest %}
+                        <div class="kpi-inline">
+                            <div>
+                                <span class="ki-lbl text-white opacity-6">Nivel</span>
+                                <span class="ki-val text-white" id="hdr-level">
+                                    {% if latest.Level_cm is not None %}{{ latest.Level_cm }}{% else %}—{% endif %}
+                                </span>
+                                <span class="ki-unit" id="hdr-level-unit">cm</span>
+                            </div>
+                            <span class="ki-sep">|</span>
+                            <div>
+                                <span class="ki-lbl text-white opacity-6">Volumen</span>
+                                <span class="ki-val text-white">
+                                    {% if latest.Volume is not None %}{{ latest.Volume|floatformat:2 }}{% else %}—{% endif %}
+                                </span>
+                                <span class="ki-unit">bbl</span>
+                            </div>
+                            {% if station.VoltageBattery is not None %}
+                            <span class="ki-sep">|</span>
+                            <div>
+                                <span class="ki-lbl text-white opacity-6">Batería</span>
+                                <span class="ki-val text-white">{{ station.VoltageBattery|floatformat:2 }}</span>
+                                <span class="ki-unit">V</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if station.LastSeen %}
+                        <p class="text-white opacity-6 text-xs mt-1 mb-0">
+                            <i class="fas fa-clock me-1"></i>{{ station.LastSeen|date:"d/m/Y H:i" }} (PET)
+                        </p>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="d-flex flex-column align-items-end gap-2">
+                        <div class="d-flex gap-2">
+                            {% if user.is_admin %}
+                            <a href="{% url 'oilfield_tank:edit' station.pk %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-pen me-1"></i>Editar
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'oilfield_tank:list' %}" class="btn btn-sm btn-outline-light mb-0">
+                                <i class="fas fa-arrow-left"></i>
+                            </a>
+                        </div>
+                        <!-- Unit selector -->
+                        <div class="unit-toggle" id="unit-toggle" title="Alternar unidades de longitud">
+                            <button class="active" onclick="setUnit('cm')">cm</button>
+                            <button onclick="setUnit('in')">in</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Period selector ───────────────────────────────────────── -->
+<div class="row mb-3 align-items-center">
+    <div class="col-auto">
+        <span class="text-xs text-secondary font-weight-bold">Período:</span>
+    </div>
+    <div class="col-auto d-flex gap-1">
+        <a href="?days=1"  class="btn btn-sm btn-outline-primary mb-0 days-btn {% if days == 1  %}active{% endif %}">24 h</a>
+        <a href="?days=3"  class="btn btn-sm btn-outline-primary mb-0 days-btn {% if days == 3  %}active{% endif %}">3 d</a>
+        <a href="?days=7"  class="btn btn-sm btn-outline-primary mb-0 days-btn {% if days == 7  %}active{% endif %}">7 d</a>
+        <a href="?days=30" class="btn btn-sm btn-outline-primary mb-0 days-btn {% if days == 30 %}active{% endif %}">30 d</a>
+    </div>
+    <div class="col-auto ms-auto">
+        <span class="text-xs text-secondary">{{ readings|length }} lecturas</span>
+    </div>
+</div>
+
+<!-- ── Main content: Tank visual + Charts ────────────────────── -->
+<div class="row g-3 mb-4">
+
+    <!-- Tank SVG visualizer -->
+    <div class="col-lg-3 col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column align-items-center justify-content-center py-4">
+                <p class="text-uppercase text-secondary font-weight-bolder text-xs mb-2">Estado del Tanque</p>
+                {% with pct=latest.LevelPercent|default:0 %}
+                <div class="tank-svg-container">
+                    <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <clipPath id="liqClip"><rect x="10" y="20" width="94" height="150" rx="4"/></clipPath>
+                            <linearGradient id="liqGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#42a5f5"/>
+                                <stop offset="100%" stop-color="#1565c0"/>
+                            </linearGradient>
+                            <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stop-color="#e0e0e0"/>
+                                <stop offset="50%" stop-color="#fafafa"/>
+                                <stop offset="100%" stop-color="#bdbdbd"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- Body -->
+                        <rect x="10" y="20" width="94" height="150" rx="7" fill="url(#bodyGrad)" stroke="#9e9e9e" stroke-width="2"/>
+                        <!-- Liquid -->
+                        <rect id="svg-liquid" x="11" y="170" width="92" height="0" rx="4"
+                              fill="url(#liqGrad)" clip-path="url(#liqClip)"
+                              data-pct="{{ pct }}"/>
+                        <!-- Glare -->
+                        <rect x="16" y="24" width="16" height="90" rx="5" fill="white" opacity=".15"/>
+                        <!-- Caps -->
+                        <rect x="36" y="10" width="42" height="13" rx="5" fill="#9e9e9e"/>
+                        <rect x="10" y="166" width="94" height="11" rx="5" fill="#9e9e9e"/>
+                        <!-- Scale marks -->
+                        <line x1="104" y1="20"  x2="112" y2="20"  stroke="#bbb" stroke-width="1.2"/>
+                        <line x1="104" y1="57"  x2="108" y2="57"  stroke="#ccc" stroke-width="1"/>
+                        <line x1="104" y1="95"  x2="112" y2="95"  stroke="#bbb" stroke-width="1.2"/>
+                        <line x1="104" y1="133" x2="108" y2="133" stroke="#ccc" stroke-width="1"/>
+                        <line x1="104" y1="170" x2="112" y2="170" stroke="#bbb" stroke-width="1.2"/>
+                        <text x="113" y="23"  font-size="7" fill="#9e9e9e">100%</text>
+                        <text x="113" y="98"  font-size="7" fill="#9e9e9e">50%</text>
+                        <text x="113" y="173" font-size="7" fill="#9e9e9e">0%</text>
+                        <!-- Percent label -->
+                        <text x="57" y="100" font-size="22" font-weight="bold" fill="white"
+                              text-anchor="middle" dominant-baseline="middle" opacity=".95">
+                            {{ pct|floatformat:0 }}%
+                        </text>
+                    </svg>
+                </div>
+                {% endwith %}
+
+                <div class="tank-readings-row">
+                    <div class="tr-item">
+                        <div class="tr-val text-info" id="tank-level-val">
+                            {% if latest and latest.Level_cm is not None %}{{ latest.Level_cm }}{% else %}—{% endif %}
+                        </div>
+                        <div class="tr-unit" id="tank-level-unit">cm</div>
+                        <div class="tr-lbl">Nivel</div>
+                    </div>
+                    <div class="tr-item">
+                        <div class="tr-val" style="color:#f5a623;">
+                            {% if latest and latest.Volume is not None %}{{ latest.Volume|floatformat:1 }}{% else %}—{% endif %}
+                        </div>
+                        <div class="tr-unit">bbl</div>
+                        <div class="tr-lbl">Volumen</div>
+                    </div>
+                    {% if station.VoltageBattery is not None %}
+                    <div class="tr-item">
+                        <div class="tr-val" style="color:#43a047; font-size:1.1rem;">{{ station.VoltageBattery|floatformat:2 }}</div>
+                        <div class="tr-unit">V</div>
+                        <div class="tr-lbl">Batería</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Level + Volume dual-axis chart -->
+    <div class="col-lg-9 col-md-8">
+        <div class="card h-100">
+            <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0 text-sm font-weight-bold">Nivel y Volumen</h6>
+                    <p class="text-xs text-secondary mb-0">
+                        Eje izq.: altura (<span id="chart-unit-label">cm</span>) — Eje der.: volumen (bbl)
+                    </p>
+                </div>
+                <span class="badge bg-gradient-info text-xs">Últimas {{ days }} día{{ days|pluralize }}</span>
+            </div>
+            <div class="card-body pt-2">
+                <div id="chart-level" class="chart-main"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Battery mini-chart ─────────────────────────────────────── -->
+{% if battery_data %}
+<div class="row g-3 mb-4">
+    <div class="col-lg-4 col-md-6">
+        <div class="card">
+            <div class="card-header pb-0">
+                <h6 class="mb-0 text-sm font-weight-bold">
+                    <i class="fas fa-battery-three-quarters text-success me-1"></i>Batería del dispositivo
+                </h6>
+            </div>
+            <div class="card-body pt-2">
+                <div id="chart-battery" style="height:120px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ── Readings table ────────────────────────────────────────── -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header pb-0 d-flex justify-content-between">
+                <h6 class="mb-0 text-sm font-weight-bold">Historial de lecturas</h6>
+                <span class="text-xs text-secondary">
+                    {% if station.LastSeen %}{{ station.LastSeen|date:"d/m/Y H:i:s" }} (PET){% else %}—{% endif %}
+                </span>
+            </div>
+            <div class="card-body px-0 pt-2 pb-0">
+                <div class="table-responsive">
+                    <table class="table tbl-readings align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-3 text-secondary text-uppercase text-xs">Hora (PET)</th>
+                                <th class="text-secondary text-uppercase text-xs">
+                                    Nivel (<span class="tbl-unit-label">cm</span>)
+                                </th>
+                                <th class="text-secondary text-uppercase text-xs">Volumen (bbl)</th>
+                                <th class="text-secondary text-uppercase text-xs">Agua (<span class="tbl-unit-label">cm</span>)</th>
+                                <th class="text-secondary text-uppercase text-xs">Batería (V)</th>
+                                <th class="text-secondary text-uppercase text-xs">Fuente</th>
+                                <th class="text-secondary text-uppercase text-xs">Conexión</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in readings reversed %}
+                            <tr>
+                                <td class="ps-3 text-xs">{{ r.ReadingDate|localtime|date:"d/m H:i:s" }}</td>
+                                <td class="font-weight-bold tbl-level"
+                                    data-cm="{% if r.Level_cm is not None %}{{ r.Level_cm }}{% else %}{% endif %}">
+                                    {% if r.Level_cm is not None %}{{ r.Level_cm }}{% else %}—{% endif %}
+                                </td>
+                                <td>{% if r.Volume is not None %}{{ r.Volume|floatformat:2 }}{% else %}—{% endif %}</td>
+                                <td class="tbl-water"
+                                    data-cm="{% if r.WaterLevel is not None %}{{ r.WaterLevel|floatformat:1 }}{% else %}{% endif %}">
+                                    {% if r.WaterLevel is not None %}{{ r.WaterLevel|floatformat:1 }}{% else %}—{% endif %}
+                                </td>
+                                <td>{% if r.VoltageBattery is not None %}{{ r.VoltageBattery|floatformat:2 }}{% else %}—{% endif %}</td>
+                                <td>
+                                    {% if r.Source == 'iot' %}
+                                    <span class="badge badge-sm bg-gradient-info">IoT</span>
+                                    {% elif r.Source == 'scada' %}
+                                    <span class="badge badge-sm bg-gradient-warning">SCADA</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Manual</span>
+                                    {% endif %}
+                                </td>
+                                <td>{% if r.TypeConn %}<span class="badge badge-sm bg-gradient-dark">{{ r.TypeConn }}</span>{% else %}—{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center text-secondary py-4">Sin lecturas en el período</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endlocaltime %}
+{% endblock %}
+
+{% block JSscripts %}
+<script>
+/* ────────────────────────────────────────────────────────────────────
+   DATA from Django context
+──────────────────────────────────────────────────────────────────── */
+const CHART_DATES   = {{ chart_dates|safe }};
+const LEVEL_CM      = {{ level_data|safe }};   // cm values
+const VOLUME_BBL    = {{ volume_data|safe }};
+const WATER_CM      = {{ water_data|safe }};
+const BATTERY_V     = {{ battery_data|safe }};
+const LEVEL_CM_RAW  = {{ latest.Level_cm|default:"null" }};
+
+/* ── Tank SVG fill ───────────────────────────────────────────── */
+(function () {
+    var rect = document.getElementById('svg-liquid');
+    if (!rect) return;
+    var pct = parseFloat(rect.getAttribute('data-pct')) || 0;
+    var bodyTop = 20, bodyH = 150;
+    var liqH = bodyH * pct / 100;
+    rect.setAttribute('y', bodyTop + bodyH - liqH);
+    rect.setAttribute('height', liqH);
+})();
+
+/* ── Unit conversion helpers ─────────────────────────────────── */
+var currentUnit = 'cm';
+
+// 1/16-inch resolution: returns e.g. "3' 2 5/16\""
+function cmToFeetInches(cm) {
+    if (cm === null || cm === undefined || isNaN(cm)) return '—';
+    var totalIn = cm * 0.393701;
+    var feet = Math.floor(totalIn / 12);
+    var remIn = totalIn % 12;
+    var sixteenths = Math.round(remIn * 16);
+    var wholeIn = Math.floor(sixteenths / 16);
+    sixteenths = sixteenths % 16;
+
+    var fracStr = '';
+    if (sixteenths > 0) {
+        var g = gcd(sixteenths, 16);
+        fracStr = ' ' + (sixteenths/g) + '/' + (16/g);
+    }
+    var result = '';
+    if (feet > 0) result += feet + '\' ';
+    result += wholeIn + fracStr + '"';
+    return result.trim();
+}
+function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+
+function cmToIn(cm) {
+    if (cm === null || cm === undefined || isNaN(cm)) return null;
+    return +(cm * 0.393701).toFixed(2);
+}
+
+function formatLevel(cm, unit) {
+    if (cm === null || cm === undefined || isNaN(parseFloat(cm))) return '—';
+    var v = parseFloat(cm);
+    if (unit === 'cm') return v.toFixed(1);
+    return cmToFeetInches(v);
+}
+
+/* ── Level chart (Plotly, dual Y) ────────────────────────────── */
+var levelPlot = document.getElementById('chart-level');
+var batteryPlot = document.getElementById('chart-battery');
+
+var layoutBase = {
+    margin: {t:10, r:60, b:50, l:60},
+    paper_bgcolor: 'transparent',
+    plot_bgcolor: 'transparent',
+    font: {size:11, color:'#7b809a'},
+    xaxis: {showgrid:false, zeroline:false},
+    yaxis: {gridcolor:'#f0f0f0', zeroline:false, title:'cm'},
+    yaxis2: {title:'bbl', overlaying:'y', side:'right', zeroline:false, gridcolor:'transparent'},
+    legend: {orientation:'h', y:-0.2},
+    hovermode: 'x unified',
+};
+
+function buildLevelTraces(unit) {
+    var yData = unit === 'cm' ? LEVEL_CM : LEVEL_CM.map(function(v){ return v !== null ? cmToIn(v) : null; });
+    var yTitle = unit === 'cm' ? 'cm' : 'in';
+    return {
+        traces: [
+            {x: CHART_DATES, y: yData, name: 'Nivel (' + yTitle + ')',
+             mode: 'lines', fill: 'tozeroy',
+             line: {color: '#1a73e8', width: 2},
+             fillcolor: 'rgba(26,115,232,.07)'},
+            {x: CHART_DATES, y: VOLUME_BBL, name: 'Volumen (bbl)',
+             mode: 'lines', yaxis: 'y2',
+             line: {color: '#f5a623', width: 2, dash: 'dot'}},
+        ],
+        yTitle: yTitle,
+    };
+}
+
+function renderLevelChart(unit) {
+    var built = buildLevelTraces(unit);
+    var layout = Object.assign({}, layoutBase, {
+        yaxis: Object.assign({}, layoutBase.yaxis, {title: built.yTitle}),
+        yaxis2: Object.assign({}, layoutBase.yaxis2),
+    });
+    if (levelPlot._hasPlot) {
+        Plotly.react('chart-level', built.traces, layout, {responsive:true, displayModeBar:false});
+    } else {
+        Plotly.newPlot('chart-level', built.traces, layout, {responsive:true, displayModeBar:false});
+        levelPlot._hasPlot = true;
+    }
+    document.getElementById('chart-unit-label').textContent = built.yTitle;
+}
+
+// Battery mini-chart
+if (batteryPlot && BATTERY_V.length) {
+    Plotly.newPlot('chart-battery', [{
+        x: CHART_DATES, y: BATTERY_V, name: 'Batería (V)',
+        mode: 'lines', fill: 'tozeroy',
+        line: {color: '#43a047', width: 1.5},
+        fillcolor: 'rgba(67,160,71,.08)',
+    }], {
+        margin: {t:5, r:20, b:30, l:40},
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+        font: {size:10, color:'#7b809a'},
+        xaxis: {showgrid:false, zeroline:false},
+        yaxis: {gridcolor:'#f0f0f0', zeroline:false, title:'V'},
+        showlegend: false,
+        hovermode: 'x',
+    }, {responsive:true, displayModeBar:false});
+}
+
+// Initial render
+renderLevelChart('cm');
+
+/* ── Unit toggle ─────────────────────────────────────────────── */
+function setUnit(unit) {
+    currentUnit = unit;
+
+    // Toggle buttons
+    document.querySelectorAll('#unit-toggle button').forEach(function(btn) {
+        btn.classList.toggle('active', btn.textContent.trim() === unit);
+    });
+
+    // Header KPI
+    var hdrVal  = document.getElementById('hdr-level');
+    var hdrUnit = document.getElementById('hdr-level-unit');
+    if (hdrVal && LEVEL_CM_RAW !== null) {
+        if (unit === 'cm') {
+            hdrVal.textContent = parseFloat(LEVEL_CM_RAW).toFixed(1);
+            hdrUnit.textContent = 'cm';
+        } else {
+            hdrVal.textContent = cmToFeetInches(LEVEL_CM_RAW);
+            hdrUnit.textContent = '';
+        }
+    }
+
+    // Tank card value
+    var tankVal  = document.getElementById('tank-level-val');
+    var tankUnit = document.getElementById('tank-level-unit');
+    if (tankVal && LEVEL_CM_RAW !== null) {
+        if (unit === 'cm') {
+            tankVal.textContent = parseFloat(LEVEL_CM_RAW).toFixed(1);
+            tankUnit.textContent = 'cm';
+        } else {
+            tankVal.textContent = cmToFeetInches(LEVEL_CM_RAW);
+            tankUnit.textContent = '';
+        }
+    }
+
+    // Table cells
+    document.querySelectorAll('.tbl-unit-label').forEach(function(el) { el.textContent = unit; });
+    document.querySelectorAll('.tbl-level').forEach(function(cell) {
+        var cm = parseFloat(cell.getAttribute('data-cm'));
+        cell.textContent = isNaN(cm) ? '—' : formatLevel(cm, unit);
+    });
+    document.querySelectorAll('.tbl-water').forEach(function(cell) {
+        var cm = parseFloat(cell.getAttribute('data-cm'));
+        cell.textContent = isNaN(cm) ? '—' : formatLevel(cm, unit);
+    });
+
+    // Redraw level chart
+    renderLevelChart(unit);
+}
+</script>
+{% endblock %}
