@@ -4,7 +4,7 @@ from django.urls import reverse_lazy
 
 
 class AppAccessMixin(LoginRequiredMixin):
-    """Add required_app = 'oilfield'|'fauna'|'transformadores' to any view."""
+    """Add required_app = 'oilfield'|'fauna'|'transformadores'|'seguridad'|'hidromet' to any view."""
     required_app = None
     login_url = reverse_lazy('user_app:user-login')
 

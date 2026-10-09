@@ -61,6 +61,9 @@ INSTALLED_APPS = [
     # SEGURIDAD app
     'Apps.SEGURIDAD',
 
+    # HIDROMET app
+    'Apps.HIDROMET',
+
     # third apps
     'multiselectfield',
     'rest_framework',

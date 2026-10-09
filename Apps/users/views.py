@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponseRedirect, JsonResponse
+from django.db.models import Max
 
 from django.views.generic import (
     View,
@@ -26,6 +27,12 @@ try:
     _OILFIELD_AVAILABLE = True
 except Exception:
     _OILFIELD_AVAILABLE = False
+
+try:
+    from Apps.HIDROMET.models import HydroStation, HydroReading
+    _HIDROMET_AVAILABLE = True
+except Exception:
+    _HIDROMET_AVAILABLE = False
 
 
 class UserRegisterView(FormView):
@@ -98,6 +105,20 @@ class AdminDashboardView(AdminRequiredMixin, TemplateView):
             context['analyzer_stations_count'] = WellAnalyzerStation.objects.count()
             context['tank_active_count']      = TankStation.objects.filter(Status='active').count()
             context['analyzer_active_count']  = WellAnalyzerStation.objects.filter(Status='active').count()
+        # Conteo de estaciones HIDROMET (superadmin: todas; admin: su compañía)
+        if _HIDROMET_AVAILABLE and user.has_app_access('hidromet'):
+            hm_stations = HydroStation.objects.all()
+            if not user.is_superadmin:
+                hm_stations = hm_stations.filter(Owner__CompanyId=user.CompanyId)
+            hm_latest = HydroReading.objects.filter(
+                id__in=HydroReading.objects.filter(Station__in=hm_stations)
+                .values('Station').annotate(last_id=Max('id')).values('last_id')
+            ).select_related('Station')
+            context['hm_stations_count'] = hm_stations.count()
+            context['hm_active_count']   = hm_stations.filter(Status='Active').count()
+            context['hm_level_alerts']   = sum(
+                1 for r in hm_latest if r.level_state in ('warning', 'critical')
+            )
         return context
 
 

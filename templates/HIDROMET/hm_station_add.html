@@ -1,0 +1,21 @@
+{% extends 'HIDROMET/base_hidromet.html' %}
+
+{% block title %}Nueva estación{% endblock title %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9 col-md-11 col-12">
+    <div class="card mt-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-success shadow-success border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+          <i class="fas fa-plus text-white me-2"></i>
+          <h6 class="text-white mb-0">NUEVA ESTACIÓN HIDROMETEOROLÓGICA</h6>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        {% include 'HIDROMET/includes/hm_station_form.html' with filled=False %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

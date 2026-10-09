@@ -11,4 +11,6 @@ urlpatterns = [
     path('log/',                         views.EventLogView.as_view(),     name='event_log'),
     path('log/export/',                  views.EventLogCSVView.as_view(),  name='event_log_csv'),
     path('api/device/<int:pk>/status/',  views.DeviceStatusAPI.as_view(),  name='device_status_api'),
+    path('notificaciones/',              views.NotificationSettingsView.as_view(), name='notifications'),
+    path('notificaciones/<int:pk>/test/', views.NotificationTestView.as_view(),    name='notifications_test'),
 ]

@@ -1,0 +1,323 @@
+{% extends 'SEGURIDAD/base_seguridad.html' %}
+{% load static %}
+{% block title %}Notificaciones{% endblock %}
+
+{% block extra_css %}
+<style>
+  .field-label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #7b809a;
+    margin-bottom: 4px;
+  }
+  .field-label .required { color: #ef5350; }
+  .form-control, .form-select {
+    font-size: .85rem;
+    border-radius: 8px;
+    border: 1px solid #d2d6da;
+    padding: 8px 12px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #344767;
+    box-shadow: 0 0 0 2px rgba(52,71,103,.12);
+    outline: none;
+  }
+  .hint-text { font-size: .72rem; color: #9e9e9e; margin-top: 3px; }
+
+  .switch-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 0; border-bottom: 1px solid #f0f2f5;
+  }
+  .switch-row:last-child { border-bottom: none; }
+  .switch-row .form-check-input { width: 2.4rem; height: 1.3rem; cursor: pointer; }
+  .switch-text { font-size: .84rem; font-weight: 600; color: #344767; }
+  .switch-hint { font-size: .72rem; color: #9e9e9e; }
+
+  /* Tabla de destinatarios */
+  .rcpt-table { width: 100%; font-size: .82rem; }
+  .rcpt-table th {
+    font-size: .68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: #7b809a;
+    padding: 0 6px 8px 6px; border-bottom: 2px solid #f0f2f5; text-align: center;
+  }
+  .rcpt-table th.text-start { text-align: left; }
+  .rcpt-table td { padding: 8px 6px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; text-align: center; }
+  .rcpt-table td.text-start { text-align: left; }
+  .rcpt-table input.form-check-input { width: 1.1rem; height: 1.1rem; }
+  .rcpt-row.to-delete { opacity: .35; }
+  .btn-icon-sm { padding: 3px 8px; font-size: .78rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10 col-md-11">
+
+    <form method="POST" id="notif-form">{% csrf_token %}
+
+      <!-- ── Configuración general del bot ─────────────────────────────────── -->
+      <div class="card mt-4 mb-4">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-info border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+            <i class="fab fa-telegram text-white me-2"></i>
+            <h6 class="text-white mb-0">Notificaciones por Telegram</h6>
+          </div>
+        </div>
+        <div class="card-body p-4">
+
+          <div class="row g-3 mb-2">
+            <div class="col-12">
+              <div class="switch-row">
+                <input type="checkbox" class="form-check-input" id="{{ config_form.Enabled.id_for_label }}"
+                       name="{{ config_form.Enabled.html_name }}"
+                       {% if config_form.Enabled.value %}checked{% endif %}>
+                <div>
+                  <label class="switch-text mb-0" for="{{ config_form.Enabled.id_for_label }}">Notificaciones activas</label>
+                  <p class="switch-hint mb-0">Interruptor maestro: si está apagado, no se envía nada aunque haya destinatarios configurados.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-2">
+            <div class="col-12 col-sm-8">
+              <p class="field-label mb-1">Token del Bot <span class="required">*</span></p>
+              {{ config_form.BotToken }}
+              <p class="hint-text">Créalo con <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a> en Telegram y pega aquí el token.</p>
+              {% if config_form.BotToken.errors %}
+                <p class="text-danger text-xs mt-1 mb-0">{{ config_form.BotToken.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- ── Escenarios ────────────────────────────────────────────────── -->
+          <p class="text-uppercase text-secondary font-weight-bolder text-xs mt-4 mb-0">
+            <i class="fas fa-layer-group me-1"></i> Escenarios de notificación
+          </p>
+          <hr class="horizontal dark mt-1 mb-2">
+
+          <div class="switch-row">
+            <input type="checkbox" class="form-check-input" id="{{ config_form.OnlyActiveState.id_for_label }}"
+                   name="{{ config_form.OnlyActiveState.html_name }}"
+                   {% if config_form.OnlyActiveState.value %}checked{% endif %}>
+            <div>
+              <label class="switch-text mb-0" for="{{ config_form.OnlyActiveState.id_for_label }}">Solo notificar estado "activo"</label>
+              <p class="switch-hint mb-0">Omite los eventos "normalizado" y avisa solo cuando un sensor pasa a estado activo.</p>
+            </div>
+          </div>
+
+          <div class="switch-row">
+            <input type="checkbox" class="form-check-input" id="{{ config_form.NotifyDeviceOffline.id_for_label }}"
+                   name="{{ config_form.NotifyDeviceOffline.html_name }}"
+                   {% if config_form.NotifyDeviceOffline.value %}checked{% endif %}>
+            <div class="flex-grow-1">
+              <label class="switch-text mb-0" for="{{ config_form.NotifyDeviceOffline.id_for_label }}">Notificar dispositivo desconectado</label>
+              <div class="d-flex align-items-center gap-2 mt-1">
+                <p class="switch-hint mb-0">Umbral sin datos:</p>
+                {{ config_form.OfflineThresholdMinutes }}
+                <p class="switch-hint mb-0">minutos</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="switch-row">
+            <input type="checkbox" class="form-check-input" id="{{ config_form.NotifyDeviceReconnect.id_for_label }}"
+                   name="{{ config_form.NotifyDeviceReconnect.html_name }}"
+                   {% if config_form.NotifyDeviceReconnect.value %}checked{% endif %}>
+            <div>
+              <label class="switch-text mb-0" for="{{ config_form.NotifyDeviceReconnect.id_for_label }}">Notificar reconexión</label>
+              <p class="switch-hint mb-0">Avisa cuando un dispositivo vuelve a reportarse tras estar desconectado.</p>
+            </div>
+          </div>
+
+          <div class="row g-3 mt-1">
+            <div class="col-12 col-sm-4">
+              <p class="field-label mb-1">Anti-spam (segundos)</p>
+              {{ config_form.CooldownSeconds }}
+              <p class="hint-text">Tiempo mínimo entre notificaciones repetidas del mismo sensor/escenario.</p>
+            </div>
+          </div>
+
+          <div class="alert alert-light border text-xs mt-3 mb-0 p-2">
+            <i class="fas fa-info-circle me-1 text-info"></i>
+            Los <strong>niveles de alerta</strong> (Crítico / Alto / Informativo) se configuran
+            por destinatario, en la tabla de abajo.
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Destinatarios ──────────────────────────────────────────────────── -->
+      <div class="card mb-4">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-dark border-radius-lg pt-3 pb-2 px-3 d-flex align-items-center">
+            <i class="fas fa-address-book text-white me-2"></i>
+            <h6 class="text-white mb-0">Destinatarios (números / chats de Telegram)</h6>
+            <button type="button" id="add-recipient" class="btn btn-sm btn-white ms-auto mb-0">
+              <i class="fas fa-plus me-1"></i>Añadir destinatario
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-4">
+
+          <div class="alert alert-light border text-xs mb-3 p-2">
+            <i class="fas fa-info-circle me-1 text-info"></i>
+            El <strong>Chat ID</strong> se obtiene escribiéndole a
+            <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a> en Telegram
+            (o el ID del grupo si es una notificación grupal).
+          </div>
+
+          {{ recipient_formset.management_form }}
+
+          <div class="table-responsive">
+            <table class="rcpt-table" id="rcpt-table">
+              <thead>
+                <tr>
+                  <th class="text-start">Chat ID</th>
+                  <th class="text-start">Nombre / referencia</th>
+                  <th>Activo</th>
+                  <th>Crítico</th>
+                  <th>Alto</th>
+                  <th>Informativo</th>
+                  <th>Descon.</th>
+                  <th>Reconex.</th>
+                  <th>Probar</th>
+                  <th>Eliminar</th>
+                </tr>
+              </thead>
+              <tbody id="rcpt-tbody">
+                {% for rform in recipient_formset %}
+                <tr class="rcpt-row">
+                  <td class="text-start">
+                    {% for hidden in rform.hidden_fields %}{{ hidden }}{% endfor %}
+                    {{ rform.ChatID }}
+                  </td>
+                  <td class="text-start">{{ rform.Label }}</td>
+                  <td>{{ rform.Enabled }}</td>
+                  <td>{{ rform.NotifyCritico }}</td>
+                  <td>{{ rform.NotifyAlto }}</td>
+                  <td>{{ rform.NotifyInformativo }}</td>
+                  <td>{{ rform.NotifyDeviceOffline }}</td>
+                  <td>{{ rform.NotifyDeviceReconnect }}</td>
+                  <td>
+                    {% if rform.instance.pk %}
+                    <button type="button" class="btn btn-outline-info btn-icon-sm btn-test-rcpt"
+                            data-pk="{{ rform.instance.pk }}" title="Enviar mensaje de prueba">
+                      <i class="fas fa-paper-plane"></i>
+                    </button>
+                    {% else %}
+                    <span class="text-secondary text-xs">—</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if rform.DELETE %}
+                      <span class="d-none">{{ rform.DELETE }}</span>
+                      <button type="button" class="btn btn-outline-danger btn-icon-sm btn-del-rcpt" title="Marcar para eliminar">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div id="test-result" class="text-xs mt-2"></div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between pb-5">
+        <a href="{% url 'seguridad:dashboard' %}" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+        <button type="submit" class="btn bg-gradient-info">
+          <i class="fas fa-save me-1"></i>Guardar configuración
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block JSscripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const tbody   = document.getElementById('rcpt-tbody');
+  const totalIn = document.getElementById('id_rcpt-TOTAL_FORMS');
+
+  // Fila plantilla = la última (form "extra" vacío que Django siempre agrega al final)
+  function templateRow() {
+    return tbody.querySelector('.rcpt-row:last-child');
+  }
+
+  document.getElementById('add-recipient').addEventListener('click', function () {
+    const idx  = parseInt(totalIn.value, 10);
+    const tmpl = templateRow();
+    const row  = tmpl.cloneNode(true);
+
+    row.querySelectorAll('input').forEach(function (input) {
+      input.name = input.name.replace(/-\d+-/, '-' + idx + '-');
+      input.id   = input.id.replace(/-\d+-/, '-' + idx + '-');
+      if (input.type === 'checkbox') {
+        input.checked = input.name.endsWith('-Enabled') || input.name.endsWith('-NotifyCritico') ||
+                        input.name.endsWith('-NotifyAlto') || input.name.endsWith('-NotifyDeviceOffline') ||
+                        input.name.endsWith('-NotifyDeviceReconnect');
+      } else {
+        input.value = '';
+      }
+    });
+    tbody.appendChild(row);
+    totalIn.value = idx + 1;
+  });
+
+  // Marcar/desmarcar fila para eliminar (checkbox DELETE oculto)
+  tbody.addEventListener('click', function (ev) {
+    const btn = ev.target.closest('.btn-del-rcpt');
+    if (!btn) return;
+    const row = btn.closest('.rcpt-row');
+    const del = row.querySelector('input[name$="-DELETE"]');
+    if (del) {
+      del.checked = !del.checked;
+      row.classList.toggle('to-delete', del.checked);
+    }
+  });
+
+  // Enviar mensaje de prueba
+  tbody.addEventListener('click', function (ev) {
+    const btn = ev.target.closest('.btn-test-rcpt');
+    if (!btn) return;
+    const pk     = btn.dataset.pk;
+    const result = document.getElementById('test-result');
+    const url    = "{% url 'seguridad:notifications_test' pk=0 %}".replace('0', pk);
+
+    btn.disabled = true;
+    result.textContent = 'Enviando…';
+    result.className = 'text-xs mt-2 text-secondary';
+
+    fetch(url, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.ok) {
+        result.textContent = '✔ Mensaje de prueba enviado correctamente.';
+        result.className = 'text-xs mt-2 text-success';
+      } else {
+        result.textContent = '✖ Error: ' + (data.error || 'desconocido');
+        result.className = 'text-xs mt-2 text-danger';
+      }
+    })
+    .catch(function (err) {
+      result.textContent = '✖ Error de red: ' + err;
+      result.className = 'text-xs mt-2 text-danger';
+    })
+    .finally(function () { btn.disabled = false; });
+  });
+});
+</script>
+{% endblock %}

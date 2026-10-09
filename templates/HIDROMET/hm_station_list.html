@@ -1,0 +1,114 @@
+{% extends 'HIDROMET/base_hidromet.html' %}
+{% load static %}
+
+{% block title %}Estaciones{% endblock title %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-info shadow-info border-radius-lg pt-3 pb-2">
+                    <div class="row align-items-center px-3">
+                        <div class="col">
+                            <h6 class="text-white mb-0">Estaciones Hidrometeorológicas</h6>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'hidromet:station_add' %}" class="btn btn-sm btn-white mb-0">
+                                <i class="fas fa-plus me-1"></i> Nueva estación
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="dt-stations">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Estación</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Cuerpo de agua</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">MAC</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Ubicación</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Sensores</th>
+                                <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Estado</th>
+                                <th class="text-uppercase text-secondary text-xs text-end font-weight-bolder opacity-7 ps-2">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in stations %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1 flex-column">
+                                        <h6 class="mb-0 text-sm">{{ s.StationName }}</h6>
+                                        <p class="text-xs text-secondary mb-0">{{ s.Description|default:"—"|truncatechars:40 }}</p>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ s.WaterBodyName|default:"—" }}</p>
+                                    <p class="text-xs text-secondary mb-0">{{ s.WaterBodyType }}
+                                        {% if s.LevelWarning is not None or s.LevelCritical is not None %}
+                                        · <span class="lvl-warning">{{ s.LevelWarning|default:"—" }}</span>/<span class="lvl-critical">{{ s.LevelCritical|default:"—" }}</span> m
+                                        {% endif %}
+                                    </p>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">
+                                        <i class="fas fa-ethernet me-1 opacity-6"></i>{{ s.MacAddress|default:"—" }}
+                                    </p>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ s.Latitude|default:"—" }}, {{ s.Longitude|default:"—" }}</p>
+                                    <p class="text-xs text-secondary mb-0">Alt: {{ s.Altitude|default:"—" }} m</p>
+                                </td>
+                                <td>
+                                    {% if s.HasWaterLevel %}<span class="badge badge-sm bg-gradient-info me-1" title="Altura de agua">NIV</span>{% endif %}
+                                    {% if s.HasWaterPH %}<span class="badge badge-sm bg-gradient-success me-1" title="pH del agua">pH</span>{% endif %}
+                                    {% if s.HasWaterTemp %}<span class="badge badge-sm bg-gradient-primary me-1" title="Temperatura del agua">T°A</span>{% endif %}
+                                    {% if s.HasTempHumidity %}<span class="badge badge-sm bg-gradient-danger me-1" title="Temperatura y humedad">T-H</span>{% endif %}
+                                    {% if s.HasSolarRadiation %}<span class="badge badge-sm bg-gradient-warning me-1" title="Radiación solar">RS</span>{% endif %}
+                                    {% if s.HasPrecipitation %}<span class="badge badge-sm bg-gradient-dark me-1" title="Precipitación">P</span>{% endif %}
+                                    {% if s.HasWind %}<span class="badge badge-sm bg-gradient-secondary me-1" title="Viento">V</span>{% endif %}
+                                </td>
+                                <td>
+                                    {% if s.Status == 'Active' %}
+                                    <span class="badge badge-sm bg-gradient-success">Activa</span>
+                                    {% elif s.Status == 'Out of service' %}
+                                    <span class="badge badge-sm bg-gradient-danger">Fuera de servicio</span>
+                                    {% elif s.Status == 'Maintenance' %}
+                                    <span class="badge badge-sm bg-gradient-warning">Mantenimiento</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Inactiva</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'hidromet:station_detail' s.id %}" title="Detalle"><i class="fas fa-eye mt-3 me-3"></i></a>
+                                    <a href="{% url 'hidromet:reading_add' %}?station={{ s.id }}" title="Agregar lectura"><i class="fas fa-plus mt-3 me-3"></i></a>
+                                    <a href="{% url 'hidromet:station_update' s.id %}" title="Editar"><i class="fas fa-edit mt-3 me-3"></i></a>
+                                    <a href="{% url 'hidromet:station_remove' s.id %}" title="Eliminar"><i class="fas fa-trash mt-3 me-3"></i></a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-secondary py-4">
+                                    Aún no hay estaciones registradas.
+                                    <a href="{% url 'hidromet:station_add' %}">Registra la primera</a>.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block JSscripts %}
+<script>
+    new simpleDatatables.DataTable("#dt-stations", { searchable: true, fixedHeight: false, perPage: 15 });
+</script>
+{% endblock JSscripts %}

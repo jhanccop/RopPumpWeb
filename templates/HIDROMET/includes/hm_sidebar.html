@@ -1,0 +1,151 @@
+{% load static user_tags %}
+{% with app=request.resolver_match.app_name view=request.resolver_match.url_name %}
+
+<aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 bg-gradient-dark"
+    id="sidenav-main">
+
+    <div class="sidenav-header">
+        <i class="fas fa-times p-3 cursor-pointer text-white opacity-5 position-absolute end-0 top-0 d-none d-xl-none"
+            aria-hidden="true" id="iconSidenav"></i>
+        <a class="navbar-brand d-flex align-items-center px-3 py-2" href="{% url 'hidromet:dashboard' %}">
+            <img src="{% static 'assets/img/logo-ct.png' %}" class="navbar-brand-img" style="height:28px;" alt="logo">
+            <span class="ms-2 font-weight-bold text-white text-sm">HIDROMET</span>
+        </a>
+    </div>
+    <hr class="horizontal light mt-0 mb-1">
+
+    <div class="collapse navbar-collapse w-auto h-auto" id="sidenav-collapse-main">
+        <ul class="navbar-nav">
+
+            <li class="nav-item mt-1">
+                <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">Red Hidrometeorológica</p>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white {% if view == 'dashboard' %}active bg-gradient-info{% endif %}"
+                   href="{% url 'hidromet:dashboard' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Dashboard</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white {% if view == 'station_list' or view == 'station_add' or view == 'station_update' or view == 'station_detail' or view == 'station_remove' %}active bg-gradient-info{% endif %}"
+                   href="{% url 'hidromet:station_list' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-broadcast-tower"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Estaciones</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white {% if view == 'reading_list' or view == 'reading_add' %}active bg-gradient-info{% endif %}"
+                   href="{% url 'hidromet:reading_list' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Lecturas</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white {% if view == 'report' %}active bg-gradient-info{% endif %}"
+                   href="{% url 'hidromet:report' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Reportes</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'hidromet:public' %}" target="_blank">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Vista pública</span>
+                </a>
+            </li>
+
+            <!-- ── Otros módulos habilitados ─────────────────────────────── -->
+            {% if request.user|has_app:'fauna' or request.user|has_app:'oilfield' or request.user|has_app:'transformadores' or request.user|has_app:'seguridad' %}
+            <hr class="horizontal light my-2">
+            <li class="nav-item">
+                <p class="text-uppercase text-white text-xs font-weight-bolder opacity-6 ps-4 mb-0">Mis módulos</p>
+            </li>
+
+            {% if request.user|has_app:'fauna' %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'weather_app:dashboard' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Fauna</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user|has_app:'oilfield' %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/oilfield/">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Oilfield</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user|has_app:'transformadores' %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/transformer/">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Transformadores</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user|has_app:'seguridad' %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'seguridad:dashboard' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Seguridad</span>
+                </a>
+            </li>
+            {% endif %}
+            {% endif %}
+
+            <hr class="horizontal light my-2">
+
+            {% if request.user.is_admin %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'user_app:admin_dashboard' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Admin Panel</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'user_app:user-logout' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Cerrar sesión</span>
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</aside>
+
+{% endwith %}

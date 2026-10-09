@@ -1,0 +1,118 @@
+{# Tarjetas de gráficos. Requiere: station. El JS está en hm_charts_js.html #}
+<div class="d-flex align-items-center justify-content-end mb-2 gap-2 flex-wrap">
+    <span class="text-xs text-secondary me-1">Eje X de los gráficos:</span>
+    <div class="btn-group btn-group-sm" role="group">
+        <button type="button" class="btn btn-sm mb-0 hm-ts-btn" id="btn-ts-server"
+                style="font-size:.72rem; padding:3px 12px; border-radius:20px 0 0 20px;">
+            <i class="fas fa-server me-1"></i>Servidor
+        </button>
+        <button type="button" class="btn btn-sm mb-0 hm-ts-btn" id="btn-ts-device"
+                style="font-size:.72rem; padding:3px 12px; border-radius:0 20px 20px 0;">
+            <i class="fas fa-microchip me-1"></i>Dispositivo
+        </button>
+    </div>
+</div>
+
+<div class="row g-3 mb-3 hm-chart-row">
+    {% if station.HasWaterLevel %}
+    <div class="col-lg-6">
+        <div class="card hm-chart-card shadow-sm">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="border-radius-lg py-2 px-3" style="background:linear-gradient(195deg,#01579b,#0288d1);">
+                    <h6 class="text-white mb-0 text-sm"><i class="fas fa-water me-2"></i>Altura del flujo (m)</h6>
+                </div>
+            </div>
+            <div class="card-body"><div id="chart-level" style="height:260px;"></div></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if station.HasWaterPH %}
+    <div class="col-lg-6">
+        <div class="card hm-chart-card shadow-sm">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="border-radius-lg py-2 px-3" style="background:linear-gradient(195deg,#4a148c,#8e24aa);">
+                    <h6 class="text-white mb-0 text-sm"><i class="fas fa-flask me-2"></i>pH del agua</h6>
+                </div>
+            </div>
+            <div class="card-body"><div id="chart-ph" style="height:260px;"></div></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if station.HasWaterTemp %}
+    <div class="col-lg-6">
+        <div class="card hm-chart-card shadow-sm">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="border-radius-lg py-2 px-3" style="background:linear-gradient(195deg,#006064,#00acc1);">
+                    <h6 class="text-white mb-0 text-sm"><i class="fas fa-temperature-low me-2"></i>Temperatura del agua</h6>
+                </div>
+            </div>
+            <div class="card-body"><div id="chart-twater" style="height:260px;"></div></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if station.HasTempHumidity %}
+    <div class="col-lg-6">
+        <div class="card hm-chart-card shadow-sm">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="border-radius-lg py-2 px-3" style="background:linear-gradient(195deg,#b71c1c,#e53e3e);">
+                    <h6 class="text-white mb-0 text-sm"><i class="fas fa-thermometer-half me-2"></i>Temperatura ambiente y humedad</h6>
+                </div>
+            </div>
+            <div class="card-body"><div id="chart-temp-hum" style="height:260px;"></div></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if station.HasPrecipitation %}
+    <div class="col-lg-6">
+        <div class="card hm-chart-card shadow-sm">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="border-radius-lg py-2 px-3" style="background:linear-gradient(195deg,#1a5276,#2980b9);">
+                    <h6 class="text-white mb-0 text-sm"><i class="fas fa-cloud-rain me-2"></i>Precipitación (mm)</h6>
+                </div>
+            </div>
+            <div class="card-body"><div id="chart-rain" style="height:260px;"></div></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if station.HasSolarRadiation %}
+    <div class="col-lg-6">
+        <div class="card hm-chart-card shadow-sm">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="border-radius-lg py-2 px-3" style="background:linear-gradient(195deg,#7d3c00,#dd6b20);">
+                    <h6 class="text-white mb-0 text-sm"><i class="fas fa-sun me-2"></i>Radiación solar</h6>
+                </div>
+            </div>
+            <div class="card-body"><div id="chart-rad" style="height:260px;"></div></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if station.HasWind %}
+    <div class="col-lg-6">
+        <div class="card hm-chart-card shadow-sm">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="border-radius-lg py-2 px-3" style="background:linear-gradient(195deg,#1c2833,#4a5568);">
+                    <h6 class="text-white mb-0 text-sm"><i class="fas fa-wind me-2"></i>Velocidad y dirección del viento</h6>
+                </div>
+            </div>
+            <div class="card-body"><div id="chart-wind" style="height:260px;"></div></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="col-lg-6">
+        <div class="card hm-chart-card shadow-sm">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="border-radius-lg py-2 px-3" style="background:linear-gradient(195deg,#1b5e20,#2f855a);">
+                    <h6 class="text-white mb-0 text-sm"><i class="fas fa-battery-three-quarters me-2"></i>Batería</h6>
+                </div>
+            </div>
+            <div class="card-body"><div id="chart-bat" style="height:260px;"></div></div>
+        </div>
+    </div>
+</div>

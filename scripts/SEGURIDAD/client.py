@@ -58,13 +58,15 @@ Ejemplos de detalle por categoría
     "FIN DE ACCESO (PERIODO DE BYPASS) - usuario:<nombre>"
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import logging
 import os
 import sys
 import time as _time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import django
 
@@ -77,6 +79,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'RopPumpWeb.settings.local')
 def _setup_django(settings_module: str | None = None):
     if settings_module:
         os.environ['DJANGO_SETTINGS_MODULE'] = settings_module
+    # settings/base.py abre "secret.json" con ruta relativa, así que el script
+    # debe correr con cwd = raíz del proyecto sin importar desde dónde se invoque.
+    os.chdir(BASE_DIR)
     django.setup()
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -139,9 +144,11 @@ def _categoria_from_topic(topic: str, payload_categoria: str) -> str:
 def _process_message(topic: str, payload_str: str):
     """
     Parsea el payload JSON y guarda el evento en la base de datos.
-    También actualiza Sensor.CurrentState y SecurityDevice.LastSeen.
+    También actualiza Sensor.CurrentState y SecurityDevice.LastSeen,
+    y dispara la notificación por Telegram si corresponde.
     """
     from Apps.SEGURIDAD.models import SecurityDevice, Sensor, EventLog
+    from Apps.SEGURIDAD import telegram
 
     # ── Parsear JSON ──────────────────────────────────────────────────────────
     try:
@@ -211,6 +218,12 @@ def _process_message(topic: str, payload_str: str):
         device.Name, origin, sensor_name, detalle, categoria, estado, canal,
     )
 
+    # ── Notificación por Telegram ──────────────────────────────────────────────
+    try:
+        telegram.notify_event(device, sensor_name, categoria, estado, detalle)
+    except Exception:
+        log.exception('Error enviando notificación Telegram para evento de %s.', device.Name)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Callbacks MQTT
@@ -239,6 +252,49 @@ def _on_message(client, userdata, msg):
         _process_message(topic, payload)
     except Exception as exc:
         log.exception('Error procesando mensaje: %s', exc)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Watchdog de desconexión / reconexión (escenarios Telegram)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Estado en memoria del proceso: {device_id: True} mientras un dispositivo
+# está marcado como desconectado (se limpia al detectar la reconexión).
+_offline_flags: dict = {}
+
+
+def _offline_watchdog(poll_seconds: int = 60):
+    """
+    Revisa periódicamente el LastSeen de los dispositivos activos y dispara
+    notificaciones de desconexión/reconexión según TelegramConfig.
+    """
+    from Apps.SEGURIDAD.models import SecurityDevice, TelegramConfig
+    from Apps.SEGURIDAD import telegram
+
+    log.info('Watchdog de desconexión iniciado (cada %ds).', poll_seconds)
+    while True:
+        try:
+            cfg = TelegramConfig.get_solo()
+            if cfg.Enabled and cfg.BotToken and (cfg.NotifyDeviceOffline or cfg.NotifyDeviceReconnect):
+                threshold = timedelta(minutes=cfg.OfflineThresholdMinutes)
+                now = datetime.utcnow()
+
+                for device in SecurityDevice.objects.filter(Status='Active'):
+                    is_offline = bool(device.LastSeen) and (now - device.LastSeen) > threshold
+                    was_offline = _offline_flags.get(device.pk, False)
+
+                    if is_offline and not was_offline:
+                        _offline_flags[device.pk] = True
+                        if cfg.NotifyDeviceOffline:
+                            telegram.notify_offline(device)
+                    elif not is_offline and was_offline:
+                        _offline_flags.pop(device.pk, None)
+                        if cfg.NotifyDeviceReconnect:
+                            telegram.notify_reconnect(device)
+        except Exception:
+            log.exception('Error en watchdog de desconexión.')
+
+        _time.sleep(poll_seconds)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -326,6 +382,10 @@ def main():
             'los dispositivos en /seguridad/dispositivos/.'
         )
         sys.exit(1)
+
+    # Watchdog de desconexión/reconexión (independiente del número de brokers)
+    import threading
+    threading.Thread(target=_offline_watchdog, daemon=True).start()
 
     if len(groups) == 1:
         # Caso simple: un solo broker → corre en el hilo principal

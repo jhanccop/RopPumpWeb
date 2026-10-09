@@ -227,6 +227,100 @@
 </div>
 {% endif %}
 
+<!-- ── HIDROMET Section ───────────────────────────────────────────────────── -->
+{% if request.user|has_app:'hidromet' %}
+<div class="row mb-4">
+    <div class="col-12 mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge px-3 py-2" style="font-size:.78rem; background:linear-gradient(195deg,#29b6f6,#0277bd);">
+                <i class="fas fa-water me-1"></i>HIDROMET — Red Hidrometeorológica
+            </span>
+        </div>
+    </div>
+
+    <!-- Hydro stations total -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center">
+                    <i class="fas fa-broadcast-tower text-white" style="font-size:1.3rem;"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0">Estaciones</p>
+                    <h4 class="mb-0 font-weight-bolder">{{ hm_stations_count|default:"0" }}</h4>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-success font-weight-bolder">{{ hm_active_count|default:"0" }}</span>
+                    <span class="text-secondary"> activas · </span>
+                    <a href="{% url 'hidromet:station_list' %}" class="text-info text-xs font-weight-bold">Ver todas →</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Level alerts -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape {% if hm_level_alerts %}bg-gradient-danger shadow-danger{% else %}bg-gradient-success shadow-success{% endif %} text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center">
+                    <i class="fas fa-water text-white" style="font-size:1.3rem;"></i>
+                </div>
+                <div class="text-end pt-1">
+                    <p class="text-sm mb-0">Alertas de nivel</p>
+                    <h4 class="mb-0 font-weight-bolder">{{ hm_level_alerts|default:"0" }}</h4>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-secondary">Altura de agua sobre umbral · </span>
+                    <a href="{% url 'hidromet:dashboard' %}" class="text-info text-xs font-weight-bold">Ver →</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shortcut: Dashboard -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <a href="{% url 'hidromet:dashboard' %}" class="card h-100 text-decoration-none"
+           style="background:linear-gradient(195deg,#29b6f6,#0277bd);">
+            <div class="card-body d-flex align-items-center gap-3 p-3">
+                <div class="icon icon-md icon-shape d-flex align-items-center justify-content-center border-radius-md flex-shrink-0"
+                     style="background:rgba(255,255,255,.15); width:3rem; height:3rem;">
+                    <i class="fas fa-chart-bar text-white"></i>
+                </div>
+                <div>
+                    <p class="text-white text-sm font-weight-bold mb-0">Dashboard Hidromet</p>
+                    <p class="text-white text-xs opacity-8 mb-0">Nivel · pH · T° agua · Clima</p>
+                </div>
+                <i class="fas fa-chevron-right text-white ms-auto opacity-6"></i>
+            </div>
+        </a>
+    </div>
+
+    <!-- Shortcut: New station -->
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <a href="{% url 'hidromet:station_add' %}" class="card h-100 text-decoration-none"
+           style="background:linear-gradient(195deg,#26c6da,#00838f);">
+            <div class="card-body d-flex align-items-center gap-3 p-3">
+                <div class="icon icon-md icon-shape d-flex align-items-center justify-content-center border-radius-md flex-shrink-0"
+                     style="background:rgba(255,255,255,.15); width:3rem; height:3rem;">
+                    <i class="fas fa-plus text-white"></i>
+                </div>
+                <div>
+                    <p class="text-white text-sm font-weight-bold mb-0">Nueva estación</p>
+                    <p class="text-white text-xs opacity-8 mb-0">Registrar río, cuenca o quebrada</p>
+                </div>
+                <i class="fas fa-chevron-right text-white ms-auto opacity-6"></i>
+            </div>
+        </a>
+    </div>
+</div>
+{% endif %}
+
 <!-- Middle row: Apps table + Quick actions -->
 <div class="row mb-4">
 
@@ -256,7 +350,7 @@
                                 <td>
                                     <div class="d-flex px-3 py-2 align-items-center">
                                         <div class="icon icon-sm icon-shape me-3 d-flex align-items-center justify-content-center
-                                            {% if app.Code == 'fauna' %}bg-gradient-success{% elif app.Code == 'oilfield' %}bg-gradient-info{% else %}bg-gradient-warning{% endif %}
+                                            {% if app.Code == 'fauna' %}bg-gradient-success{% elif app.Code == 'oilfield' %}bg-gradient-info{% elif app.Code == 'hidromet' %}bg-gradient-primary{% else %}bg-gradient-warning{% endif %}
                                             shadow border-radius-md">
                                             <i class="{{ app.Icon }} text-white" style="font-size:.8rem;"></i>
                                         </div>
@@ -432,6 +526,37 @@
                     <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
                 </a>
                 {% endif %}
+                {% endif %}
+
+                {% if request.user|has_app:'hidromet' %}
+                <a href="{% url 'hidromet:dashboard' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#29b6f6,#0277bd); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0"
+                         style="background:rgba(255,255,255,.2);">
+                        <i class="fas fa-water text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Dashboard Hidromet</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Red de estaciones hidrometeorológicas</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
+                <a href="{% url 'hidromet:station_list' %}"
+                   class="d-flex align-items-center p-3 rounded-3 text-decoration-none"
+                   style="background: linear-gradient(195deg,#26c6da,#00838f); transition: opacity .2s;"
+                   onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    <div class="icon icon-sm icon-shape d-flex align-items-center justify-content-center me-3 shadow border-radius-md flex-shrink-0"
+                         style="background:rgba(255,255,255,.2);">
+                        <i class="fas fa-broadcast-tower text-white" style="font-size:.8rem;"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-white text-sm font-weight-bold">Estaciones Hidromet</p>
+                        <p class="mb-0 text-white text-xs opacity-7">Configurar sensores y umbrales</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-white ms-auto opacity-5"></i>
+                </a>
                 {% endif %}
 
                 <a href="{{ request.user.get_first_app_url }}"

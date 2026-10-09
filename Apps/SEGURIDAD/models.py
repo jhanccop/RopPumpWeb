@@ -150,3 +150,91 @@ class EventLog(models.Model):
     @property
     def category_color(self):
         return {'critico': 'danger', 'alto': 'warning', 'informativo': 'info'}.get(self.Category, 'secondary')
+
+
+class TelegramConfig(models.Model):
+    """
+    Configuración global (fila única) del envío de notificaciones por Telegram.
+    Se accede siempre vía TelegramConfig.get_solo().
+    """
+
+    Enabled  = models.BooleanField('Notificaciones activas', default=False,
+                                   help_text='Interruptor maestro: si está apagado no se envía nada.')
+    BotToken = models.CharField('Token del Bot', max_length=120, blank=True, null=True,
+                                help_text='Obtenido de @BotFather, ej. 123456789:AAExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+
+    # ── Escenarios ───────────────────────────────────────────────────────────
+    OnlyActiveState = models.BooleanField(
+        'Solo estado "activo"', default=False,
+        help_text='Si está activo, omite los eventos "normalizado" y solo notifica cuando un sensor pasa a "activo".',
+    )
+    NotifyDeviceOffline = models.BooleanField(
+        'Notificar dispositivo desconectado', default=False,
+        help_text='Avisa cuando un dispositivo deja de reportarse (sin mensajes MQTT) durante el tiempo configurado.',
+    )
+    OfflineThresholdMinutes = models.PositiveIntegerField(
+        'Umbral de desconexión (min)', default=10,
+        help_text='Minutos sin recibir datos de un dispositivo para considerarlo desconectado.',
+    )
+    NotifyDeviceReconnect = models.BooleanField(
+        'Notificar reconexión', default=False,
+        help_text='Avisa cuando un dispositivo vuelve a reportarse tras estar desconectado.',
+    )
+    CooldownSeconds = models.PositiveIntegerField(
+        'Anti-spam (seg)', default=30,
+        help_text='Tiempo mínimo entre notificaciones repetidas del mismo sensor/escenario.',
+    )
+
+    UpdatedAt = models.DateTimeField('Última actualización', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Configuración de Telegram'
+        verbose_name_plural = 'Configuración de Telegram'
+
+    def __str__(self):
+        return 'Configuración de notificaciones Telegram'
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+
+class TelegramRecipient(models.Model):
+    """Número/chat de Telegram destino y qué tipo de alertas recibe."""
+
+    ChatID  = models.CharField('Chat ID', max_length=40,
+                               help_text='ID numérico del chat/usuario de Telegram (ej. obtenido con @userinfobot).')
+    Label   = models.CharField('Nombre / referencia', max_length=80, blank=True, null=True,
+                               help_text='Ej. "Jefe de seguridad", "Grupo guardias".')
+    Enabled = models.BooleanField('Habilitado', default=True)
+
+    # Niveles de alerta que recibe este destinatario
+    NotifyCritico     = models.BooleanField('Crítico', default=True)
+    NotifyAlto        = models.BooleanField('Alto', default=True)
+    NotifyInformativo = models.BooleanField('Informativo', default=False)
+
+    # Escenarios adicionales
+    NotifyDeviceOffline   = models.BooleanField('Desconexión', default=True)
+    NotifyDeviceReconnect = models.BooleanField('Reconexión', default=True)
+
+    CreatedAt = models.DateTimeField('Fecha de registro', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Destinatario Telegram'
+        verbose_name_plural = 'Destinatarios Telegram'
+        ordering = ['Label', 'ChatID']
+
+    def __str__(self):
+        return f'{self.Label or "—"} ({self.ChatID})'
+
+    def wants_category(self, categoria: str) -> bool:
+        return {
+            'critico':     self.NotifyCritico,
+            'alto':        self.NotifyAlto,
+            'informativo': self.NotifyInformativo,
+        }.get(categoria, False)

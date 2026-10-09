@@ -56,6 +56,15 @@
                     <span class="nav-link-text ms-1">Dispositivos</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if view == 'notifications' %}active bg-gradient-primary{% endif %}"
+                   href="{% url 'seguridad:notifications' %}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                        <i class="fab fa-telegram"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Notificaciones</span>
+                </a>
+            </li>
             {% endif %}
 
             <!-- ── Otros módulos habilitados ─────────────────────────────── -->

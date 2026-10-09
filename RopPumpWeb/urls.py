@@ -46,4 +46,5 @@ urlpatterns = [
     path('oilfield/tank/',        include('Apps.OILFIELD.tank.urls')),
     path('oilfield/wellanalyzer/', include('Apps.OILFIELD.wellAnalyzer.urls')),
     path('seguridad/', include('Apps.SEGURIDAD.urls')),
+    path('hidromet/', include('Apps.HIDROMET.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

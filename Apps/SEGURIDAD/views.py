@@ -10,8 +10,14 @@ from django.views.generic import (
 )
 
 from Apps.users.mixins import AppAccessMixin, AdminRequiredMixin
-from .forms import SecurityDeviceForm, SensorForm
-from .models import SENSOR_KEYS, EventLog, SecurityDevice, Sensor
+from . import telegram
+from .forms import (
+    SecurityDeviceForm, SensorForm, TelegramConfigForm, TelegramRecipientForm,
+)
+from .models import (
+    SENSOR_KEYS, EventLog, SecurityDevice, Sensor,
+    TelegramConfig, TelegramRecipient,
+)
 
 
 # ── Mixins de acceso ─────────────────────────────────────────────────────────
@@ -218,3 +224,49 @@ class DeviceStatusAPI(SecUserMixin, View):
             'last_seen':   device.LastSeen.strftime('%d/%m/%Y %H:%M:%S') if device.LastSeen else None,
             'sensors':     sensors,
         })
+
+
+# ── Notificaciones Telegram (configuración) ────────────────────────────────────
+class NotificationSettingsView(SecAdminMixin, TemplateView):
+    template_name = 'SEGURIDAD/seg_notifications.html'
+
+    RecipientFormSet = modelformset_factory(
+        TelegramRecipient, form=TelegramRecipientForm, extra=1, can_delete=True,
+    )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        config = TelegramConfig.get_solo()
+
+        if self.request.method == 'POST':
+            ctx['config_form']      = TelegramConfigForm(self.request.POST, instance=config)
+            ctx['recipient_formset'] = self.RecipientFormSet(
+                self.request.POST, queryset=TelegramRecipient.objects.all(), prefix='rcpt',
+            )
+        else:
+            ctx['config_form']      = TelegramConfigForm(instance=config)
+            ctx['recipient_formset'] = self.RecipientFormSet(
+                queryset=TelegramRecipient.objects.all(), prefix='rcpt',
+            )
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        ctx             = self.get_context_data(**kwargs)
+        config_form     = ctx['config_form']
+        recipient_formset = ctx['recipient_formset']
+
+        if config_form.is_valid() and recipient_formset.is_valid():
+            config_form.save()
+            recipient_formset.save()
+            return redirect('seguridad:notifications')
+
+        return self.render_to_response(ctx)
+
+
+class NotificationTestView(SecAdminMixin, View):
+    """Envía un mensaje de prueba a un destinatario (AJAX, botón 'Probar')."""
+
+    def post(self, request, pk):
+        recipient = get_object_or_404(TelegramRecipient, pk=pk)
+        ok, err = telegram.send_test(recipient)
+        return JsonResponse({'ok': ok, 'error': err})

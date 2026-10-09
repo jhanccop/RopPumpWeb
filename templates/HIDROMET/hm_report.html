@@ -1,0 +1,124 @@
+{% extends 'HIDROMET/base_hidromet.html' %}
+{% load static hidromet_tags %}
+
+{% block title %}Reportes{% endblock title %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-3 pb-2">
+                    <h6 class="text-center text-white"><i class="fas fa-filter me-1"></i> Filtros del reporte</h6>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST">{% csrf_token %}
+                    <div class="row align-items-end">
+                        <div class="col-12 col-sm-4">
+                            <div class="input-group input-group-outline mb-3 is-focused">
+                                <label class="form-label">Estación</label>
+                                {{ form.station }}
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="input-group input-group-outline mb-3 is-focused">
+                                <label class="form-label">Desde</label>
+                                {{ form.date_from }}
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="input-group input-group-outline mb-3 is-focused">
+                                <label class="form-label">Hasta</label>
+                                {{ form.date_to }}
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-2 mb-3">
+                            <button class="btn bg-gradient-info mb-0 w-100" type="submit" name="filter">
+                                <i class="fas fa-search me-1"></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger text-white text-sm">
+                        {% for field, errors in form.errors.items %}{% for error in errors %}<p class="mb-0">{{ error }}</p>{% endfor %}{% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if readings %}
+                    <div class="d-flex align-items-center mt-1">
+                        <span class="text-sm text-secondary me-3">{{ total }} registros encontrados</span>
+                        <button class="btn bg-gradient-success btn-sm mb-0" type="submit" name="download">
+                            <i class="fas fa-file-csv me-1"></i> Descargar CSV
+                        </button>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if readings %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="bg-gradient-info shadow-info border-radius-lg pt-2 pb-2 mt-n4 mx-3">
+                    <h6 class="text-white text-center mb-0">Resultados — {{ total }} lecturas</h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-0">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="dt-report">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estación</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Fecha / hora</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nivel m</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">pH</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">T agua</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">T amb</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">HR %</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Prec mm</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Rad W/m²</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Viento m/s</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Dir °</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in readings %}
+                            <tr>
+                                <td class="text-xs font-weight-bold ps-3">{{ r.Station__StationName }}</td>
+                                <td class="text-xs ps-2">{{ r.DateCreate|lima_date:"d/m/Y H:i" }}</td>
+                                <td class="text-xs ps-2">{{ r.WaterLevel|floatformat:2|default:"—" }}</td>
+                                <td class="text-xs ps-2">{{ r.WaterPH|floatformat:2|default:"—" }}</td>
+                                <td class="text-xs ps-2">{{ r.WaterTemperature|floatformat:1|default:"—" }}</td>
+                                <td class="text-xs ps-2">{{ r.Temperature|floatformat:1|default:"—" }}</td>
+                                <td class="text-xs ps-2">{{ r.Humidity|floatformat:1|default:"—" }}</td>
+                                <td class="text-xs ps-2">{{ r.Precipitation|floatformat:1|default:"—" }}</td>
+                                <td class="text-xs ps-2">{{ r.SolarRadiation|floatformat:0|default:"—" }}</td>
+                                <td class="text-xs ps-2">{{ r.WindSpeed|floatformat:1|default:"—" }}</td>
+                                <td class="text-xs ps-2">{{ r.WindDirection|floatformat:0|default:"—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock content %}
+
+{% block JSscripts %}
+{% if readings %}
+<script>
+    new simpleDatatables.DataTable("#dt-report", { searchable: true, fixedHeight: false, perPage: 20 });
+</script>
+{% endif %}
+{% endblock JSscripts %}

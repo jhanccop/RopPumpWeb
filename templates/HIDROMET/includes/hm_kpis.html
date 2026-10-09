@@ -1,0 +1,96 @@
+{% load hidromet_tags %}
+{# KPIs de la última lectura. Requiere: station, latest. Estilos .kpi* definidos en la página #}
+{% if latest %}
+<div class="row g-2">
+    {% if station.HasWaterLevel %}
+    <div class="col-6 col-md-3">
+        <div class="kpi" style="border-color:{% if latest.level_state == 'critical' %}#c62828{% elif latest.level_state == 'warning' %}#f57c00{% else %}#0277bd{% endif %};">
+            <div class="kpi-label">🌊 Altura del flujo</div>
+            <div class="kpi-val lvl-{{ latest.level_state|default:'normal' }}">{% if latest.WaterLevel is not None %}{{ latest.WaterLevel|floatformat:2 }}{% else %}—{% endif %}</div>
+            <div class="kpi-unit">m{% if latest.level_state == 'critical' %} · CRÍTICO{% elif latest.level_state == 'warning' %} · ALERTA{% endif %}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi" style="border-color:#78909c;">
+            <div class="kpi-label">📏 Distancia medida</div>
+            <div class="kpi-val" style="color:#455a64;">{% if latest.RawDistance is not None %}{{ latest.RawDistance|floatformat:3 }}{% else %}—{% endif %}</div>
+            <div class="kpi-unit">m · tara {% if station.LevelTare is not None %}{{ station.LevelTare|floatformat:3 }} m{% else %}sin configurar{% endif %}</div>
+        </div>
+    </div>
+    {% endif %}
+    {% if station.HasWaterPH %}
+    <div class="col-6 col-md-3">
+        <div class="kpi" style="border-color:#8e24aa;">
+            <div class="kpi-label">🧪 pH agua</div>
+            <div class="kpi-val" style="color:#8e24aa;">{% if latest.WaterPH is not None %}{{ latest.WaterPH|floatformat:2 }}{% else %}—{% endif %}</div>
+            <div class="kpi-unit">pH</div>
+        </div>
+    </div>
+    {% endif %}
+    {% if station.HasWaterTemp %}
+    <div class="col-6 col-md-3">
+        <div class="kpi" style="border-color:#00838f;">
+            <div class="kpi-label">💦 T agua</div>
+            <div class="kpi-val" style="color:#00838f;">{% if latest.WaterTemperature is not None %}{{ latest.WaterTemperature|floatformat:1 }}{% else %}—{% endif %}</div>
+            <div class="kpi-unit">°C</div>
+        </div>
+    </div>
+    {% endif %}
+    {% if station.HasTempHumidity %}
+    <div class="col-6 col-md-3">
+        <div class="kpi" style="border-color:#e53e3e;">
+            <div class="kpi-label">🌡 T ambiente</div>
+            <div class="kpi-val text-danger">{% if latest.Temperature is not None %}{{ latest.Temperature|floatformat:1 }}{% else %}—{% endif %}</div>
+            <div class="kpi-unit">°C</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="kpi" style="border-color:#3182ce;">
+            <div class="kpi-label">💧 Humedad</div>
+            <div class="kpi-val text-info">{% if latest.Humidity is not None %}{{ latest.Humidity|floatformat:1 }}{% else %}—{% endif %}</div>
+            <div class="kpi-unit">%</div>
+        </div>
+    </div>
+    {% endif %}
+    {% if station.HasPrecipitation %}
+    <div class="col-6 col-md-3">
+        <div class="kpi" style="border-color:#2980b9;">
+            <div class="kpi-label">🌧 Precipitación</div>
+            <div class="kpi-val" style="color:#1a5276;">{% if latest.Precipitation is not None %}{{ latest.Precipitation|floatformat:1 }}{% else %}—{% endif %}</div>
+            <div class="kpi-unit">mm</div>
+        </div>
+    </div>
+    {% endif %}
+    {% if station.HasSolarRadiation %}
+    <div class="col-6 col-md-3">
+        <div class="kpi" style="border-color:#dd6b20;">
+            <div class="kpi-label">☀️ Radiación</div>
+            <div class="kpi-val" style="color:#dd6b20;">{% if latest.SolarRadiation is not None %}{{ latest.SolarRadiation|floatformat:0 }}{% else %}—{% endif %}</div>
+            <div class="kpi-unit">W/m²</div>
+        </div>
+    </div>
+    {% endif %}
+    {% if station.HasWind %}
+    <div class="col-6 col-md-3">
+        <div class="kpi" style="border-color:#4a5568;">
+            <div class="kpi-label">🌬 Viento</div>
+            <div class="kpi-val text-dark">{% if latest.WindSpeed is not None %}{{ latest.WindSpeed|floatformat:1 }}{% else %}—{% endif %}</div>
+            <div class="kpi-unit">m/s{% if latest.WindDirection is not None %} · {{ latest.WindDirection|floatformat:0 }}° {{ latest.WindDirection|wind_compass }}{% endif %}</div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="col-6 col-md-3">
+        <div class="kpi" style="border-color:#2f855a;">
+            <div class="kpi-label">🔋 Batería</div>
+            <div class="kpi-val {% if latest.VoltageBattery is not None and latest.VoltageBattery < 3.5 %}text-danger{% else %}text-success{% endif %}">{% if latest.VoltageBattery is not None %}{{ latest.VoltageBattery|floatformat:2 }}{% else %}—{% endif %}</div>
+            <div class="kpi-unit">V{% if latest.TypeConn %} · {{ latest.TypeConn }}{% endif %}</div>
+        </div>
+    </div>
+</div>
+<p class="text-xxs text-secondary mt-2 mb-0"><i class="fas fa-clock me-1"></i>Última lectura: {{ latest.DateCreate|lima_date:"d/m/Y H:i" }}</p>
+{% else %}
+<div class="text-center text-secondary py-4">
+    <i class="fas fa-water d-block mb-2" style="font-size:2rem;opacity:.25;"></i>
+    <p class="text-sm mb-0">Esta estación aún no tiene lecturas.</p>
+</div>
+{% endif %}

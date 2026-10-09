@@ -1,0 +1,165 @@
+{# Datos + render de los gráficos de hm_charts.html. Requiere Plotly cargado y el contexto de _chart_context() #}
+<script id="hm-data" type="application/json">
+{
+    "name":        "{{ station.StationName|escapejs }}",
+    "warning":     {% if station.LevelWarning is not None %}{{ station.LevelWarning|stringformat:"f" }}{% else %}null{% endif %},
+    "critical":    {% if station.LevelCritical is not None %}{{ station.LevelCritical|stringformat:"f" }}{% else %}null{% endif %},
+    "dates":       {{ chart_dates|safe }},
+    "display":     {{ display_dates|safe }},
+    "datesDev":    {{ chart_dates_dev|safe }},
+    "displayDev":  {{ display_dates_dev|safe }},
+    "temp":        {{ chart_Temperature|safe }},
+    "hum":         {{ chart_Humidity|safe }},
+    "windDir":     {{ chart_WindDirection|safe }},
+    "windSpd":     {{ chart_WindSpeed|safe }},
+    "rain":        {{ chart_Precipitation|safe }},
+    "rad":         {{ chart_SolarRadiation|safe }},
+    "level":       {{ chart_WaterLevel|safe }},
+    "ph":          {{ chart_WaterPH|safe }},
+    "twater":      {{ chart_WaterTemperature|safe }},
+    "bat":         {{ chart_battery|safe }}
+}
+</script>
+<script>
+(function () {
+    var D = JSON.parse(document.getElementById('hm-data').textContent);
+
+    function hasVal(arr) {
+        return arr && arr.some(function (v) { return v !== null && v !== undefined; });
+    }
+
+    function noData(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML =
+            '<div style="height:100%;display:flex;align-items:center;justify-content:center;">' +
+            '<div class="text-center py-3">' +
+            '<i class="fas fa-chart-line d-block mb-2 text-secondary" style="font-size:2rem;opacity:.18;"></i>' +
+            '<p class="text-secondary text-xs mb-0">Sin datos para este período</p></div></div>';
+    }
+
+    function mkLayout(y1, y2) {
+        var l = {
+            margin: { t: 12, r: y2 ? 52 : 20, b: 60, l: 52 },
+            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { size: 10, color: '#7b809a' },
+            legend: { orientation: 'h', y: -0.22, x: 0.01, font: { size: 10 } },
+            hovermode: 'x unified',
+            xaxis: { type: 'date', tickformat: '%d/%m\n%H:%M', tickfont: { size: 9 },
+                     gridcolor: '#f0f2f5', zeroline: false, automargin: true },
+            yaxis: { title: { text: y1 || '', font: { size: 10 } }, gridcolor: '#f0f2f5',
+                     tickfont: { size: 9 }, automargin: true },
+            shapes: [],
+        };
+        if (y2) {
+            l.yaxis2 = { title: { text: y2, font: { size: 10 } }, overlaying: 'y', side: 'right',
+                         gridcolor: 'transparent', zeroline: false, tickfont: { size: 9 }, automargin: true };
+        }
+        return l;
+    }
+
+    function hline(y, color, dash) {
+        return { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: y, y1: y,
+                 line: { color: color, width: 1.5, dash: dash || 'dash' } };
+    }
+
+    var cfg = {
+        responsive: true, displaylogo: false,
+        modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
+        toImageButtonOptions: { format: 'png', filename: D.name, height: 480, width: 900, scale: 2 },
+    };
+
+    function line(x, xd, y, name, color, unit, fmt, extra) {
+        return Object.assign({
+            x: x, y: y, customdata: xd, name: name, type: 'scatter', mode: 'lines+markers',
+            line: { color: color, width: 2 }, marker: { size: 3, color: color }, connectgaps: false,
+            hovertemplate: '<b>%{customdata}</b><br>%{y:' + fmt + '} ' + unit + '<extra>' + name + '</extra>',
+        }, extra || {});
+    }
+
+    function plot(id, data, traces, layout) {
+        if (!document.getElementById(id)) return;
+        if (hasVal(data)) { Plotly.react(id, traces, layout, cfg); } else { noData(id); }
+    }
+
+    function render(x, xd) {
+        // Altura de agua + umbrales
+        var lvlLayout = mkLayout('m');
+        if (D.warning !== null)  lvlLayout.shapes.push(hline(D.warning,  '#FF9800'));
+        if (D.critical !== null) lvlLayout.shapes.push(hline(D.critical, '#F44336'));
+        plot('chart-level', D.level, [
+            line(x, xd, D.level, 'Altura de agua', '#0277bd', 'm', '.2f',
+                 { fill: 'tozeroy', fillcolor: 'rgba(2,119,189,.12)' }),
+        ], lvlLayout);
+
+        // pH con rango aceptable 6.5 – 8.5
+        var phLayout = mkLayout('pH');
+        phLayout.shapes.push({ type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 6.5, y1: 8.5,
+                               fillcolor: 'rgba(76,175,80,.08)', line: { width: 0 } });
+        plot('chart-ph', D.ph, [line(x, xd, D.ph, 'pH', '#8e24aa', '', '.2f')], phLayout);
+
+        // Temperatura del agua (vs ambiente si existe)
+        var tw = [line(x, xd, D.twater, 'T agua (°C)', '#00838f', '°C', '.1f')];
+        if (hasVal(D.temp)) {
+            tw.push(line(x, xd, D.temp, 'T ambiente (°C)', '#e57373', '°C', '.1f',
+                         { line: { color: '#e57373', width: 1, dash: 'dot' }, marker: { size: 2 } }));
+        }
+        plot('chart-twater', D.twater, tw, mkLayout('°C'));
+
+        // Temperatura ambiente + humedad
+        plot('chart-temp-hum', (hasVal(D.temp) ? D.temp : D.hum), [
+            line(x, xd, D.temp, 'Temperatura (°C)', '#e53e3e', '°C', '.1f'),
+            line(x, xd, D.hum, 'Humedad (%)', '#3182ce', '%', '.1f',
+                 { yaxis: 'y2', line: { color: '#3182ce', width: 2, dash: 'dot' } }),
+        ], mkLayout('°C', '%'));
+
+        // Precipitación
+        plot('chart-rain', D.rain, [{
+            x: x, y: D.rain, customdata: xd, name: 'Precipitación', type: 'bar',
+            marker: { color: '#2980b9' },
+            hovertemplate: '<b>%{customdata}</b><br>%{y:.1f} mm<extra>Precipitación</extra>',
+        }], mkLayout('mm'));
+
+        // Radiación solar
+        plot('chart-rad', D.rad, [
+            line(x, xd, D.rad, 'Radiación', '#dd6b20', 'W/m²', '.0f',
+                 { mode: 'lines', fill: 'tozeroy', fillcolor: 'rgba(221,107,32,.13)' }),
+        ], mkLayout('W/m²'));
+
+        // Viento
+        plot('chart-wind', D.windSpd, [
+            line(x, xd, D.windSpd, 'Velocidad (m/s)', '#4a5568', 'm/s', '.1f'),
+            { x: x, y: D.windDir, customdata: xd, name: 'Dirección (°)', type: 'scatter', mode: 'markers',
+              yaxis: 'y2', marker: { size: 6, color: '#718096', symbol: 'arrow', angle: D.windDir },
+              hovertemplate: '%{y:.0f}°<extra>Dirección</extra>' },
+        ], Object.assign(mkLayout('m/s', '°'), {}));
+
+        // Batería
+        var batLayout = mkLayout('V');
+        batLayout.shapes.push(hline(3.5, '#F44336'));
+        plot('chart-bat', D.bat, [line(x, xd, D.bat, 'Batería', '#2f855a', 'V', '.2f')], batLayout);
+    }
+
+    // ── Toggle servidor / dispositivo ───────────────────────────────────────
+    var btnSrv = document.getElementById('btn-ts-server');
+    var btnDev = document.getElementById('btn-ts-device');
+    var on  = { background: '#344767', color: '#fff', border: '1px solid #344767' };
+    var off = { background: '#fff', color: '#344767', border: '1px solid #344767' };
+    var hasDev = hasVal(D.datesDev);
+
+    function setMode(useDevice) {
+        Object.assign(btnDev.style, useDevice ? on : off);
+        Object.assign(btnSrv.style, useDevice ? off : on);
+        if (useDevice) { render(D.datesDev, D.displayDev); } else { render(D.dates, D.display); }
+    }
+
+    if (!hasDev) {
+        btnDev.disabled = true;
+        btnDev.title = 'No hay timestamps del dispositivo registrados';
+        btnDev.style.opacity = '0.45';
+    }
+    btnSrv.addEventListener('click', function () { setMode(false); });
+    btnDev.addEventListener('click', function () { if (hasDev) setMode(true); });
+    setMode(hasDev);
+}());
+</script>

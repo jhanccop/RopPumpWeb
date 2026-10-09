@@ -1,0 +1,565 @@
+{% load hidromet_tags %}
+{# Escena animada de la estación: quebrada (nivel) + mástil meteorológico + sondas de agua, según sensores habilitados. Requiere station, latest #}
+<style>
+    .hm-river-wrap { position: relative; border-radius: 12px; overflow: hidden; background: #e3f2fd; }
+    .hm-river-wrap svg { display: block; width: 100%; height: auto; }
+    .hm-water-level { transition: transform 2.2s cubic-bezier(.22,.9,.3,1); }
+    .hm-wave { animation: hm-wave-move linear infinite; }
+    .hm-wave.back { opacity: .55; }
+    @keyframes hm-wave-move { from { transform: translateX(0); } to { transform: translateX(-120px); } }
+    .hm-bubble { animation: hm-bubble-rise 4s ease-in infinite; opacity: 0; }
+    @keyframes hm-bubble-rise {
+        0% { transform: translateY(0); opacity: 0; } 15% { opacity: .7; } 100% { transform: translateY(-34px); opacity: 0; }
+    }
+    .hm-leaf { animation: hm-leaf-drift linear infinite; }
+    @keyframes hm-leaf-drift { from { transform: translateX(-40px); } to { transform: translateX(640px); } }
+
+    /* Estación meteorológica */
+    .hm-spin { animation: hm-spin linear infinite; }
+    @keyframes hm-spin { to { transform: rotate(360deg); } }
+    .hm-cloud { animation: hm-cloud linear infinite; }
+    @keyframes hm-cloud { from { transform: translateX(-220px); } to { transform: translateX(820px); } }
+    .hm-drop { animation: hm-fall linear infinite; }
+    @keyframes hm-fall { from { transform: translateY(-30px); } to { transform: translateY(360px); } }
+    .hm-bob { animation: hm-bob 2.6s ease-in-out infinite; }
+    @keyframes hm-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(2.5px); } }
+    .hm-pulse { animation: hm-pulse 3s ease-in-out infinite; }
+    @keyframes hm-pulse { 0%, 100% { opacity: .55; } 50% { opacity: .9; } }
+    .hm-vane { transition: transform 1.6s cubic-bezier(.3,1.6,.5,1); }
+    .hm-fill { transition: all 2s ease; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .hm-wave, .hm-bubble, .hm-leaf, .hm-spin, .hm-cloud, .hm-drop, .hm-bob, .hm-pulse { animation: none; }
+        .hm-water-level, .hm-vane, .hm-fill { transition: none; }
+    }
+</style>
+
+<div class="hm-river-wrap" id="hm-river"
+     data-level="{% if latest.WaterLevel is not None %}{{ latest.WaterLevel|stringformat:'f' }}{% endif %}"
+     data-warning="{% if station.LevelWarning is not None %}{{ station.LevelWarning|stringformat:'f' }}{% endif %}"
+     data-critical="{% if station.LevelCritical is not None %}{{ station.LevelCritical|stringformat:'f' }}{% endif %}"
+     data-tare="{% if station.LevelTare is not None %}{{ station.LevelTare|stringformat:'f' }}{% endif %}"
+     data-raw="{% if latest.RawDistance is not None %}{{ latest.RawDistance|stringformat:'f' }}{% endif %}"
+     data-has-level="{{ station.HasWaterLevel|yesno:'1,0' }}"
+     data-has-th="{{ station.HasTempHumidity|yesno:'1,0' }}"
+     data-has-wind="{{ station.HasWind|yesno:'1,0' }}"
+     data-has-rain="{{ station.HasPrecipitation|yesno:'1,0' }}"
+     data-has-rad="{{ station.HasSolarRadiation|yesno:'1,0' }}"
+     data-has-ph="{{ station.HasWaterPH|yesno:'1,0' }}"
+     data-has-tw="{{ station.HasWaterTemp|yesno:'1,0' }}"
+     data-temp="{% if latest.Temperature is not None %}{{ latest.Temperature|stringformat:'f' }}{% endif %}"
+     data-hum="{% if latest.Humidity is not None %}{{ latest.Humidity|stringformat:'f' }}{% endif %}"
+     data-ws="{% if latest.WindSpeed is not None %}{{ latest.WindSpeed|stringformat:'f' }}{% endif %}"
+     data-wd="{% if latest.WindDirection is not None %}{{ latest.WindDirection|stringformat:'f' }}{% endif %}"
+     data-wd-name="{% if latest.WindDirection is not None %}{{ latest.WindDirection|wind_compass }}{% endif %}"
+     data-rain="{% if latest.Precipitation is not None %}{{ latest.Precipitation|stringformat:'f' }}{% endif %}"
+     data-rad="{% if latest.SolarRadiation is not None %}{{ latest.SolarRadiation|stringformat:'f' }}{% endif %}"
+     data-ph="{% if latest.WaterPH is not None %}{{ latest.WaterPH|stringformat:'f' }}{% endif %}"
+     data-tw="{% if latest.WaterTemperature is not None %}{{ latest.WaterTemperature|stringformat:'f' }}{% endif %}"
+     data-bat="{% if latest.VoltageBattery is not None %}{{ latest.VoltageBattery|stringformat:'f' }}{% endif %}">
+    <svg viewBox="0 0 780 340" role="img" aria-label="Animación de la estación hidrometeorológica según sus sensores habilitados">
+        <defs>
+            <linearGradient id="hm-sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" id="hm-sky-top" stop-color="#90caf9"/><stop offset="1" id="hm-sky-bottom" stop-color="#e3f2fd"/>
+            </linearGradient>
+            <linearGradient id="hm-ground" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#8d6e63"/><stop offset="1" stop-color="#4e342e"/>
+            </linearGradient>
+            <linearGradient id="hm-water-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" id="hm-water-top" stop-color="#4fc3f7"/>
+                <stop offset="1" id="hm-water-bottom" stop-color="#01579b"/>
+            </linearGradient>
+            <radialGradient id="hm-sun-glow">
+                <stop offset="0" stop-color="#fff59d" stop-opacity=".9"/><stop offset="1" stop-color="#ffeb3b" stop-opacity="0"/>
+            </radialGradient>
+            <clipPath id="hm-channel">
+                <path d="M40,40 C120,40 150,225 220,228 L380,228 C450,225 480,40 560,40 Z"/>
+            </clipPath>
+            <clipPath id="hm-gauge-clip"><rect x="143" y="98" width="14" height="22"/></clipPath>
+            <clipPath id="hm-drop-clip"><path d="M150,62 C150,62 141,73 141,79 a9,9 0 0 0 18,0 C159,73 150,62 150,62 Z"/></clipPath>
+        </defs>
+
+        <!-- ══ Cielo ══ -->
+        <rect width="780" height="340" fill="url(#hm-sky)"/>
+        <g id="hm-stars" fill="#fff" style="display:none;">
+            <circle cx="210" cy="18" r="1.2"/><circle cx="330" cy="30" r="1"/><circle cx="470" cy="14" r="1.3"/>
+            <circle cx="560" cy="38" r="1"/><circle cx="650" cy="20" r="1.2"/><circle cx="740" cy="44" r="1"/>
+        </g>
+        <!-- Sol (radiación) / luna (radiación ≈ 0) -->
+        <g id="hm-sun" transform="translate(470,42)" style="display:none;">
+            <circle id="hm-sun-halo" r="34" fill="url(#hm-sun-glow)" class="hm-pulse"/>
+            <g class="hm-spin" style="animation-duration:40s;" stroke="#fbc02d" stroke-width="2.5" stroke-linecap="round" id="hm-sun-rays">
+                <path d="M0,-22 V-28 M0,22 V28 M-22,0 H-28 M22,0 H28 M15.5,-15.5 L19.8,-19.8 M-15.5,15.5 L-19.8,19.8 M15.5,15.5 L19.8,19.8 M-15.5,-15.5 L-19.8,-19.8"/>
+            </g>
+            <circle r="15" fill="#fdd835"/>
+        </g>
+        <g id="hm-moon" transform="translate(470,40)" style="display:none;">
+            <circle r="13" fill="#eceff1"/><circle cx="6" cy="-4" r="12" fill="#1a237e"/>
+        </g>
+        <path d="M0,95 L70,55 L140,88 L230,45 L320,92 L400,60 L480,96 L560,52 L650,90 L720,58 L780,80 L780,125 L0,125 Z" fill="#90a4ae" opacity=".45"/>
+
+        <!-- Nubes (velocidad según el viento; oscuras si llueve) -->
+        <g id="hm-clouds" fill="#fff" opacity=".9">
+            <g class="hm-cloud" style="animation-duration:90s; animation-delay:-20s;">
+                <g transform="translate(0,26)"><ellipse cx="30" cy="0" rx="26" ry="10"/><ellipse cx="18" cy="-6" rx="14" ry="10"/><ellipse cx="40" cy="-8" rx="16" ry="12"/></g>
+            </g>
+            <g class="hm-cloud" style="animation-duration:90s; animation-delay:-55s;">
+                <g transform="translate(0,44) scale(.8)"><ellipse cx="30" cy="0" rx="26" ry="10"/><ellipse cx="18" cy="-6" rx="14" ry="10"/><ellipse cx="40" cy="-8" rx="16" ry="12"/></g>
+            </g>
+            <g class="hm-cloud" style="animation-duration:90s; animation-delay:-80s;">
+                <g transform="translate(0,18) scale(1.15)"><ellipse cx="30" cy="0" rx="26" ry="10"/><ellipse cx="18" cy="-6" rx="14" ry="10"/><ellipse cx="40" cy="-8" rx="16" ry="12"/></g>
+            </g>
+        </g>
+
+        <!-- Lluvia (generada por JS según la precipitación) -->
+        <g id="hm-rain" stroke="#4fc3f7" stroke-width="1.4" stroke-linecap="round" opacity=".8"></g>
+
+        <!-- ══ Quebrada (nivel de agua) ══ -->
+        <g transform="translate(180,80)">
+            <!-- Regla limnimétrica (detrás del agua: se ve sumergida) -->
+            <g id="hm-staff">
+                <rect x="292" y="34" width="16" height="196" fill="#fafafa" stroke="#546e7a" stroke-width="1"/>
+                <g id="hm-staff-ticks"></g>
+            </g>
+
+            <!-- Agua -->
+            <g clip-path="url(#hm-channel)">
+                <g class="hm-water-level" id="hm-water" style="transform: translateY(230px);">
+                    <path class="hm-wave back" id="hm-wave-back" fill="url(#hm-water-grad)"/>
+                    <path class="hm-wave" id="hm-wave-front" fill="url(#hm-water-grad)" fill-opacity=".85"/>
+                    <g fill="#fff">
+                        <circle class="hm-bubble" cx="250" cy="40" r="2.5" style="animation-delay:0s"/>
+                        <circle class="hm-bubble" cx="395" cy="48" r="2" style="animation-delay:1.3s"/>
+                        <circle class="hm-bubble" cx="275" cy="44" r="1.8" style="animation-delay:2.6s"/>
+                    </g>
+                    <g class="hm-leaf" style="animation-duration:14s">
+                        <ellipse cx="0" cy="2" rx="6" ry="2.5" fill="#558b2f" transform="rotate(-15)"/>
+                    </g>
+                </g>
+            </g>
+
+            <!-- Boya con sondas de pH y temperatura del agua (flota con el nivel) -->
+            <g class="hm-water-level" id="hm-buoy" style="transform: translateY(230px); display:none;">
+                <g class="hm-bob">
+                    <line x1="345" y1="-14" x2="345" y2="-4" stroke="#455a64" stroke-width="1.5"/>
+                    <path d="M345,-14 L353,-11 L345,-8 Z" fill="#e53935"/>
+                    <ellipse cx="345" cy="0" rx="10" ry="5" fill="#ffb300" stroke="#e65100" stroke-width="1"/>
+                    <g id="hm-probe-ph" style="display:none;">
+                        <line x1="340" y1="4" x2="340" y2="24" stroke="#37474f" stroke-width="1.5"/>
+                        <rect x="337" y="22" width="6" height="9" rx="2" fill="#37474f"/>
+                        <circle id="hm-ph-bulb" cx="340" cy="33" r="3.5" fill="#43a047" stroke="#fff" stroke-width=".8"/>
+                    </g>
+                    <g id="hm-probe-tw" style="display:none;">
+                        <line x1="350" y1="4" x2="350" y2="20" stroke="#37474f" stroke-width="1.5"/>
+                        <rect x="347.5" y="18" width="5" height="12" rx="2.5" fill="#fff" stroke="#37474f" stroke-width=".8"/>
+                        <rect id="hm-tw-fill" class="hm-fill" x="348.7" y="24" width="2.6" height="5" fill="#00838f"/>
+                    </g>
+                </g>
+            </g>
+
+            <!-- Terreno (tapa los bordes del agua) -->
+            <path d="M0,40 L40,40 C120,40 150,225 220,228 L380,228 C450,225 480,40 560,40 L600,40 L600,260 L0,260 Z" fill="url(#hm-ground)"/>
+            <path d="M0,40 L40,40 M560,40 L600,40" stroke="#689f38" stroke-width="6" stroke-linecap="round"/>
+            <g fill="#6d4c41">
+                <ellipse cx="205" cy="236" rx="16" ry="7"/><ellipse cx="400" cy="234" rx="12" ry="6"/>
+                <ellipse cx="120" cy="120" rx="9" ry="5"/><ellipse cx="490" cy="110" rx="10" ry="5"/>
+            </g>
+            <g stroke="#7cb342" stroke-width="2" stroke-linecap="round">
+                <path d="M575,40 l-3,-10 M580,40 l1,-12 M585,40 l4,-9"/>
+            </g>
+
+            <!-- Umbrales -->
+            <g id="hm-thresholds" font-size="10" font-weight="700"></g>
+
+            <!-- Etiquetas de la regla (sobre el agua para que sean legibles) -->
+            <g id="hm-staff-labels"></g>
+
+            <!-- Sensor (a la altura de la tara) y cota de la distancia medida -->
+            <g id="hm-sensor" style="display:none;">
+                <path id="hm-sensor-arm" stroke="#455a64" stroke-width="4" stroke-linecap="round" fill="none"/>
+                <rect id="hm-sensor-box" width="22" height="12" rx="3" fill="#263238"/>
+                <text id="hm-sensor-label" font-size="9" font-weight="700" fill="#263238" paint-order="stroke" stroke="#fff" stroke-width="3">Sensor</text>
+                <g id="hm-measure" style="opacity:0; transition: opacity .6s ease 2.1s;">
+                    <line id="hm-measure-line" stroke="#263238" stroke-width="1.4" stroke-dasharray="3 3"/>
+                    <path id="hm-measure-arrow" fill="#263238"/>
+                    <rect id="hm-measure-bg" height="16" rx="8" fill="#fff" stroke="#263238" stroke-width=".8"/>
+                    <text id="hm-measure-text" font-size="9.5" font-weight="700" fill="#263238" text-anchor="middle"></text>
+                </g>
+            </g>
+
+            <!-- Etiqueta del nivel actual -->
+            <g class="hm-water-level" id="hm-level-tag" style="transform: translateY(230px);">
+                <rect x="196" y="-11" width="86" height="20" rx="10" fill="#344767" opacity=".9"/>
+                <text id="hm-level-text" x="239" y="3" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">—</text>
+                <path d="M282,-1 L292,-1" stroke="#344767" stroke-width="2"/>
+            </g>
+        </g>
+
+        <!-- ══ Terreno de la estación meteorológica ══ -->
+        <rect x="0" y="120" width="182" height="220" fill="url(#hm-ground)"/>
+        <path d="M0,120 L182,120" stroke="#689f38" stroke-width="6" stroke-linecap="round"/>
+        <g stroke="#7cb342" stroke-width="2" stroke-linecap="round">
+            <path d="M12,120 l-3,-10 M16,120 l1,-12 M20,120 l4,-9 M170,120 l-3,-9 M174,120 l2,-11"/>
+        </g>
+
+        <!-- Mástil -->
+        <g stroke="#78909c" stroke-width="2.5" stroke-linecap="round">
+            <path d="M70,120 V22 M70,104 L56,120 M70,104 L84,120"/>
+        </g>
+
+        <!-- Panel solar (alimentación) -->
+        <g>
+            <path d="M70,92 H58" stroke="#78909c" stroke-width="2"/>
+            <path d="M34,98 L46,84 L62,84 L50,98 Z" fill="#1a237e" stroke="#90a4ae" stroke-width="1"/>
+            <path d="M40,91 L56,91 M48,84 L42,98 M55,84 L49,98" stroke="#5c6bc0" stroke-width=".8"/>
+        </g>
+
+        <!-- Datalogger + batería -->
+        <g>
+            <rect x="60" y="102" width="20" height="14" rx="2" fill="#eceff1" stroke="#546e7a"/>
+            <rect x="63" y="106" width="12" height="6" rx="1" fill="none" stroke="#37474f" stroke-width=".8"/>
+            <rect x="75" y="107.5" width="1.5" height="3" fill="#37474f"/>
+            <rect id="hm-bat-fill" class="hm-fill" x="64" y="107" width="0" height="4" fill="#43a047"/>
+        </g>
+
+        <!-- Anemómetro (velocidad del viento) -->
+        <g id="hm-anemometer" style="display:none;">
+            <g transform="translate(70,22) scale(1,.38)">
+                <g class="hm-spin" id="hm-cups" style="animation-play-state:paused;">
+                    <g stroke="#546e7a" stroke-width="2.4">
+                        <path d="M0,0 L18,0 M0,0 L-9,15.6 M0,0 L-9,-15.6"/>
+                    </g>
+                    <g fill="#eceff1" stroke="#37474f" stroke-width="1">
+                        <circle cx="18" cy="0" r="5"/><circle cx="-9" cy="15.6" r="5"/><circle cx="-9" cy="-15.6" r="5"/>
+                    </g>
+                </g>
+            </g>
+            <circle cx="70" cy="22" r="2.5" fill="#37474f"/>
+        </g>
+
+        <!-- Veleta (dirección del viento) -->
+        <g id="hm-windvane" style="display:none;">
+            <path d="M70,36 H98" stroke="#78909c" stroke-width="2"/>
+            <circle cx="110" cy="36" r="11" fill="#fff" fill-opacity=".85" stroke="#90a4ae"/>
+            <text x="110" y="30.5" text-anchor="middle" font-size="5" font-weight="700" fill="#c62828">N</text>
+            <g transform="translate(110,36)">
+                <g class="hm-vane" id="hm-vane-arrow">
+                    <path d="M0,-8 L3,1 L0,-1 L-3,1 Z" fill="#c62828"/><path d="M0,-1 V8 M-2.5,8 H2.5" stroke="#37474f" stroke-width="1.4"/>
+                </g>
+            </g>
+        </g>
+
+        <!-- Piranómetro (radiación solar) -->
+        <g id="hm-pyranometer" style="display:none;">
+            <path d="M70,54 H44" stroke="#78909c" stroke-width="2"/>
+            <circle id="hm-pyr-glow" class="hm-pulse" cx="40" cy="50" r="8" fill="#ffeb3b" opacity=".6"/>
+            <rect x="33" y="51" width="14" height="4" rx="1" fill="#eceff1" stroke="#546e7a" stroke-width=".8"/>
+            <path d="M35,51 a5,5 0 0 1 10,0 Z" fill="#e3f2fd" stroke="#546e7a" stroke-width=".8"/>
+        </g>
+
+        <!-- Caseta meteorológica: temperatura y humedad -->
+        <g id="hm-shelter" style="display:none;">
+            <path d="M70,68 H84" stroke="#78909c" stroke-width="2"/>
+            <rect x="84" y="58" width="24" height="24" rx="1.5" fill="#fafafa" stroke="#90a4ae"/>
+            <path d="M82,58 L96,51 L110,58 Z" fill="#eceff1" stroke="#90a4ae"/>
+            <path d="M87,63 H105 M87,67 H105 M87,71 H105 M87,75 H105 M87,79 H105" stroke="#cfd8dc" stroke-width="1.2"/>
+            <!-- Termómetro -->
+            <rect x="116" y="54" width="7" height="34" rx="3.5" fill="#fff" stroke="#78909c"/>
+            <rect id="hm-temp-fill" class="hm-fill" x="118" y="86" width="3" height="0" fill="#e53935"/>
+            <circle id="hm-temp-bulb" cx="119.5" cy="91" r="5" fill="#e53935" stroke="#78909c"/>
+            <!-- Gota de humedad -->
+            <path d="M150,62 C150,62 141,73 141,79 a9,9 0 0 0 18,0 C159,73 150,62 150,62 Z" fill="#fff" stroke="#1e88e5" stroke-width="1.2"/>
+            <rect id="hm-hum-fill" class="hm-fill" x="140" y="88" width="20" height="0" fill="#42a5f5" clip-path="url(#hm-drop-clip)"/>
+        </g>
+
+        <!-- Pluviómetro (precipitación) -->
+        <g id="hm-gauge" style="display:none;">
+            <path d="M139,93 L161,93 L157,98 L143,98 Z" fill="#cfd8dc" stroke="#607d8b"/>
+            <rect x="143" y="98" width="14" height="22" fill="#fff" fill-opacity=".6" stroke="#607d8b"/>
+            <rect id="hm-gauge-fill" class="hm-fill" x="143" y="120" width="14" height="0" fill="#29b6f6" clip-path="url(#hm-gauge-clip)"/>
+        </g>
+
+        <!-- Placas con los valores de los sensores habilitados -->
+        <g id="hm-plates" font-size="9.5" font-weight="700"></g>
+    </svg>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var box = document.getElementById('hm-river');
+    if (!box) return;
+    var ds = box.dataset, SVGNS = 'http://www.w3.org/2000/svg';
+    var num = function (v) { return v === '' || v === undefined ? null : parseFloat(v); };
+    var on = function (k) { return ds[k] === '1'; };
+    var $ = function (id) { return document.getElementById(id); };
+    var show = function (id) { $(id).style.display = ''; };
+    var set = function (id, attrs) {
+        var el = typeof id === 'string' ? $(id) : id;
+        Object.keys(attrs).forEach(function (k) { el.setAttribute(k, attrs[k]); });
+        return el;
+    };
+    var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+
+    var hasLevel = on('hasLevel');
+    var level = num(ds.level), warning = num(ds.warning), critical = num(ds.critical);
+    var tare = num(ds.tare), raw = num(ds.raw);
+    var temp = num(ds.temp), hum = num(ds.hum), ws = num(ds.ws), wd = num(ds.wd);
+    var rain = num(ds.rain), rad = num(ds.rad), ph = num(ds.ph), tw = num(ds.tw), bat = num(ds.bat);
+
+    // ════════════════════ Nivel de agua (quebrada) ════════════════════
+    var series = [];
+    var dataEl = $('hm-data');
+    if (dataEl) {
+        try { series = (JSON.parse(dataEl.textContent).level || []).filter(function (v) { return v !== null; }); }
+        catch (e) { series = []; }
+    }
+
+    // Geometría de la quebrada (coordenadas del grupo trasladado)
+    var BED = 228, TOP = 46;
+    // Con tara, el cauce completo representa la tara (el sensor queda arriba, junto al borde)
+    var scaleMax = Math.max(1, (tare || 0) * 1.02, (critical || 0) * 1.25, (warning || 0) * 1.4,
+                            (level || 0) * 1.15, Math.max.apply(null, series.concat([0])) * 1.1);
+    var yOf = function (m) { return BED - Math.min(m, scaleMax) / scaleMax * (BED - TOP); };
+
+    function wavePath(amp, phase) {
+        var d = 'M0,' + (amp * Math.sin(phase)).toFixed(2);
+        for (var x = 10; x <= 840; x += 10) {
+            d += ' L' + x + ',' + (amp * Math.sin(x / 120 * 2 * Math.PI + phase)).toFixed(2);
+        }
+        return d + ' L840,300 L0,300 Z';
+    }
+    $('hm-wave-back').setAttribute('d', wavePath(4, Math.PI));
+    $('hm-wave-front').setAttribute('d', wavePath(5, 0));
+
+    // Sin sensor de nivel: agua decorativa a media altura, sin regla, umbrales ni sensor
+    var drawLevel = hasLevel ? level : scaleMax * 0.4;
+    if (!hasLevel) {
+        ['hm-staff', 'hm-staff-labels', 'hm-level-tag'].forEach(function (id) { $(id).style.display = 'none'; });
+    } else {
+        // Regla graduada
+        var step = scaleMax <= 2 ? 0.25 : scaleMax <= 5 ? 0.5 : scaleMax <= 10 ? 1 : 2;
+        for (var m = 0; m <= scaleMax + 1e-9; m += step) {
+            var y = yOf(m), major = Math.abs(m / (step * 2) - Math.round(m / (step * 2))) < 1e-6;
+            $('hm-staff-ticks').appendChild(set(document.createElementNS(SVGNS, 'line'), {
+                x1: 292, x2: major ? 304 : 299, y1: y, y2: y,
+                stroke: major ? '#c62828' : '#263238', 'stroke-width': major ? 1.6 : 1,
+            }));
+            if (major) {
+                var lbl = set(document.createElementNS(SVGNS, 'text'), {
+                    x: 312, y: y + 3.5, 'font-size': 9, 'font-weight': 700, fill: '#263238',
+                    'paint-order': 'stroke', stroke: '#fff', 'stroke-width': 3,
+                });
+                lbl.textContent = m.toFixed(step < 1 ? 1 : 0) + ' m';
+                $('hm-staff-labels').appendChild(lbl);
+            }
+        }
+
+        // Líneas de umbral
+        [[warning, '#f57c00', 'Alerta'], [critical, '#c62828', 'Crítico']].forEach(function (t) {
+            if (t[0] === null) return;
+            var y = yOf(t[0]);
+            $('hm-thresholds').appendChild(set(document.createElementNS(SVGNS, 'line'), {
+                x1: 20, x2: 580, y1: y, y2: y, stroke: t[1], 'stroke-width': 1.6, 'stroke-dasharray': '7 5',
+            }));
+            var tx = set(document.createElementNS(SVGNS, 'text'), { x: 578, y: y - 4, 'text-anchor': 'end', fill: t[1] });
+            tx.textContent = t[2] + ' ' + t[0].toFixed(2) + ' m';
+            $('hm-thresholds').appendChild(tx);
+        });
+
+        // Estado y colores del agua (más turbia en crecida)
+        var state = level === null ? null
+                  : (critical !== null && level >= critical) ? 'critical'
+                  : (warning !== null && level >= warning) ? 'warning' : 'normal';
+        var palette = {
+            normal:   ['#4fc3f7', '#01579b', '#2e7d32', 'Normal'],
+            warning:  ['#80cbc4', '#5d6d3e', '#f57c00', 'Alerta'],
+            critical: ['#a1887f', '#4e342e', '#c62828', 'Crítico'],
+        };
+        if (state) {
+            var p = palette[state];
+            $('hm-water-top').setAttribute('stop-color', p[0]);
+            $('hm-water-bottom').setAttribute('stop-color', p[1]);
+            var badge = $('hm-river-badge') || document.createElement('span');
+            badge.style.background = p[2]; badge.textContent = p[3];
+            var val = $('hm-river-value') || document.createElement('span');
+            val.textContent = level.toFixed(2) + ' m'; val.style.color = p[2];
+            $('hm-level-text').textContent = level.toFixed(2) + ' m';
+        }
+
+        // Tendencia frente a la lectura anterior
+        if (series.length >= 2) {
+            var diff = series[series.length - 1] - series[series.length - 2];
+            var trend = $('hm-river-trend') || document.createElement('span');
+            trend.innerHTML = Math.abs(diff) < 0.005
+                ? '<i class="fas fa-equals text-secondary me-1"></i>Estable'
+                : '<i class="fas fa-arrow-' + (diff > 0 ? 'up text-danger' : 'down text-success') + ' me-1"></i>' +
+                  (diff > 0 ? '+' : '') + diff.toFixed(2) + ' m vs. lectura anterior';
+        }
+    }
+
+    // Corriente más rápida a mayor nivel
+    var ratio = drawLevel === null ? 0 : Math.min(drawLevel / scaleMax, 1);
+    $('hm-wave-front').style.animationDuration = (3.2 - 2.2 * ratio) + 's';
+    $('hm-wave-back').style.animationDuration = (4.6 - 2.8 * ratio) + 's';
+    document.querySelector('#hm-river .hm-leaf').style.animationDuration = (16 - 11 * ratio) + 's';
+
+    var target = drawLevel === null ? BED + 4 : yOf(drawLevel);
+
+    // Sensor colgado de un brazo en la orilla derecha, a la altura de la tara
+    if (hasLevel && tare !== null) {
+        var sY = yOf(tare), sX = 372;
+        show('hm-sensor');
+        set('hm-sensor-arm', { d: 'M560,40 L560,' + (sY - 14) + ' L' + (sX + 11) + ',' + (sY - 14) + ' L' + (sX + 11) + ',' + (sY - 12) });
+        set('hm-sensor-box', { x: sX, y: sY - 12 });
+        set('hm-sensor-label', { x: sX + 28, y: sY - 3 });
+        $('hm-sensor-label').textContent = 'Sensor · tara ' + tare.toFixed(3) + ' m';
+        if (level !== null) {
+            var x = sX + 11, y1 = sY, y2 = target, mid = (y1 + y2) / 2;
+            set('hm-measure-line', { x1: x, x2: x, y1: y1, y2: y2 - 4 });
+            set('hm-measure-arrow', { d: 'M' + (x - 4) + ',' + (y2 - 6) + ' L' + (x + 4) + ',' + (y2 - 6) + ' L' + x + ',' + y2 + ' Z' });
+            var txt = 'medida ' + (raw !== null ? raw : tare - level).toFixed(3) + ' m';
+            set('hm-measure-bg', { x: x + 6, y: mid - 8, width: txt.length * 5.6 + 10 });
+            set('hm-measure-text', { x: x + 11 + txt.length * 2.8, y: mid + 3.5 });
+            $('hm-measure-text').textContent = txt;
+            setTimeout(function () { $('hm-measure').style.opacity = 1; }, 50);
+        }
+    }
+
+    // ════════════════════ Sondas de agua (boya) ════════════════════
+    if (on('hasPh') || on('hasTw')) {
+        show('hm-buoy');
+        if (on('hasPh')) {
+            show('hm-probe-ph');
+            // Color del indicador universal: ácido (rojo) → neutro (verde) → básico (morado)
+            var phColors = ['#d32f2f', '#f4511e', '#fb8c00', '#fdd835', '#c0ca33', '#7cb342', '#43a047',
+                            '#2e7d32', '#00897b', '#0277bd', '#283593', '#4527a0', '#6a1b9a', '#4a148c', '#311b92'];
+            if (ph !== null) $('hm-ph-bulb').setAttribute('fill', phColors[clamp(Math.round(ph), 0, 14)]);
+        }
+        if (on('hasTw')) {
+            show('hm-probe-tw');
+            if (tw !== null) {
+                var hTw = 2 + clamp(tw / 35, 0, 1) * 8;
+                set('hm-tw-fill', { y: 29 - hTw, height: hTw });
+            }
+        }
+    }
+
+    // ════════════════════ Estación meteorológica ════════════════════
+    // Radiación: sol con brillo proporcional; de noche (≈0 W/m²) cielo oscuro con luna
+    if (on('hasRad')) {
+        show('hm-pyranometer');
+        var radK = rad === null ? 0.5 : clamp(rad / 1000, 0, 1.2);
+        if (rad !== null && rad < 15) {
+            set('hm-sky-top', { 'stop-color': '#1a237e' }); set('hm-sky-bottom', { 'stop-color': '#5c6bc0' });
+            show('hm-moon'); show('hm-stars');
+            set('hm-clouds', { fill: '#7986cb', opacity: .55 });
+            $('hm-pyr-glow').style.display = 'none';
+        } else {
+            show('hm-sun');
+            $('hm-sun-halo').setAttribute('r', 20 + 30 * radK);
+            $('hm-sun-rays').style.opacity = 0.35 + 0.65 * Math.min(radK, 1);
+            $('hm-sun-rays').style.animationDuration = (60 - 40 * Math.min(radK, 1)) + 's';
+            $('hm-pyr-glow').setAttribute('r', 4 + 9 * radK);
+        }
+    }
+
+    // Viento: anemómetro gira según la velocidad, veleta según la dirección, nubes más rápidas
+    var windFactor = 0;
+    if (on('hasWind')) {
+        show('hm-anemometer'); show('hm-windvane');
+        if (ws !== null && ws > 0.05) {
+            $('hm-cups').style.animationDuration = clamp(3 / ws, 0.15, 6) + 's';
+            $('hm-cups').style.animationPlayState = 'running';
+            windFactor = clamp(ws / 15, 0, 1);
+        }
+        if (wd !== null) {
+            // La veleta apunta hacia donde viene el viento
+            requestAnimationFrame(function () { $('hm-vane-arrow').style.transform = 'rotate(' + wd + 'deg)'; });
+        }
+    }
+    document.querySelectorAll('#hm-river .hm-cloud').forEach(function (c) {
+        c.style.animationDuration = (90 - 70 * windFactor) + 's';
+    });
+
+    // Temperatura y humedad: termómetro (−10…40 °C) y gota de humedad (0…100 %)
+    if (on('hasTh')) {
+        show('hm-shelter');
+        if (temp !== null) {
+            var tK = clamp((temp + 10) / 50, 0, 1), hT = 2 + tK * 28;
+            var tColor = temp < 10 ? '#1e88e5' : temp < 25 ? '#fb8c00' : '#e53935';
+            set('hm-temp-fill', { y: 86 - hT, height: hT, fill: tColor });
+            $('hm-temp-bulb').setAttribute('fill', tColor);
+        }
+        if (hum !== null) {
+            var hH = clamp(hum / 100, 0, 1) * 27;
+            set('hm-hum-fill', { y: 88 - hH, height: hH });
+        }
+    }
+
+    // Precipitación: lluvia (intensidad según mm), nubes grises y pluviómetro que se llena
+    if (on('hasRain')) {
+        show('hm-gauge');
+        if (rain !== null) {
+            var gH = clamp(rain / 20, 0, 1) * 22;
+            set('hm-gauge-fill', { y: 120 - gH, height: gH });
+        }
+        if (rain !== null && rain > 0) {
+            $('hm-clouds').setAttribute('fill', rain > 5 ? '#78909c' : '#b0bec5');
+            var drops = Math.round(clamp(12 + rain * 10, 12, 90));
+            var slant = windFactor * 18;                       // inclinación por el viento
+            var rainG = $('hm-rain');
+            rainG.setAttribute('transform', 'skewX(' + (-slant) + ')');
+            for (var i = 0; i < drops; i++) {
+                var dx = Math.random() * 860, dur = 0.55 + Math.random() * 0.4;
+                var drop = set(document.createElementNS(SVGNS, 'line'), {
+                    x1: dx, x2: dx, y1: 0, y2: 8, class: 'hm-drop',
+                });
+                drop.style.animationDuration = dur + 's';
+                drop.style.animationDelay = (-Math.random() * dur) + 's';
+                rainG.appendChild(drop);
+            }
+        }
+    }
+
+    // Batería del datalogger (3.3 V vacía … 4.2 V llena)
+    if (bat !== null) {
+        var bK = clamp((bat - 3.3) / 0.9, 0, 1);
+        set('hm-bat-fill', { width: 10 * bK, fill: bat < 3.5 ? '#e53935' : bK < 0.5 ? '#fb8c00' : '#43a047' });
+    }
+
+    // Placas con los valores (solo variables habilitadas)
+    var fmt = function (v, d, u) { return v === null ? '—' : v.toFixed(d) + (u ? ' ' + u : ''); };
+    var plates = [];
+    if (on('hasTh'))   plates.push(['🌡 T ambiente', fmt(temp, 1, '°C'), '#e53935'],
+                                   ['💧 Humedad', fmt(hum, 1, '%'), '#1e88e5']);
+    if (on('hasWind')) plates.push(['🌬 Viento', fmt(ws, 1, 'm/s'), '#78909c'],
+                                   ['🧭 Dirección', wd === null ? '—' : wd.toFixed(0) + '° ' + (ds.wdName || ''), '#b0bec5']);
+    if (on('hasRain')) plates.push(['🌧 Precipitación', fmt(rain, 1, 'mm'), '#29b6f6']);
+    if (on('hasRad'))  plates.push(['☀️ Radiación', fmt(rad, 0, 'W/m²'), '#fbc02d']);
+    if (on('hasPh'))   plates.push(['🧪 pH agua', fmt(ph, 2), '#8e24aa']);
+    if (on('hasTw'))   plates.push(['💦 T agua', fmt(tw, 1, '°C'), '#00acc1']);
+    plates.push(['🔋 Batería', fmt(bat, 2, 'V'), bat !== null && bat < 3.5 ? '#e53935' : '#43a047']);
+
+    var pg = $('hm-plates');
+    plates.forEach(function (pl, i) {
+        var y = 130 + i * 22;
+        pg.appendChild(set(document.createElementNS(SVGNS, 'rect'), {
+            x: 6, y: y, width: 168, height: 18, rx: 9, fill: '#000', 'fill-opacity': .32,
+        }));
+        pg.appendChild(set(document.createElementNS(SVGNS, 'circle'), { cx: 16, cy: y + 9, r: 3.5, fill: pl[2] }));
+        var l = set(document.createElementNS(SVGNS, 'text'), { x: 24, y: y + 12.5, fill: '#eceff1', 'font-weight': 600 });
+        l.textContent = pl[0];
+        var v = set(document.createElementNS(SVGNS, 'text'), { x: 168, y: y + 12.5, fill: '#fff', 'text-anchor': 'end' });
+        v.textContent = pl[1];
+        pg.appendChild(l); pg.appendChild(v);
+    });
+
+    // Subida animada del agua (y la boya) hasta el nivel actual
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            ['hm-water', 'hm-buoy'].forEach(function (id) { $(id).style.transform = 'translateY(' + target + 'px)'; });
+            $('hm-level-tag').style.transform = 'translateY(' + (level === null ? -40 : target) + 'px)';
+        });
+    });
+});
+</script>

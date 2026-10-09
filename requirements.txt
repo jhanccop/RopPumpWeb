@@ -1,5 +1,5 @@
 Django
-whitenoise==6.12.0
+whitenoise==6.11.0
 djangorestframework
 #django-mysql
 #mysqlclient
@@ -13,3 +13,5 @@ django-import-export
 psycopg2
 django-model-utils
 parserheader
+paho-mqtt
+requests

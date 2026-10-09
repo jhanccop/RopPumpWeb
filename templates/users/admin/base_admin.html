@@ -73,7 +73,7 @@
                 </li>
                 {% endif %}
 
-                {% if request.user|has_app:'oilfield' or request.user|has_app:'seguridad' %}
+                {% if request.user|has_app:'oilfield' or request.user|has_app:'seguridad' or request.user|has_app:'hidromet' %}
                 <hr class="horizontal light my-2">
 
                 <li class="nav-item">
@@ -140,6 +140,34 @@
                     </a>
                 </li>
                 {% endif %}
+                {% endif %}
+
+                {% if request.user|has_app:'hidromet' %}
+                <li class="nav-item">
+                    <a class="nav-link text-white {% if request.resolver_match.app_name == 'hidromet' %}active bg-gradient-primary{% endif %}"
+                       href="{% url 'hidromet:dashboard' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-water"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Hidromet</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'hidromet:station_list' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-broadcast-tower" style="font-size:.75rem;"></i>
+                        </div>
+                        <span class="nav-link-text ms-1" style="font-size:.8rem;">› Estaciones</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'hidromet:report' %}">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center" style="min-width:1.8rem;">
+                            <i class="fas fa-file-alt" style="font-size:.75rem;"></i>
+                        </div>
+                        <span class="nav-link-text ms-1" style="font-size:.8rem;">› Reportes</span>
+                    </a>
+                </li>
                 {% endif %}
                 {% endif %}
 
