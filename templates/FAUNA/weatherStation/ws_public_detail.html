@@ -909,20 +909,29 @@ function triggerDownload(csv, filename) {
 }
 
 function downloadCSV() {
-    var header = ['Fecha'];
+    // Mismas columnas que la tabla de registros (según sensores habilitados)
+    var csvVal = function (v, dec) {
+        if (v === null || v === undefined) return '';
+        return dec !== undefined ? parseFloat(v).toFixed(dec) : v;
+    };
+    var header = ['Fecha_Hora_Servidor', 'Fecha_Hora_Dispositivo'];
     if (HAS_TEMP)  { header.push('Temperatura_C', 'Humedad_pct'); }
     if (HAS_RAIN)  { header.push('Descargas_n', 'Precipitacion_mm'); }
     if (HAS_RAD)   { header.push('Radiacion_Wm2'); }
-    if (HAS_WIND)  { header.push('Viento_ms', 'Direccion_deg'); }
+    if (HAS_WIND)  { header.push('Viento_ms', 'Direccion_deg', 'Direccion_cardinal'); }
     header.push('Bateria_V');
     var rows = [header.join(',')];
     for (var i = 0; i < datesServer.length; i++) {
-        var row = ['"' + displayDatesServer[i] + '"'];
-        if (HAS_TEMP)  { row.push(temp[i] != null ? temp[i] : '', hum[i] != null ? hum[i] : ''); }
-        if (HAS_RAIN)  { row.push(rain[i] != null ? rain[i] : '', rainMm[i] != null ? rainMm[i].toFixed(2) : ''); }
-        if (HAS_RAD)   { row.push(rad[i]  != null ? rad[i]  : ''); }
-        if (HAS_WIND)  { row.push(wind[i] != null ? wind[i] : '', windDir[i] != null ? windDir[i] : ''); }
-        row.push(bat[i] != null ? bat[i] : '');
+        var devTs = displayDatesDevice[i];
+        var row = ['"' + displayDatesServer[i] + '"', (devTs && devTs !== '—') ? '"' + devTs + '"' : ''];
+        if (HAS_TEMP)  { row.push(csvVal(temp[i]), csvVal(hum[i])); }
+        if (HAS_RAIN)  { row.push(csvVal(rain[i]), csvVal(rainMm[i], 2)); }
+        if (HAS_RAD)   { row.push(csvVal(rad[i])); }
+        if (HAS_WIND)  {
+            row.push(csvVal(wind[i]), csvVal(windDir[i]),
+                     windDir[i] === null || windDir[i] === undefined ? '' : degToCompass(windDir[i]));
+        }
+        row.push(csvVal(bat[i]));
         rows.push(row.join(','));
     }
     var suffix   = SHOW_ALL ? 'todo' : DAYS + 'd';
